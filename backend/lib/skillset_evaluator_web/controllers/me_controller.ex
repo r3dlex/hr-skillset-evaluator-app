@@ -5,7 +5,16 @@ defmodule SkillsetEvaluatorWeb.MeController do
   alias SkillsetEvaluator.Accounts.User
 
   def show(conn, _params) do
-    user = conn.assigns.current_user
+    user =
+      conn.assigns.current_user
+      |> SkillsetEvaluator.Repo.preload(:team)
+
+    team_data =
+      if user.team do
+        %{id: user.team.id, name: user.team.name}
+      else
+        nil
+      end
 
     json(conn, %{
       data: %{
@@ -14,7 +23,7 @@ defmodule SkillsetEvaluatorWeb.MeController do
         name: user.name,
         role: user.role,
         location: user.location,
-        team_id: user.team_id,
+        team: team_data,
         active: user.active,
         onboarding: %{
           completed_steps: User.completed_steps(user),

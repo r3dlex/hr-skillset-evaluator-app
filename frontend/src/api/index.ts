@@ -8,42 +8,58 @@ import type {
   GapAnalysisItem,
 } from '@/types'
 
+// Wrapper types matching Phoenix JSON responses (all wrapped in {data: ...})
+interface DataWrapper<T> {
+  data: T
+}
+
 // Auth
 export const auth = {
-  login(email: string, password: string) {
-    return apiPost<{ user: User }>('/auth/login', { email, password })
+  async login(email: string, password: string): Promise<{ user: User }> {
+    const resp = await apiPost<DataWrapper<User>>('/auth/login', { email, password })
+    return { user: resp.data }
   },
   logout() {
     return apiPost<void>('/auth/logout')
   },
-  fetchMe() {
-    return apiGet<{ user: User }>('/auth/me')
+  async fetchMe(): Promise<{ user: User }> {
+    const resp = await apiGet<DataWrapper<User>>('/me')
+    return { user: resp.data }
   },
 }
 
 // Teams
 export const teams = {
-  listTeams() {
-    return apiGet<{ teams: Team[] }>('/teams')
+  async listTeams(): Promise<{ teams: Team[] }> {
+    const resp = await apiGet<DataWrapper<Team[]>>('/teams')
+    return { teams: resp.data }
   },
-  getTeamMembers(teamId: number) {
-    return apiGet<{ members: User[] }>(`/teams/${teamId}/members`)
+  async getTeamMembers(teamId: number): Promise<{ team: Team; members: User[] }> {
+    const resp = await apiGet<DataWrapper<{ id: number; name: string; members: User[] }>>(`/teams/${teamId}`)
+    return {
+      team: { id: resp.data.id, name: resp.data.name },
+      members: resp.data.members || [],
+    }
   },
 }
 
 // Skillsets
 export const skillsets = {
-  listSkillsets() {
-    return apiGet<{ skillsets: Skillset[] }>('/skillsets')
+  async listSkillsets(): Promise<{ skillsets: Skillset[] }> {
+    const resp = await apiGet<DataWrapper<Skillset[]>>('/skillsets')
+    return { skillsets: resp.data }
   },
-  getSkillset(id: number) {
-    return apiGet<{ skillset: Skillset }>(`/skillsets/${id}`)
+  async getSkillset(id: number): Promise<{ skillset: Skillset }> {
+    const resp = await apiGet<DataWrapper<Skillset>>(`/skillsets/${id}`)
+    return { skillset: resp.data }
   },
-  createSkillset(data: { name: string; description: string }) {
-    return apiPost<{ skillset: Skillset }>('/skillsets', { skillset: data })
+  async createSkillset(data: { name: string; description: string }): Promise<{ skillset: Skillset }> {
+    const resp = await apiPost<DataWrapper<Skillset>>('/skillsets', { skillset: data })
+    return { skillset: resp.data }
   },
-  updateSkillset(id: number, data: Partial<Skillset>) {
-    return apiPut<{ skillset: Skillset }>(`/skillsets/${id}`, { skillset: data })
+  async updateSkillset(id: number, data: Partial<Skillset>): Promise<{ skillset: Skillset }> {
+    const resp = await apiPut<DataWrapper<Skillset>>(`/skillsets/${id}`, { skillset: data })
+    return { skillset: resp.data }
   },
   deleteSkillset(id: number) {
     return apiDelete(`/skillsets/${id}`)
@@ -52,30 +68,33 @@ export const skillsets = {
 
 // Evaluations
 export const evaluations = {
-  getEvaluations(userId: number, skillsetId: number, period: string) {
-    return apiGet<{ evaluations: Evaluation[] }>(
+  async getEvaluations(userId: number, skillsetId: number, period: string): Promise<{ evaluations: Evaluation[] }> {
+    const resp = await apiGet<DataWrapper<Evaluation[]>>(
       `/evaluations?user_id=${userId}&skillset_id=${skillsetId}&period=${period}`,
     )
+    return { evaluations: resp.data }
   },
-  updateManagerScores(
+  async updateManagerScores(
     userId: number,
     period: string,
     scores: { skill_id: number; score: number }[],
-  ) {
-    return apiPut<{ evaluations: Evaluation[] }>('/evaluations/manager', {
+  ): Promise<{ evaluations: Evaluation[] }> {
+    const resp = await apiPut<DataWrapper<Evaluation[]>>('/evaluations/manager', {
       user_id: userId,
       period,
       scores,
     })
+    return { evaluations: resp.data }
   },
-  updateSelfScores(
+  async updateSelfScores(
     period: string,
     scores: { skill_id: number; score: number }[],
-  ) {
-    return apiPut<{ evaluations: Evaluation[] }>('/evaluations/self', {
+  ): Promise<{ evaluations: Evaluation[] }> {
+    const resp = await apiPut<DataWrapper<Evaluation[]>>('/evaluations/self', {
       period,
       scores,
     })
+    return { evaluations: resp.data }
   },
 }
 
@@ -108,14 +127,13 @@ export const onboarding = {
 // XLSX Import/Export
 export const xlsx = {
   importXlsx(file: File, period: string) {
-    return apiUpload<{ imported: number; errors: string[] }>(
-      '/xlsx/import',
+    return apiUpload<DataWrapper<{ imported: number; errors: string[] }>>(
+      '/import',
       file,
       { period },
     )
   },
   exportXlsx(skillsetId: number, period: string) {
-    // Direct download, return the URL
-    return `/api/xlsx/export?skillset_id=${skillsetId}&period=${period}`
+    return `/api/export?skillset_id=${skillsetId}&period=${period}`
   },
 }

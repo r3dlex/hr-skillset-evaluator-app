@@ -313,6 +313,7 @@ defmodule SkillsetEvaluator.Import.Pipeline do
     Skills.Skill
     |> join(:inner, [s], sg in Skills.SkillGroup, on: s.skill_group_id == sg.id)
     |> where([s, sg], s.name == ^skill_name and sg.skillset_id == ^skillset_id)
+    |> limit(1)
     |> Repo.one()
   end
 

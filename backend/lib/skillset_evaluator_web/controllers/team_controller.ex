@@ -4,7 +4,7 @@ defmodule SkillsetEvaluatorWeb.TeamController do
   alias SkillsetEvaluator.Teams
 
   def index(conn, _params) do
-    teams = Teams.list_teams()
+    teams = Teams.list_teams_with_member_count()
     render(conn, :index, teams: teams)
   end
 

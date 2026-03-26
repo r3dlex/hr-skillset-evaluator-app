@@ -12,6 +12,15 @@ defmodule SkillsetEvaluator.Teams do
     Repo.all(Team)
   end
 
+  def list_teams_with_member_count do
+    Team
+    |> join(:left, [t], u in User, on: u.team_id == t.id and u.active == true)
+    |> group_by([t], t.id)
+    |> select([t, u], {t, count(u.id)})
+    |> Repo.all()
+    |> Enum.map(fn {team, count} -> Map.put(team, :member_count, count) end)
+  end
+
   def get_team(id), do: Repo.get(Team, id)
 
   def get_team!(id), do: Repo.get!(Team, id)

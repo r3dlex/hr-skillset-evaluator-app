@@ -15,10 +15,16 @@ defmodule SkillsetEvaluatorWeb.TeamJSON do
   end
 
   defp team_data(%Team{} = team) do
-    %{
+    data = %{
       id: team.id,
       name: team.name
     }
+
+    if Map.has_key?(team, :member_count) do
+      Map.put(data, :member_count, team.member_count)
+    else
+      data
+    end
   end
 
   defp member_data(%User{} = user) do

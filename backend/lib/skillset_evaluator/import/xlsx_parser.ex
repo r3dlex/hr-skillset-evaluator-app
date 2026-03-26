@@ -60,29 +60,29 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
 
   @spec parse(String.t(), String.t()) :: {:ok, [PersonRow.t()]} | {:error, String.t()}
   def parse(file_path, period) do
-    case Xlsxir.multi_extract(file_path) do
-      {:ok, table_ids} ->
-        person_rows =
-          table_ids
-          |> Enum.with_index()
-          |> Enum.flat_map(fn {table_id, _index} ->
-            sheet_name = Xlsxir.get_info(table_id, :name)
+    result = Xlsxir.multi_extract(file_path)
+    table_ids = extract_table_ids(result)
 
-            rows =
-              if sheet_name in @skip_sheets do
-                []
-              else
-                parse_skill_sheet(table_id, sheet_name, period)
-              end
+    if table_ids == [] do
+      {:error, "Failed to parse xlsx: no sheets found"}
+    else
+      person_rows =
+        table_ids
+        |> Enum.flat_map(fn table_id ->
+          sheet_name = Xlsxir.get_info(table_id, :name)
 
-            Xlsxir.close(table_id)
-            rows
-          end)
+          rows =
+            if sheet_name in @skip_sheets do
+              []
+            else
+              parse_skill_sheet(table_id, sheet_name, period)
+            end
 
-        {:ok, person_rows}
+          Xlsxir.close(table_id)
+          rows
+        end)
 
-      {:error, reason} ->
-        {:error, "Failed to parse xlsx: #{inspect(reason)}"}
+      {:ok, person_rows}
     end
   rescue
     e -> {:error, "Xlsx parsing error: #{Exception.message(e)}"}
@@ -90,29 +90,30 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
 
   @spec parse_teams_sheet(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   def parse_teams_sheet(file_path) do
-    case Xlsxir.multi_extract(file_path) do
-      {:ok, table_ids} ->
-        teams_data =
-          table_ids
-          |> Enum.reduce([], fn table_id, acc ->
-            sheet_name = Xlsxir.get_info(table_id, :name)
+    result = Xlsxir.multi_extract(file_path)
+    table_ids = extract_table_ids(result)
 
-            result =
-              if sheet_name == "Teams" do
-                rows = Xlsxir.get_list(table_id)
-                parse_teams_rows(rows)
-              else
-                []
-              end
+    if table_ids == [] do
+      {:error, "Failed to parse xlsx: no sheets found"}
+    else
+      teams_data =
+        table_ids
+        |> Enum.reduce([], fn table_id, acc ->
+          sheet_name = Xlsxir.get_info(table_id, :name)
 
-            Xlsxir.close(table_id)
-            acc ++ result
-          end)
+          result =
+            if sheet_name == "Teams" do
+              rows = Xlsxir.get_list(table_id)
+              parse_teams_rows(rows)
+            else
+              []
+            end
 
-        {:ok, teams_data}
+          Xlsxir.close(table_id)
+          acc ++ result
+        end)
 
-      {:error, reason} ->
-        {:error, "Failed to parse xlsx: #{inspect(reason)}"}
+      {:ok, teams_data}
     end
   end
 
@@ -248,4 +249,15 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
   defp empty_row?(row) do
     Enum.all?(row, fn val -> val == nil or val == "" end)
   end
+
+  # Xlsxir.multi_extract returns a keyword list [ok: ref, ok: ref, ...]
+  # not {:ok, [ref, ref, ...]}. Extract the references.
+  defp extract_table_ids(result) when is_list(result) do
+    result
+    |> Enum.filter(fn {status, _} -> status == :ok end)
+    |> Enum.map(fn {:ok, ref} -> ref end)
+  end
+
+  defp extract_table_ids({:ok, table_ids}) when is_list(table_ids), do: table_ids
+  defp extract_table_ids(_), do: []
 end
