@@ -101,18 +101,24 @@ python -m pipeline_runner --dry-run
 
 ### Workflow: `.github/workflows/ci.yml`
 
-Triggers: push to `main`, pull requests.
+Triggers: push to `main`, pull requests. Three parallel jobs:
 
-```yaml
-jobs:
-  pipeline:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build app container
-        run: docker compose build app
-      - name: Run pipeline
-        run: docker compose run --rm pipeline-runner
+```
+ci.yml
+├── backend-test     Elixir 1.16 + OTP 26
+│   ├── mix deps.get
+│   ├── mix format --check-formatted
+│   ├── mix compile --warnings-as-errors
+│   └── mix test
+│
+├── frontend-test    Node.js 20
+│   ├── npm ci
+│   ├── npx vue-tsc --noEmit
+│   ├── npx eslint src --ext .ts,.vue
+│   └── npx vitest run
+│
+└── docker-build     (depends on both above)
+    └── docker build -t hr-skillset-evaluator .
 ```
 
 ### Workflow: `.github/workflows/security.yml`
@@ -120,20 +126,28 @@ jobs:
 Triggers: push (all branches).
 
 Scans for:
-- Secrets in source (gitleaks or trufflehog)
-- Dependency vulnerabilities (mix audit, npm audit)
+- Secrets in source via trufflehog (only verified secrets)
+- npm dependency vulnerabilities (`npm audit --audit-level=high`)
+- Hex dependency vulnerabilities (`mix deps.audit`)
 
 ## Local Development Pipeline
 
 ```bash
-# Run full pipeline locally (same as CI)
-docker compose run --rm pipeline-runner
+# Run full pipeline locally via Docker
+docker compose --profile tools run --rm pipeline-runner
 
-# Run just tests
-docker compose run --rm pipeline-runner python -m pipeline_runner --stages test
+# Run specific stages
+docker compose --profile tools run --rm pipeline-runner \
+  python -m pipeline_runner -s security -s archgate
+
+# Run backend tests directly
+cd backend && mix test
+
+# Run frontend tests directly
+cd frontend && npx vitest run
 
 # Run archgate check only
-docker compose run --rm app npx archgate check
+cd . && npx archgate check
 ```
 
 ## Pre-commit Hook (optional)

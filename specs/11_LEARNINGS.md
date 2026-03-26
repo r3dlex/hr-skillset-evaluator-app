@@ -28,6 +28,21 @@
 **Decision**: Use archgate to encode ADRs as executable checks.
 **Why**: ADRs become living documents backed by automated enforcement. Integrates with pre-commit and CI. Free tier is sufficient.
 
+### Broadway for xlsx import pipeline
+**Decision**: Use Broadway (with `Task.async_stream` for the synchronous path).
+**Why**: Broadway provides the concurrency model for processing person rows in parallel during xlsx import. For the current synchronous import (single request), `Task.async_stream` with `max_concurrency: System.schedulers_online()` gives adequate parallelism. The Broadway callbacks are implemented and ready for a future async mode if needed.
+**Trade-off**: Broadway dependency adds some weight but is well-maintained and provides a clear upgrade path to async processing.
+
+### Native CI over pipeline-runner-in-Docker for test/lint
+**Decision**: GitHub Actions runs backend tests (Elixir) and frontend tests (Node) natively instead of inside the pipeline-runner container.
+**Why**: The pipeline-runner container has Python + Node but not Elixir. Running `mix test` inside it would require a much larger image with all three runtimes. Native CI with `erlef/setup-beam` and `actions/setup-node` is faster and simpler.
+**Trade-off**: Local and CI pipelines are not identical. Pipeline runner is used for security scans and archgate checks locally.
+
+### File-based SQLite test database over in-memory
+**Decision**: Tests use `/tmp/skillset_evaluator_test.db` instead of `:memory:`.
+**Why**: ecto_sqlite3 in-memory databases have limitations with concurrent access and the Ecto sandbox. A file-based test DB is more reliable and closer to production behavior.
+**Trade-off**: Slightly slower test setup, but negligible at current test count.
+
 ---
 
 *This document is updated as new decisions and learnings emerge during development.*

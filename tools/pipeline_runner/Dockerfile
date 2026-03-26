@@ -23,12 +23,12 @@ RUN poetry config virtualenvs.create false && \
 # Copy source code
 COPY . .
 
-# Install the package itself
-RUN poetry install --no-interaction --no-ansi
+# Install the package itself into system site-packages
+RUN pip install --no-cache-dir .
 
 # Install archgate globally
 RUN npm install -g archgate
 
 WORKDIR /workspace
 
-ENTRYPOINT ["python", "-m", "pipeline_runner"]
+CMD ["python", "-m", "pipeline_runner"]

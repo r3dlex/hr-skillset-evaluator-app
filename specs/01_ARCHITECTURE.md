@@ -39,13 +39,25 @@
 ## Monorepo Structure
 
 ```
-/backend     — Phoenix app (Elixir)
-/frontend    — Vue 3 + TypeScript (builds into backend/priv/static)
-/tools       — Pipeline runner (Python/Poetry)
-/data        — xlsx files + SQLite DB (volume mount, gitignored content)
-/specs       — All specification documents
-/.archgate   — ADRs and architectural rules
-/.github     — GitHub Actions workflows
+/backend          Phoenix app (Elixir 1.16 + Phoenix 1.7)
+  /lib/skillset_evaluator/        Contexts: Accounts, Teams, Skills, Evaluations, Import
+  /lib/skillset_evaluator_web/    Controllers (12), Plugs, Router, Endpoint
+  /priv/repo/migrations/          7 Ecto migrations (teams, users, tokens, skillsets, groups, skills, evaluations)
+  /priv/static/                   Vue SPA build output (gitignored, populated at build time)
+  /test/                          68 ExUnit tests
+/frontend         Vue 3 + TypeScript (builds into backend/priv/static)
+  /src/api/                       Typed fetch client + domain API functions
+  /src/components/                RadarChart, GapAnalysis, DataInput, TeamLegend, etc.
+  /src/stores/                    Pinia: auth, skills, evaluations, team
+  /src/views/                     Login, Dashboards, SkillsetView, Settings
+  /src/layouts/                   AuthLayout, AppLayout (sidebar + content)
+  62 Vitest tests
+/tools            Pipeline runner (Python 3.12 + Poetry)
+  /pipeline_runner/stages/        security, lint, typecheck, archgate, test, build
+/data             xlsx files + SQLite DB (volume mount, gitignored content)
+/specs            13 specification documents (numbered 01-13)
+/.archgate        5 ADRs with executable rules
+/.github          CI/CD workflows (ci.yml, security.yml)
 ```
 
 ## Request Flow

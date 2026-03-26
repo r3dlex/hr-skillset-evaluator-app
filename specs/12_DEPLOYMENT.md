@@ -58,23 +58,25 @@ ADMIN_PASSWORD=change-me-in-production
 ## Dockerfile (Multi-stage)
 
 ```
-Stage 1: frontend-build
-  - Node 20 Alpine
-  - npm ci + npm run build
+Stage 1: frontend-build (node:20-alpine)
+  - npm ci (or npm install if no lock file)
+  - npx vite build --outDir /app/frontend/dist
   - Output: built static files
 
-Stage 2: backend-build
-  - Elixir 1.16 Alpine
-  - mix deps.get + mix release
-  - Copy frontend build into priv/static
-  - Output: compiled release
+Stage 2: backend-build (hexpm/elixir:1.16.2-erlang-26.2.2-alpine-3.19.1)
+  - mix deps.get --only prod + mix deps.compile
+  - Copy frontend dist into priv/static
+  - mix compile + mix release
+  - Output: OTP release
 
-Stage 3: runtime
-  - Erlang runtime only (no build tools)
-  - Copy release from stage 2
+Stage 3: runtime (alpine:3.19)
+  - Erlang runtime only (libstdc++, openssl, ncurses-libs)
+  - Non-root user (appuser)
+  - CMD: run migrations then start server
   - Expose port 4000
-  - CMD: run migrations + start server
 ```
+
+The build is fully reproducible -- no host dependencies. Lock files (`mix.lock`, `package-lock.json`) are committed and used in CI.
 
 ## Production Considerations
 

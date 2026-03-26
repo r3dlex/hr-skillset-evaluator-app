@@ -11,14 +11,18 @@
 
 ## Build Output
 
-Vite configured to output to `../backend/priv/static/`:
+Vite configured to output to `../backend/priv/static/` for local dev. In Docker, the Dockerfile overrides with `--outDir /app/frontend/dist`.
+
 ```typescript
 // vite.config.ts
 export default defineConfig({
   build: {
-    outDir: '../backend/priv/static',
+    outDir: resolve(__dirname, '../backend/priv/static'),
     emptyOutDir: true,
-  }
+  },
+  server: {
+    proxy: { '/api': { target: 'http://localhost:4000', changeOrigin: true } },
+  },
 })
 ```
 

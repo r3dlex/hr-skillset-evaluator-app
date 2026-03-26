@@ -10,10 +10,92 @@ permissions:
   contents: read
 
 jobs:
-  pipeline:
-    name: Build & Test
+  backend-test:
+    name: Backend Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+
+      - name: Cache deps
+        uses: actions/cache@v4
+        with:
+          path: backend/deps
+          key: elixir-deps-${{ hashFiles('backend/mix.lock') }}
+          restore-keys: elixir-deps-
+
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: backend/_build
+          key: elixir-build-${{ hashFiles('backend/mix.lock') }}-${{ hashFiles('backend/lib/**') }}
+          restore-keys: elixir-build-
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: mix deps.get
+
+      - name: Check formatting
+        working-directory: ./backend
+        run: mix format --check-formatted
+
+      - name: Compile (warnings as errors)
+        working-directory: ./backend
+        env:
+          MIX_ENV: test
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests
+        working-directory: ./backend
+        env:
+          MIX_ENV: test
+        run: mix test
+
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: TypeScript check
+        working-directory: ./frontend
+        run: npx vue-tsc --noEmit
+
+      - name: Lint
+        working-directory: ./frontend
+        run: npx eslint src --ext .ts,.vue
+
+      - name: Run tests
+        working-directory: ./frontend
+        run: npx vitest run
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [backend-test, frontend-test]
 
     steps:
       - name: Checkout
@@ -21,23 +103,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Build pipeline-runner image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./tools/pipeline_runner
-          file: ./tools/pipeline_runner/Dockerfile
-          load: true
-          tags: pipeline-runner:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Run pipeline
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/workspace:ro" \
-            pipeline-runner:ci \
-            python -m pipeline_runner
 
       - name: Build production image
         uses: docker/build-push-action@v5
@@ -48,46 +113,3 @@ jobs:
           tags: hr-skillset-evaluator:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install trufflehog
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
-
-      - name: Scan for secrets with trufflehog
-        run: |
-          trufflehog git file://. --only-verified --fail
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Audit npm dependencies
-        working-directory: ./frontend
-        run: |
-          npm ci --prefer-offline --no-audit
-          npm audit --audit-level=high || true
-
-      - name: Set up Elixir
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: "1.16"
-          otp-version: "26"
-
-      - name: Audit Hex dependencies
-        working-directory: ./backend
-        run: |
-          mix local.hex --force
-          mix deps.get
-          mix deps.audit || true

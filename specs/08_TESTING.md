@@ -1,5 +1,13 @@
 # 08 — Testing
 
+## Current Status
+
+| Layer | Tests | Status |
+|-------|-------|--------|
+| Backend (ExUnit) | 68 tests | All passing |
+| Frontend (Vitest) | 62 tests | All passing |
+| E2E (Playwright) | Planned | Not yet implemented |
+
 ## Coverage Targets
 
 | Layer | Target | Tool |
@@ -17,25 +25,22 @@
 ```
 backend/test/
   skillset_evaluator/
-    accounts_test.exs        # User CRUD, auth
-    teams_test.exs           # Team management
+    accounts_test.exs        # User CRUD, auth, password hashing
+    teams_test.exs           # Team CRUD, member queries
     skills_test.exs          # Skillsets, groups, skills CRUD
-    evaluations_test.exs     # Score management, gap analysis
-    xlsx_import_test.exs     # Import parsing and upsert
-    xlsx_export_test.exs     # Export generation
+    evaluations_test.exs     # Score upsert, radar data, gap analysis
   skillset_evaluator_web/
     controllers/
-      auth_controller_test.exs
-      skillset_controller_test.exs
-      evaluation_controller_test.exs
-      import_controller_test.exs
-      radar_controller_test.exs
+      auth_controller_test.exs       # Login, logout flows
+      evaluation_controller_test.exs # Score read/write endpoints
+      me_controller_test.exs         # Current user endpoint
+      skillset_controller_test.exs   # Skillset CRUD endpoints
     plugs/
-      require_role_test.exs
+      auth_test.exs                  # Auth plug, role enforcement
   support/
     fixtures.ex              # Test data factories
-    conn_case.ex
-    data_case.ex
+    conn_case.ex             # Authenticated conn helpers
+    data_case.ex             # Ecto sandbox setup
 ```
 
 ### Test Data
@@ -61,29 +66,29 @@ docker compose run --rm app mix test --cover
 ```
 frontend/src/
   components/__tests__/
-    RadarChart.spec.ts
-    GapAnalysis.spec.ts
-    DataInput.spec.ts
-    TeamLegend.spec.ts
-    Overview.spec.ts
+    RadarChart.spec.ts       # 5 tests: SVG, axes, polygons, tooltip, empty
+    GapAnalysis.spec.ts      # 6 tests: rows, names, scores, gap, sort, empty
+    DataInput.spec.ts        # 5 tests: rows, badges, emit, readonly, empty
+    Overview.spec.ts         # 4 tests: cards, values, zero avg, defaults
+    TeamLegend.spec.ts       # 5 tests: items, colors, toggle, names, empty
+    SkillsetTabs.spec.ts     # 5 tests: count, active, emit, names, empty
+    ScoreSlider.spec.ts      # 7 tests: range, value, emit, disabled, enabled, styles
   stores/__tests__/
-    auth.spec.ts
-    skills.spec.ts
-    evaluations.spec.ts
+    auth.spec.ts             # 8 tests: state, login, logout, isManager, fetchMe, errors
+    skills.spec.ts           # 5 tests: state, fetchSkillsets, fetchSkillset, errors
+    evaluations.spec.ts      # 6 tests: state, fetch, radar, gap, errors
   api/__tests__/
-    client.spec.ts
-  views/__tests__/
-    LoginView.spec.ts
+    client.spec.ts           # 6 tests: get, post, 401 redirect, errors, non-JSON, 204
 ```
 
-### Key Test Cases
+### Key Test Cases (62 total)
 
-- RadarChart renders correct number of axes
-- RadarChart polygon points match score values
-- GapAnalysis sorts by gap magnitude
-- DataInput emits score updates on slider change
-- Auth store handles login/logout flow
-- API client handles 401 → redirect to login
+- RadarChart renders SVG with correct axes count and polygon count
+- GapAnalysis sorts by absolute gap magnitude, handles null scores
+- DataInput emits `update:score` on slider change, respects readonly
+- ScoreSlider 0-5 range, disabled state, value display
+- Auth store handles full login/logout lifecycle + error states
+- API client handles 401 redirect, non-2xx errors, multipart uploads
 
 ### Running
 
