@@ -1,6 +1,9 @@
 defmodule SkillsetEvaluatorWeb.MeController do
   use SkillsetEvaluatorWeb, :controller
 
+  alias SkillsetEvaluator.Accounts
+  alias SkillsetEvaluator.Accounts.User
+
   def show(conn, _params) do
     user = conn.assigns.current_user
 
@@ -12,8 +15,43 @@ defmodule SkillsetEvaluatorWeb.MeController do
         role: user.role,
         location: user.location,
         team_id: user.team_id,
-        active: user.active
+        active: user.active,
+        onboarding: %{
+          completed_steps: User.completed_steps(user),
+          dismissed: user.onboarding_dismissed
+        }
       }
     })
+  end
+
+  def update_onboarding(conn, %{"step" => step_id}) when is_binary(step_id) do
+    user = conn.assigns.current_user
+
+    case Accounts.complete_onboarding_step(user, step_id) do
+      {:ok, updated_user} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          completed_steps: User.completed_steps(updated_user),
+          dismissed: updated_user.onboarding_dismissed
+        })
+
+      {:error, _changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: "Failed to update onboarding"})
+    end
+  end
+
+  def dismiss_onboarding(conn, _params) do
+    user = conn.assigns.current_user
+
+    case Accounts.dismiss_onboarding(user) do
+      {:ok, _} ->
+        conn |> put_status(:ok) |> json(%{dismissed: true})
+
+      {:error, _} ->
+        conn |> put_status(:unprocessable_entity) |> json(%{error: "Failed to dismiss"})
+    end
   end
 end

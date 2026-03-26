@@ -12,6 +12,10 @@ export interface User {
   team: Team | null
   location: string
   active: boolean
+  onboarding?: {
+    completed_steps: string[]
+    dismissed: boolean
+  }
 }
 
 export interface Skill {
@@ -62,4 +66,19 @@ export interface GapAnalysisItem {
   manager_score: number
   self_score: number
   gap: number
+}
+
+export interface OnboardingStep {
+  id: string
+  label: string
+  description: string
+  route?: string  // optional link to relevant page
+  icon: string    // SVG path or emoji
+}
+
+export interface TourStep {
+  target: string    // CSS selector
+  title: string
+  content: string
+  position: 'top' | 'bottom' | 'left' | 'right'
 }

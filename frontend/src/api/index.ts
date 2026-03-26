@@ -98,6 +98,13 @@ export const gapAnalysis = {
   },
 }
 
+// Onboarding
+export const onboarding = {
+  completeStep: (step: string) =>
+    apiPut<{ completed_steps: string[]; dismissed: boolean }>('/me/onboarding', { step }),
+  dismiss: () => apiDelete('/me/onboarding'),
+}
+
 // XLSX Import/Export
 export const xlsx = {
   importXlsx(file: File, period: string) {

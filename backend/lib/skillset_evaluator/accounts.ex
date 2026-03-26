@@ -74,6 +74,34 @@ defmodule SkillsetEvaluator.Accounts do
     :ok
   end
 
+  ## Onboarding
+
+  def complete_onboarding_step(user, step_id) when is_binary(step_id) do
+    current_steps = User.completed_steps(user)
+
+    if step_id in current_steps do
+      {:ok, user}
+    else
+      new_steps = Jason.encode!(current_steps ++ [step_id])
+
+      user
+      |> User.onboarding_changeset(%{onboarding_completed_steps: new_steps})
+      |> Repo.update()
+    end
+  end
+
+  def dismiss_onboarding(user) do
+    user
+    |> User.onboarding_changeset(%{onboarding_dismissed: true})
+    |> Repo.update()
+  end
+
+  def reset_onboarding(user) do
+    user
+    |> User.onboarding_changeset(%{onboarding_completed_steps: "[]", onboarding_dismissed: false})
+    |> Repo.update()
+  end
+
   ## Microsoft SSO
 
   def get_or_create_user_from_microsoft(%{uid: uid, info: info}) do

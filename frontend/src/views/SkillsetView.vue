@@ -138,8 +138,29 @@ async function handleScoreUpdate(skillId: number, score: number) {
           <div v-if="evalStore.radarData && evalStore.radarData.axes.length > 0" class="flex justify-center">
             <RadarChart :radar-data="evalStore.radarData" :size="500" />
           </div>
-          <div v-else class="flex items-center justify-center h-80 text-gray-400">
-            No data available
+          <div v-else class="flex flex-col items-center justify-center h-80">
+            <div class="w-14 h-14 mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <p v-if="authStore.isManager" class="text-sm text-gray-500 text-center max-w-xs">
+              No evaluations yet. Start by evaluating team members on this skillset.
+            </p>
+            <template v-else>
+              <p class="text-sm text-gray-500 text-center max-w-xs mb-4">
+                No evaluations yet. Complete a self-evaluation to see your radar chart.
+              </p>
+              <RouterLink
+                :to="`/self-evaluation/${skillsetId}`"
+                class="btn-primary text-sm inline-flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Start self-evaluation
+              </RouterLink>
+            </template>
           </div>
         </div>
 

@@ -158,9 +158,19 @@ function priorityColor(priority: string): string {
       <!-- Empty state -->
       <div
         v-if="!skillsStore.currentSkillset?.skill_groups?.length && !skillsStore.loading"
-        class="text-center py-16"
+        class="card p-10 text-center max-w-md mx-auto"
       >
-        <p class="text-gray-400">No skills defined for this skillset</p>
+        <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gray-100 flex items-center justify-center">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+        </div>
+        <h3 class="text-base font-semibold text-gray-900 mb-2">
+          No skills defined yet
+        </h3>
+        <p class="text-sm text-gray-500">
+          This skillset has no skills defined yet. Your manager can add skills by importing data.
+        </p>
       </div>
     </div>
   </AppLayout>

@@ -1,18 +1,41 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSkillsStore } from '@/stores/skills'
+import { useOnboardingStore } from '@/stores/onboarding'
+import OnboardingChecklist from '@/components/OnboardingChecklist.vue'
+import type { TourStep } from '@/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const skillsStore = useSkillsStore()
+const onboardingStore = useOnboardingStore()
+
+const startTour = inject<(steps: TourStep[]) => void>('startTour')
 
 onMounted(() => {
   if (skillsStore.skillsets.length === 0) {
     skillsStore.fetchSkillsets()
   }
+  onboardingStore.syncFromUser()
 })
+
+function handleStartTour() {
+  const tourSteps: TourStep[] = authStore.isManager
+    ? [
+        { target: '[data-tour="dashboard-link"]', title: 'Dashboard', content: 'Your main hub for team overview and stats.', position: 'right' },
+        { target: '[data-tour="settings-link"]', title: 'Settings', content: 'Manage skillsets, import xlsx files, and configure skill groups.', position: 'right' },
+        { target: '[data-tour="skillsets-section"]', title: 'Skillsets', content: 'Quick links to each skillset for evaluating team members.', position: 'right' },
+        { target: '[data-tour="user-info"]', title: 'Your Profile', content: 'View your account info and sign out from here.', position: 'top' },
+      ]
+    : [
+        { target: '[data-tour="dashboard-link"]', title: 'Your Dashboard', content: 'See your evaluation scores, radar chart, and self-evaluation links.', position: 'right' },
+        { target: '[data-tour="skillsets-section"]', title: 'Skillsets', content: 'Navigate to each skillset to view your evaluations and radar charts.', position: 'right' },
+        { target: '[data-tour="user-info"]', title: 'Your Profile', content: 'View your account info and sign out from here.', position: 'top' },
+      ]
+  startTour?.(tourSteps)
+}
 
 async function handleLogout() {
   await authStore.logout()
@@ -33,6 +56,7 @@ async function handleLogout() {
     <nav class="px-4 py-4 space-y-1">
       <RouterLink
         to="/dashboard"
+        data-tour="dashboard-link"
         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
         active-class="bg-white/15 text-white"
       >
@@ -45,6 +69,7 @@ async function handleLogout() {
       <RouterLink
         v-if="authStore.isManager"
         to="/settings/skillsets"
+        data-tour="settings-link"
         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
         active-class="bg-white/15 text-white"
       >
@@ -56,8 +81,14 @@ async function handleLogout() {
       </RouterLink>
     </nav>
 
+    <!-- Onboarding Checklist -->
+    <OnboardingChecklist
+      v-if="onboardingStore.isVisible"
+      @start-tour="handleStartTour"
+    />
+
     <!-- Skillsets -->
-    <div class="px-4 py-3 flex-1 overflow-y-auto">
+    <div class="px-4 py-3 flex-1 overflow-y-auto" data-tour="skillsets-section">
       <h2 class="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">
         Skillsets
       </h2>
@@ -82,7 +113,7 @@ async function handleLogout() {
     </div>
 
     <!-- User info -->
-    <div class="px-4 py-4 border-t border-white/10">
+    <div class="px-4 py-4 border-t border-white/10" data-tour="user-info">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-full bg-primary/30 flex items-center justify-center text-sm font-semibold text-primary-light shrink-0">
           {{ authStore.user?.name?.charAt(0)?.toUpperCase() || '?' }}

@@ -227,21 +227,43 @@ function moveDown(index: number) {
         </div>
       </div>
 
-      <!-- Empty state -->
+      <!-- Import CTA when no skillsets -->
       <div
         v-if="skillsStore.skillsets.length === 0 && !skillsStore.loading"
-        class="text-center py-16 card"
+        class="card p-8 mb-6 border-2 border-dashed border-primary/30 bg-primary-light/20"
       >
-        <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-        <p class="text-gray-500">No skillsets created yet</p>
-        <button
-          class="mt-4 text-primary hover:text-primary-dark font-medium text-sm"
-          @click="showCreateForm = true"
-        >
-          Create your first skillset
-        </button>
+        <div class="flex items-start gap-5">
+          <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+            <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-lg font-bold text-gray-900 mb-1">
+              Get started with your skill matrix
+            </h3>
+            <p class="text-sm text-gray-500 mb-4">
+              Get started quickly by uploading your existing SkillMatrix.xlsx file. This will create skillsets, skill groups, and skills automatically.
+            </p>
+            <div class="flex items-center gap-3">
+              <button
+                class="btn-primary inline-flex items-center gap-2"
+                @click="showCreateForm = false"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import from xlsx
+              </button>
+              <button
+                class="btn-secondary"
+                @click="showCreateForm = true"
+              >
+                Create manually
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- XLSX Import -->

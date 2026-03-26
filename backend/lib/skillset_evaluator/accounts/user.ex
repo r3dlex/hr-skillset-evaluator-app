@@ -12,6 +12,8 @@ defmodule SkillsetEvaluator.Accounts.User do
     field :microsoft_uid, :string
     field :active, :boolean, default: true
     field :confirmed_at, :utc_datetime
+    field :onboarding_completed_steps, :string, default: "[]"
+    field :onboarding_dismissed, :boolean, default: false
 
     belongs_to :team, SkillsetEvaluator.Teams.Team
 
@@ -46,6 +48,29 @@ defmodule SkillsetEvaluator.Accounts.User do
     |> validate_required([:password])
     |> validate_length(:password, min: 8, max: 72)
     |> hash_password()
+  end
+
+  def onboarding_changeset(user, attrs) do
+    cast(user, attrs, [:onboarding_completed_steps, :onboarding_dismissed])
+  end
+
+  @doc """
+  Parses the JSON string of completed onboarding steps into a list of strings.
+  """
+  def completed_steps(%__MODULE__{onboarding_completed_steps: steps}) do
+    case Jason.decode(steps || "[]") do
+      {:ok, list} when is_list(list) -> list
+      _ -> []
+    end
+  end
+
+  @doc """
+  Returns a changeset that appends step_id to the completed steps (deduplicating).
+  """
+  def add_completed_step(user, step_id) do
+    current = completed_steps(user)
+    new_steps = Enum.uniq(current ++ [step_id])
+    onboarding_changeset(user, %{onboarding_completed_steps: Jason.encode!(new_steps)})
   end
 
   defp hash_password(changeset) do

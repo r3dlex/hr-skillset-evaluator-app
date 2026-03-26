@@ -32,6 +32,8 @@ defmodule SkillsetEvaluatorWeb.Router do
     pipe_through [:api, :require_auth]
 
     get "/me", MeController, :show
+    put "/me/onboarding", MeController, :update_onboarding
+    delete "/me/onboarding", MeController, :dismiss_onboarding
     resources "/teams", TeamController, only: [:index, :show]
     resources "/skillsets", SkillsetController, only: [:index, :show]
 
