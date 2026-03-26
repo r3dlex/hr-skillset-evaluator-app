@@ -21,7 +21,7 @@ export interface User {
 export interface Skill {
   id: number
   name: string
-  priority: 'critical' | 'high' | 'medium'
+  priority: 'critical' | 'high' | 'medium' | 'low'
   position: number
 }
 

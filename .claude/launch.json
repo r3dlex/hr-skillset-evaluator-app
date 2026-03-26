@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "phoenix-backend",
+      "runtimeExecutable": "mix",
+      "runtimeArgs": ["phx.server"],
+      "port": 4000,
+      "cwd": "backend",
+      "env": {
+        "MIX_ENV": "dev",
+        "DATABASE_PATH": "data/skillset_evaluator_dev.db",
+        "PHX_SERVER": "true",
+        "SECRET_KEY_BASE": "dev_only_secret_key_base_that_is_at_least_64_bytes_long_for_development_use_only_ok"
+      }
+    },
+    {
+      "name": "vite-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173,
+      "cwd": "frontend"
+    }
+  ]
+}

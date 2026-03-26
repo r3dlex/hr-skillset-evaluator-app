@@ -19,6 +19,7 @@ const authStore = useAuthStore()
 
 const activeTab = ref<'chart' | 'table' | 'gap'>('chart')
 const selectedUserId = ref<number | null>(null)
+const selectedGroupId = ref<number | null>(null)
 
 const skillsetId = computed(() => Number(route.params.id))
 
@@ -39,6 +40,15 @@ const selectedPeriod = ref(availablePeriods.value[0])
 
 const currentPeriod = computed(() => selectedPeriod.value)
 
+const skillGroups = computed(() => {
+  return skillsStore.currentSkillset?.skill_groups || []
+})
+
+const selectedGroup = computed(() => {
+  if (!selectedGroupId.value) return skillGroups.value[0] || null
+  return skillGroups.value.find(g => g.id === selectedGroupId.value) || null
+})
+
 const allSkills = computed(() => {
   if (!skillsStore.currentSkillset?.skill_groups) return []
   return skillsStore.currentSkillset.skill_groups.flatMap((g) => g.skills)
@@ -52,6 +62,16 @@ const scoreMap = computed(() => {
   return map
 })
 
+// Effective userId for evaluations and gap analysis
+const effectiveUserId = computed(() => {
+  if (selectedUserId.value) return selectedUserId.value
+  // For managers, default to first team member
+  if (authStore.isManager && teamStore.members.length > 0) {
+    return teamStore.members[0].id
+  }
+  return authStore.user?.id || null
+})
+
 onMounted(async () => {
   await skillsStore.fetchSkillset(skillsetId.value)
   if (authStore.isManager) {
@@ -59,6 +79,10 @@ onMounted(async () => {
     if (teamStore.teams.length > 0 && authStore.user?.team) {
       await teamStore.fetchMembers(authStore.user.team.id)
     }
+  }
+  // Default selectedGroupId to first group
+  if (skillGroups.value.length > 0 && !selectedGroupId.value) {
+    selectedGroupId.value = skillGroups.value[0].id
   }
   loadData()
 })
@@ -68,16 +92,23 @@ watch(skillsetId, () => {
   loadData()
 })
 
+function selectGroup(groupId: number) {
+  selectedGroupId.value = groupId
+  loadData()
+}
+
 function loadData() {
   const userIds = authStore.isManager
     ? Array.from(teamStore.selectedMemberIds)
     : authStore.user ? [authStore.user.id] : []
 
+  const groupId = selectedGroup.value?.id
+
   if (userIds.length > 0) {
-    evalStore.fetchRadarData(userIds, skillsetId.value, currentPeriod.value)
+    evalStore.fetchRadarData(userIds, skillsetId.value, currentPeriod.value, groupId)
   }
 
-  const userId = selectedUserId.value || authStore.user?.id
+  const userId = effectiveUserId.value
   if (userId) {
     evalStore.fetchEvaluations(userId, skillsetId.value, currentPeriod.value)
     evalStore.fetchGapAnalysis(userId, skillsetId.value, currentPeriod.value)
@@ -136,6 +167,23 @@ async function handleScoreUpdate(skillId: number, score: number) {
             {{ member.name }}
           </option>
         </select>
+      </div>
+
+      <!-- Skill Group Tabs -->
+      <div v-if="skillGroups.length > 0" class="mb-6">
+        <div class="flex gap-1 flex-wrap bg-gray-50 rounded-lg p-1 border border-gray-200">
+          <button
+            v-for="group in skillGroups"
+            :key="group.id"
+            class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors uppercase tracking-wide"
+            :class="selectedGroup?.id === group.id
+              ? 'bg-white text-primary shadow-sm border border-gray-200'
+              : 'text-gray-500 hover:text-gray-700'"
+            @click="selectGroup(group.id)"
+          >
+            {{ group.name }}
+          </button>
+        </div>
       </div>
 
       <!-- Tab navigation -->

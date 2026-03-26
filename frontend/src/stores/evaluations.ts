@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Evaluation, RadarData, GapAnalysisItem } from '@/types'
 import { evaluations as evalApi, radar as radarApi, gapAnalysis as gapApi } from '@/api'
+import { useTeamStore } from '@/stores/team'
 
 export const useEvaluationsStore = defineStore('evaluations', () => {
   const evaluations = ref<Evaluation[]>([])
@@ -58,11 +59,21 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
     }
   }
 
-  async function fetchRadarData(userIds: number[], skillsetId: number, period: string) {
+  async function fetchRadarData(userIds: number[], skillsetId: number, period: string, skillGroupId?: number) {
     loading.value = true
     error.value = null
     try {
-      radarData.value = await radarApi.getRadarData(userIds, skillsetId, period)
+      const data = await radarApi.getRadarData(userIds, skillsetId, period, skillGroupId)
+
+      // Resolve user names from team store
+      const teamStore = useTeamStore()
+      const memberNames = new Map(teamStore.members.map(m => [m.id, m.name]))
+      data.series.forEach(s => {
+        const name = memberNames.get(s.user_id)
+        if (name) s.name = name
+      })
+
+      radarData.value = data
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch radar data'
     } finally {

@@ -113,6 +113,44 @@ defmodule SkillsetEvaluator.Evaluations do
     %{labels: labels, datasets: datasets}
   end
 
+  def get_radar_data_for_group(user_ids, skill_group_id, period) when is_list(user_ids) do
+    skills =
+      Skill
+      |> where([s], s.skill_group_id == ^skill_group_id)
+      |> order_by([s], s.position)
+      |> Repo.all()
+
+    skill_ids = Enum.map(skills, & &1.id)
+    labels = Enum.map(skills, & &1.name)
+
+    evaluations =
+      Evaluation
+      |> where([e], e.user_id in ^user_ids and e.period == ^period and e.skill_id in ^skill_ids)
+      |> preload(:skill)
+      |> Repo.all()
+
+    datasets =
+      Enum.map(user_ids, fn uid ->
+        user_evals = Enum.filter(evaluations, &(&1.user_id == uid))
+
+        manager_data =
+          Enum.map(labels, fn label ->
+            eval = Enum.find(user_evals, &(&1.skill.name == label))
+            if eval, do: eval.manager_score, else: nil
+          end)
+
+        self_data =
+          Enum.map(labels, fn label ->
+            eval = Enum.find(user_evals, &(&1.skill.name == label))
+            if eval, do: eval.self_score, else: nil
+          end)
+
+        %{user_id: uid, manager_scores: manager_data, self_scores: self_data}
+      end)
+
+    %{labels: labels, datasets: datasets}
+  end
+
   def get_gap_analysis(user_id, skillset_id, period) do
     skill_ids = skill_ids_for_skillset(skillset_id)
 

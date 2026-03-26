@@ -234,10 +234,11 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
   defp normalize_priority(""), do: "medium"
 
   defp normalize_priority(val) do
-    case String.downcase(val) do
-      "critical" -> "critical"
-      "high" -> "high"
-      "medium" -> "medium"
+    case String.downcase(String.trim(to_string(val))) do
+      v when v in ["critical", "c", "crit", "1"] -> "critical"
+      v when v in ["high", "h", "2"] -> "high"
+      v when v in ["medium", "m", "med", "3"] -> "medium"
+      v when v in ["low", "l", "4"] -> "low"
       _ -> "medium"
     end
   end

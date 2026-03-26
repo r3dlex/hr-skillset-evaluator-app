@@ -14,7 +14,7 @@ Refer to `AGENTS.md` for:
 - **Backend**: `backend/` -- Elixir + Phoenix 1.7 + SQLite
 - **Frontend**: `frontend/` -- Vue 3 + TypeScript + Vite + Pinia + Tailwind
 - **Pipeline**: `tools/pipeline_runner/` -- Python + Poetry + archgate/cli
-- **Specs**: `specs/01_ARCHITECTURE.md` through `specs/13_DESIGN_SYSTEM.md`
+- **Specs**: `spec/01_ARCHITECTURE.md` through `spec/13_DESIGN_SYSTEM.md`
 - **ADRs**: `.archgate/adr/001-no-raw-sql.md` through `005-typed-api.md`
 - **CI**: `.github/workflows/ci.yml` (backend tests, frontend tests, Docker build)
 

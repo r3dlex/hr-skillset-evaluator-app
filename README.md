@@ -59,7 +59,7 @@ frontend/        Vue 3 + TypeScript
     views/       Login, Dashboards, SkillsetView, Settings
 
 tools/           Pipeline runner (Python + Poetry)
-specs/           13 specification documents
+spec/           13 specification documents
 .archgate/       5 ADRs with executable rules
 .github/         CI/CD workflows
 data/            xlsx files + SQLite DB (gitignored content)
@@ -130,21 +130,21 @@ docker run --rm -w /app/frontend \
 
 ## Specifications
 
-All specs live in `specs/` and are numbered for execution order:
+All specs live in `spec/` and are numbered for execution order:
 
-1. [Architecture](specs/01_ARCHITECTURE.md) -- System topology, KISS principles
-2. [Data Model](specs/02_DATA_MODEL.md) -- SQLite schema, Ecto schemas
-3. [Auth & Roles](specs/03_AUTH_AND_ROLES.md) -- Manager/User roles, OAuth
-4. [API](specs/04_API.md) -- REST JSON endpoint contract
-5. [Frontend](specs/05_FRONTEND.md) -- Vue components, routing, state
-6. [Visualization](specs/06_VISUALIZATION.md) -- Radar chart rendering rules
-7. [xlsx Import/Export](specs/07_XLSX_IMPORT_EXPORT.md) -- Broadway pipeline
-8. [Testing](specs/08_TESTING.md) -- Coverage targets, test strategy
-9. [Pipelines](specs/09_PIPELINES.md) -- archgate, CI/CD
-10. [Troubleshooting](specs/10_TROUBLESHOOTING.md) -- Common issues
-11. [Learnings](specs/11_LEARNINGS.md) -- Decision log
-12. [Deployment](specs/12_DEPLOYMENT.md) -- Docker setup
-13. [Design System](specs/13_DESIGN_SYSTEM.md) -- Colors, typography, components
+1. [Architecture](spec/01_ARCHITECTURE.md) -- System topology, KISS principles
+2. [Data Model](spec/02_DATA_MODEL.md) -- SQLite schema, Ecto schemas
+3. [Auth & Roles](spec/03_AUTH_AND_ROLES.md) -- Manager/User roles, OAuth
+4. [API](spec/04_API.md) -- REST JSON endpoint contract
+5. [Frontend](spec/05_FRONTEND.md) -- Vue components, routing, state
+6. [Visualization](spec/06_VISUALIZATION.md) -- Radar chart rendering rules
+7. [xlsx Import/Export](spec/07_XLSX_IMPORT_EXPORT.md) -- Broadway pipeline
+8. [Testing](spec/08_TESTING.md) -- Coverage targets, test strategy
+9. [Pipelines](spec/09_PIPELINES.md) -- archgate, CI/CD
+10. [Troubleshooting](spec/10_TROUBLESHOOTING.md) -- Common issues
+11. [Learnings](spec/11_LEARNINGS.md) -- Decision log
+12. [Deployment](spec/12_DEPLOYMENT.md) -- Docker setup
+13. [Design System](spec/13_DESIGN_SYSTEM.md) -- Colors, typography, components
 
 ## License
 

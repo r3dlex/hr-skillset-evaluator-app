@@ -16,7 +16,7 @@ A skills radar chart application for HR evaluation. Managers evaluate team membe
 
 ## Spec Files (execute in order)
 
-All specs live in `specs/` and are numbered for execution order:
+All specs live in `spec/` and are numbered for execution order:
 
 1. `01_ARCHITECTURE.md` -- System topology, KISS principles, monorepo layout
 2. `02_DATA_MODEL.md` -- 7 Ecto schemas, SQLite tables, relationships, xlsx mapping

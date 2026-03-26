@@ -71,7 +71,7 @@ describe('useEvaluationsStore', () => {
     expect(store.radarData).toEqual(mockRadarData)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
-    expect(radarApi.getRadarData).toHaveBeenCalledWith([1], 1, '2024-Q1')
+    expect(radarApi.getRadarData).toHaveBeenCalledWith([1], 1, '2024-Q1', undefined)
   })
 
   it('fetchGapAnalysis populates gapAnalysis', async () => {

@@ -102,14 +102,17 @@ export const evaluations = {
 const RADAR_COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899']
 
 export const radar = {
-  async getRadarData(userIds: number[], skillsetId: number, period: string): Promise<RadarData> {
+  async getRadarData(userIds: number[], skillsetId: number, period: string, skillGroupId?: number): Promise<RadarData> {
     const ids = userIds.join(',')
+    let url = `/radar?user_ids=${ids}&skillset_id=${skillsetId}&period=${period}`
+    if (skillGroupId) url += `&skill_group_id=${skillGroupId}`
+
     const resp = await apiGet<{
       data: {
         labels: string[]
         datasets: { user_id: number; manager_scores: (number | null)[]; self_scores: (number | null)[] }[]
       }
-    }>(`/radar?user_ids=${ids}&skillset_id=${skillsetId}&period=${period}`)
+    }>(url)
 
     return {
       axes: resp.data.labels,
@@ -125,10 +128,11 @@ export const radar = {
 
 // Gap Analysis
 export const gapAnalysis = {
-  getGapAnalysis(userId: number, skillsetId: number, period: string) {
-    return apiGet<{ items: GapAnalysisItem[] }>(
+  async getGapAnalysis(userId: number, skillsetId: number, period: string): Promise<{ items: GapAnalysisItem[] }> {
+    const resp = await apiGet<{ data: GapAnalysisItem[] }>(
       `/gap-analysis?user_id=${userId}&skillset_id=${skillsetId}&period=${period}`,
     )
+    return { items: resp.data }
   },
 }
 
