@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-build
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app/backend
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - MIX_ENV=dev
+      - DATABASE_PATH=/app/data/skillset_evaluator_dev.db
+      - PHX_SERVER=true
+    command: /bin/sh -c "mix setup && mix phx.server"
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app/frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app/frontend
+      - frontend_node_modules:/app/frontend/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:4000
+    command: /bin/sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+
+volumes:
+  frontend_node_modules:

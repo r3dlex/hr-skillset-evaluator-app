@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "pipeline-runner"
+version = "0.1.0"
+description = "CI/CD pipeline runner for the HR Skillset Evaluator app"
+authors = ["HR Skillset Evaluator Team"]
+readme = "README.md"
+packages = [{include = "pipeline_runner"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+click = "^8.1.7"
+rich = "^13.7.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^4.1.0"
+
+[tool.poetry.scripts]
+pipeline-runner = "pipeline_runner.__main__:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]

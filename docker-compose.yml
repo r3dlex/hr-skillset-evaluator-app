@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - DATABASE_PATH=/app/data/skillset_evaluator.db
+      - PHX_SERVER=true
+      - PHX_HOST=localhost
+      - PORT=4000
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  pipeline-runner:
+    build:
+      context: ./tools/pipeline_runner
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspace:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    command: python -m pipeline_runner
+    profiles:
+      - tools
+
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-build
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app/backend
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - MIX_ENV=dev
+      - DATABASE_PATH=/app/data/skillset_evaluator_dev.db
+      - PHX_SERVER=true
+    command: /bin/sh -c "mix setup && mix phx.server"
+    profiles:
+      - dev

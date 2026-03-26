@@ -1,10 +1,60 @@
-/_build
-/cover
-/deps
-/doc
-/.fetch
-erl_crash.dump
-*.ez
-*.beam
-/config/*.secret.exs
-.elixir_ls/
+# Data files (keep folder structure, ignore content)
+data/*.xlsx
+data/*.csv
+data/*.xls
+
+# SQLite databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Elixir/Phoenix
+backend/_build/
+backend/cover/
+backend/deps/
+backend/doc/
+backend/.fetch
+backend/priv/static/assets/
+backend/priv/static/index.html
+backend/.elixir_ls/
+backend/*.ez
+backend/*.beam
+backend/erl_crash.dump
+backend/config/*.secret.exs
+
+# Node/Vue
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Python
+tools/pipeline_runner/.venv/
+tools/pipeline_runner/__pycache__/
+tools/pipeline_runner/*.egg-info/
+**/__pycache__/
+*.pyc
+
+# Docker
+*.log
+
+# Environment / Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# archgate
+.archgate/.cache/

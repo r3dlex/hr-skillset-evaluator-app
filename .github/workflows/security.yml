@@ -1,0 +1,62 @@
+name: Security Scan
+
+on:
+  push:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install trufflehog
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Scan repository for secrets
+        run: |
+          echo "Scanning repository for leaked secrets..."
+          trufflehog git file://. \
+            --only-verified \
+            --fail \
+            --json 2>/dev/null | head -100 || true
+
+          # Run the actual check (non-json for clear CI output)
+          trufflehog git file://. \
+            --only-verified \
+            --fail
+
+      - name: Run pattern-based secret scan
+        run: |
+          echo "Scanning for common secret patterns in source files..."
+
+          FOUND=0
+
+          # Scan for hardcoded secrets in source files
+          if grep -rn \
+            --include='*.ex' --include='*.exs' \
+            --include='*.ts' --include='*.vue' --include='*.js' \
+            --exclude-dir=node_modules --exclude-dir=deps --exclude-dir=_build \
+            --exclude='.env.example' --exclude='*_test.exs' --exclude='*.spec.ts' \
+            -iE '(API_KEY|SECRET_KEY|PASSWORD|AUTH_TOKEN|PRIVATE_KEY)\s*[:=]\s*["'"'"'][^"'"'"'\s]{8,}["'"'"']' \
+            backend/lib/ frontend/src/ 2>/dev/null; then
+            echo "::error::Potential hardcoded secrets found in source files!"
+            FOUND=1
+          fi
+
+          if [ "$FOUND" -eq 1 ]; then
+            echo "::error::Secret scan failed. Remove hardcoded secrets and use environment variables."
+            exit 1
+          fi
+
+          echo "No hardcoded secrets detected."
