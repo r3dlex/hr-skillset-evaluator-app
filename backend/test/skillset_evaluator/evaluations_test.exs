@@ -24,13 +24,20 @@ defmodule SkillsetEvaluator.EvaluationsTest do
   describe "upsert_manager_scores/4" do
     setup :setup_skillset_and_skills
 
-    test "inserts new evaluations", %{manager: manager, user: user, skill1: skill1, skill2: skill2} do
+    test "inserts new evaluations", %{
+      manager: manager,
+      user: user,
+      skill1: skill1,
+      skill2: skill2
+    } do
       scores = [
         %{skill_id: skill1.id, score: 4},
         %{skill_id: skill2.id, score: 3}
       ]
 
-      assert {:ok, evaluations} = Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", scores)
+      assert {:ok, evaluations} =
+               Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", scores)
+
       assert length(evaluations) == 2
 
       eval1 = Enum.find(evaluations, &(&1.skill_id == skill1.id))
@@ -43,7 +50,9 @@ defmodule SkillsetEvaluator.EvaluationsTest do
       {:ok, _} = Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", scores_initial)
 
       scores_updated = [%{skill_id: skill1.id, score: 5, notes: "Improved"}]
-      {:ok, evaluations} = Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", scores_updated)
+
+      {:ok, evaluations} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", scores_updated)
 
       eval = hd(evaluations)
       assert eval.manager_score == 5
@@ -94,7 +103,10 @@ defmodule SkillsetEvaluator.EvaluationsTest do
     test "returns empty for different period", ctx do
       %{user: user, manager: manager, skill1: skill1, skillset: skillset} = ctx
 
-      {:ok, _} = Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [%{skill_id: skill1.id, score: 3}])
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 3}
+        ])
 
       assert Evaluations.list_evaluations(user.id, skillset.id, "2025-Q2") == []
     end
@@ -106,15 +118,17 @@ defmodule SkillsetEvaluator.EvaluationsTest do
     test "returns labels and datasets", ctx do
       %{user: user, manager: manager, skill1: skill1, skill2: skill2, skillset: skillset} = ctx
 
-      {:ok, _} = Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
-        %{skill_id: skill1.id, score: 4},
-        %{skill_id: skill2.id, score: 3}
-      ])
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 4},
+          %{skill_id: skill2.id, score: 3}
+        ])
 
-      {:ok, _} = Evaluations.upsert_self_scores(user.id, "2025-Q1", [
-        %{skill_id: skill1.id, score: 3},
-        %{skill_id: skill2.id, score: 5}
-      ])
+      {:ok, _} =
+        Evaluations.upsert_self_scores(user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 3},
+          %{skill_id: skill2.id, score: 5}
+        ])
 
       radar = Evaluations.get_radar_data([user.id], skillset.id, "2025-Q1")
 
@@ -136,13 +150,15 @@ defmodule SkillsetEvaluator.EvaluationsTest do
     test "returns gap between manager and self scores", ctx do
       %{user: user, manager: manager, skill1: skill1, skillset: skillset} = ctx
 
-      {:ok, _} = Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
-        %{skill_id: skill1.id, score: 4}
-      ])
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 4}
+        ])
 
-      {:ok, _} = Evaluations.upsert_self_scores(user.id, "2025-Q1", [
-        %{skill_id: skill1.id, score: 2}
-      ])
+      {:ok, _} =
+        Evaluations.upsert_self_scores(user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 2}
+        ])
 
       gaps = Evaluations.get_gap_analysis(user.id, skillset.id, "2025-Q1")
 
@@ -157,9 +173,10 @@ defmodule SkillsetEvaluator.EvaluationsTest do
     test "returns nil gap when a score is missing", ctx do
       %{user: user, manager: manager, skill1: skill1, skillset: skillset} = ctx
 
-      {:ok, _} = Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
-        %{skill_id: skill1.id, score: 3}
-      ])
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 3}
+        ])
 
       gaps = Evaluations.get_gap_analysis(user.id, skillset.id, "2025-Q1")
 

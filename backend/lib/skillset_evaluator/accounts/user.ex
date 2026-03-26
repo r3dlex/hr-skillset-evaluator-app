@@ -22,7 +22,16 @@ defmodule SkillsetEvaluator.Accounts.User do
 
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:email, :name, :role, :location, :microsoft_uid, :active, :confirmed_at, :team_id])
+    |> cast(attrs, [
+      :email,
+      :name,
+      :role,
+      :location,
+      :microsoft_uid,
+      :active,
+      :confirmed_at,
+      :team_id
+    ])
     |> validate_required([:email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
     |> validate_length(:email, max: 160)

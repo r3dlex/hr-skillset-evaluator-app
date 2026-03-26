@@ -28,7 +28,11 @@ defmodule SkillsetEvaluator.Evaluations do
         case Repo.get_by(Evaluation, user_id: user_id, skill_id: skill_id, period: period) do
           %Evaluation{} = eval ->
             eval
-            |> Evaluation.changeset(%{manager_score: score, evaluated_by_id: evaluator.id, notes: notes})
+            |> Evaluation.changeset(%{
+              manager_score: score,
+              evaluated_by_id: evaluator.id,
+              notes: notes
+            })
             |> Repo.update!()
 
           nil ->

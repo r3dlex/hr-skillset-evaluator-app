@@ -11,7 +11,8 @@ config :skillset_evaluator, SkillsetEvaluatorWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "dev_only_secret_key_base_that_is_at_least_64_bytes_long_for_development_use_only_ok",
+  secret_key_base:
+    "dev_only_secret_key_base_that_is_at_least_64_bytes_long_for_development_use_only_ok",
   watchers: []
 
 config :logger, :console, format: "[$level] $message\n"

@@ -7,7 +7,8 @@ config :skillset_evaluator, SkillsetEvaluator.Repo,
 
 config :skillset_evaluator, SkillsetEvaluatorWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "test_only_secret_key_base_that_is_at_least_64_bytes_long_for_testing_purposes_only_ok",
+  secret_key_base:
+    "test_only_secret_key_base_that_is_at_least_64_bytes_long_for_testing_purposes_only_ok",
   server: false
 
 config :bcrypt_elixir, :log_rounds, 1

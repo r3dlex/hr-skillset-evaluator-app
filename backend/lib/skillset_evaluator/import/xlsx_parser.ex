@@ -9,7 +9,8 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
     Row 4+: Person data with scores
   """
 
-  @skill_start_col 4  # Column E (0-indexed = 4)
+  # Column E (0-indexed = 4)
+  @skill_start_col 4
 
   defmodule SheetData do
     @moduledoc false
@@ -18,8 +19,18 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
     @type t :: %__MODULE__{
             sheet_name: String.t(),
             skill_groups: [%{name: String.t(), start_col: integer(), end_col: integer()}],
-            skills: [%{name: String.t(), priority: String.t(), column: integer(), group_name: String.t()}],
-            person_rows: [%{team: String.t(), location: String.t(), role: String.t(), name: String.t(), scores: map()}]
+            skills: [
+              %{name: String.t(), priority: String.t(), column: integer(), group_name: String.t()}
+            ],
+            person_rows: [
+              %{
+                team: String.t(),
+                location: String.t(),
+                role: String.t(),
+                name: String.t(),
+                scores: map()
+              }
+            ]
           }
   end
 
@@ -33,7 +44,14 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
             role: String.t(),
             name: String.t(),
             sheet_name: String.t(),
-            scores: [%{skill_name: String.t(), group_name: String.t(), priority: String.t(), value: integer() | nil}],
+            scores: [
+              %{
+                skill_name: String.t(),
+                group_name: String.t(),
+                priority: String.t(),
+                value: integer() | nil
+              }
+            ],
             period: String.t()
           }
   end
@@ -133,7 +151,14 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
     |> Enum.map(fn {name, col} -> %{name: safe_string(name), start_col: col} end)
     |> Enum.with_index()
     |> Enum.map(fn {group, _idx} ->
-      next_group = Enum.at(group_row |> Enum.with_index() |> Enum.filter(fn {val, c} -> c > group.start_col and val != nil and val != "" end), 0)
+      next_group =
+        Enum.at(
+          group_row
+          |> Enum.with_index()
+          |> Enum.filter(fn {val, c} -> c > group.start_col and val != nil and val != "" end),
+          0
+        )
+
       end_col = if next_group, do: elem(next_group, 1) - 1, else: length(group_row) - 1
       Map.put(group, :end_col, end_col)
     end)

@@ -18,13 +18,21 @@ defmodule SkillsetEvaluator.Skills do
   def get_skillset(id) do
     Skillset
     |> Repo.get(id)
-    |> Repo.preload(skill_groups: {from(sg in SkillGroup, order_by: sg.position), skills: from(s in Skill, order_by: s.position)})
+    |> Repo.preload(
+      skill_groups:
+        {from(sg in SkillGroup, order_by: sg.position),
+         skills: from(s in Skill, order_by: s.position)}
+    )
   end
 
   def get_skillset!(id) do
     Skillset
     |> Repo.get!(id)
-    |> Repo.preload(skill_groups: {from(sg in SkillGroup, order_by: sg.position), skills: from(s in Skill, order_by: s.position)})
+    |> Repo.preload(
+      skill_groups:
+        {from(sg in SkillGroup, order_by: sg.position),
+         skills: from(s in Skill, order_by: s.position)}
+    )
   end
 
   def create_skillset(attrs) do

@@ -184,12 +184,17 @@ defmodule SkillsetEvaluator.Import.Pipeline do
               %Evaluation{}
               |> Evaluation.changeset(attrs)
               |> Repo.insert()
+
               :created
 
             existing ->
               existing
-              |> Evaluation.changeset(%{manager_score: score_entry.value, evaluated_by_id: evaluator_id})
+              |> Evaluation.changeset(%{
+                manager_score: score_entry.value,
+                evaluated_by_id: evaluator_id
+              })
               |> Repo.update()
+
               :updated
           end
         else
@@ -230,7 +235,9 @@ defmodule SkillsetEvaluator.Import.Pipeline do
 
         Accounts.create_user(%{
           name: row.name,
-          email: row.email || "#{String.downcase(String.replace(row.name, " ", "."))}@placeholder.local",
+          email:
+            row.email ||
+              "#{String.downcase(String.replace(row.name, " ", "."))}@placeholder.local",
           role: role,
           team_id: team_id,
           location: row.location,
@@ -256,7 +263,9 @@ defmodule SkillsetEvaluator.Import.Pipeline do
   defp ensure_skill_group(name, skillset_id) do
     case Repo.get_by(Skills.SkillGroup, name: name, skillset_id: skillset_id) do
       nil ->
-        {:ok, group} = Skills.create_skill_group(%{name: name, skillset_id: skillset_id, position: 0})
+        {:ok, group} =
+          Skills.create_skill_group(%{name: name, skillset_id: skillset_id, position: 0})
+
         group
 
       group ->
@@ -267,7 +276,14 @@ defmodule SkillsetEvaluator.Import.Pipeline do
   defp ensure_skill(name, priority, skill_group_id) do
     case Repo.get_by(Skills.Skill, name: name, skill_group_id: skill_group_id) do
       nil ->
-        {:ok, skill} = Skills.create_skill(%{name: name, priority: priority, skill_group_id: skill_group_id, position: 0})
+        {:ok, skill} =
+          Skills.create_skill(%{
+            name: name,
+            priority: priority,
+            skill_group_id: skill_group_id,
+            position: 0
+          })
+
         skill
 
       skill ->

@@ -17,7 +17,15 @@ defmodule SkillsetEvaluator.Evaluations.Evaluation do
 
   def changeset(evaluation, attrs) do
     evaluation
-    |> cast(attrs, [:manager_score, :self_score, :period, :notes, :user_id, :skill_id, :evaluated_by_id])
+    |> cast(attrs, [
+      :manager_score,
+      :self_score,
+      :period,
+      :notes,
+      :user_id,
+      :skill_id,
+      :evaluated_by_id
+    ])
     |> validate_required([:period, :user_id, :skill_id])
     |> validate_score(:manager_score)
     |> validate_score(:self_score)
