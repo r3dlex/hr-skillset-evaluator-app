@@ -22,10 +22,22 @@ const selectedUserId = ref<number | null>(null)
 
 const skillsetId = computed(() => Number(route.params.id))
 
-const currentPeriod = computed(() => {
+// Generate available periods (current + last 4 quarters)
+const availablePeriods = computed(() => {
+  const periods: string[] = []
   const now = new Date()
-  return `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i * 3, 1)
+    const q = Math.ceil((d.getMonth() + 1) / 3)
+    const p = `${d.getFullYear()}-Q${q}`
+    if (!periods.includes(p)) periods.push(p)
+  }
+  return periods
 })
+
+const selectedPeriod = ref(availablePeriods.value[0])
+
+const currentPeriod = computed(() => selectedPeriod.value)
 
 const allSkills = computed(() => {
   if (!skillsStore.currentSkillset?.skill_groups) return []
@@ -95,8 +107,15 @@ async function handleScoreUpdate(skillId: number, score: number) {
             {{ skillsStore.currentSkillset?.description }}
           </p>
         </div>
-        <div class="text-sm text-gray-500">
-          Period: <span class="font-semibold text-gray-700">{{ currentPeriod }}</span>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-gray-500">Period:</label>
+          <select
+            v-model="selectedPeriod"
+            class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white"
+            @change="loadData()"
+          >
+            <option v-for="p in availablePeriods" :key="p" :value="p">{{ p }}</option>
+          </select>
         </div>
       </div>
 

@@ -98,13 +98,28 @@ export const evaluations = {
   },
 }
 
-// Radar
+// Radar — transform backend {labels, datasets} → frontend {axes, series}
+const RADAR_COLORS = ['#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899']
+
 export const radar = {
-  getRadarData(userIds: number[], skillsetId: number, period: string) {
+  async getRadarData(userIds: number[], skillsetId: number, period: string): Promise<RadarData> {
     const ids = userIds.join(',')
-    return apiGet<RadarData>(
-      `/radar?user_ids=${ids}&skillset_id=${skillsetId}&period=${period}`,
-    )
+    const resp = await apiGet<{
+      data: {
+        labels: string[]
+        datasets: { user_id: number; manager_scores: (number | null)[]; self_scores: (number | null)[] }[]
+      }
+    }>(`/radar?user_ids=${ids}&skillset_id=${skillsetId}&period=${period}`)
+
+    return {
+      axes: resp.data.labels,
+      series: resp.data.datasets.map((ds, i) => ({
+        user_id: ds.user_id,
+        name: `User ${ds.user_id}`,
+        color: RADAR_COLORS[i % RADAR_COLORS.length],
+        values: ds.manager_scores.map(v => v ?? 0),
+      })),
+    }
   },
 }
 

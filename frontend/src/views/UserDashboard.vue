@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import RadarChart from '@/components/RadarChart.vue'
 import Overview from '@/components/Overview.vue'
@@ -11,10 +11,20 @@ const authStore = useAuthStore()
 const skillsStore = useSkillsStore()
 const evalStore = useEvaluationsStore()
 
-const currentPeriod = computed(() => {
+const availablePeriods = computed(() => {
+  const periods: string[] = []
   const now = new Date()
-  return `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i * 3, 1)
+    const q = Math.ceil((d.getMonth() + 1) / 3)
+    const p = `${d.getFullYear()}-Q${q}`
+    if (!periods.includes(p)) periods.push(p)
+  }
+  return periods
 })
+
+const selectedPeriod = ref(availablePeriods.value[0])
+const currentPeriod = computed(() => selectedPeriod.value)
 
 onMounted(async () => {
   await skillsStore.fetchSkillsets()
