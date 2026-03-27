@@ -1,6 +1,6 @@
 # HR Skillset Evaluator
 
-Interactive radar chart application for evaluating team members across multiple skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Managers evaluate their teams; users submit self-assessments. Gap analysis highlights alignment between manager and self scores.
+Interactive radar chart application for evaluating team members across multiple skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Managers evaluate their teams; users submit self-assessments. Gap analysis highlights alignment between manager scores, self scores, team averages, and role averages.
 
 ## Quick Start
 
@@ -27,7 +27,7 @@ docker compose up --build
 
 ```
 Browser  -->  Phoenix (port 4000)
-              ├── /api/*   JSON REST API (12 controllers, 4 contexts)
+              ├── /api/*   JSON REST API (14 controllers, 4 contexts)
               └── /*       Vue SPA (built into priv/static/)
                            │
                            Ecto + ecto_sqlite3
@@ -43,23 +43,23 @@ One container, one port, one DB file. No external services.
 backend/         Phoenix app (Elixir)
   lib/skillset_evaluator/
     accounts/    User, UserToken, auth logic
-    teams/       Team schema + context
+    teams/       Team, UserTeam schemas + context (many-to-many)
     skills/      Skillset -> SkillGroup -> Skill hierarchy
-    evaluations/ Evaluation schema + radar/gap queries
+    evaluations/ Evaluation schema + radar/gap/dashboard queries
     import/      Broadway pipeline + XlsxParser
   lib/skillset_evaluator_web/
-    controllers/ 12 controllers (auth, eval, radar, import, export...)
+    controllers/ 14 controllers (auth, eval, radar, gap-analysis, dashboard, import, export...)
     plugs/       Auth plug (session + role enforcement)
 
 frontend/        Vue 3 + TypeScript
   src/
     api/         Typed fetch client + domain API functions
-    components/  RadarChart, GapAnalysis, DataInput, TeamLegend...
+    components/  RadarChart, GapAnalysis, DataInput, TeamLegend, Overview...
     stores/      Pinia: auth, skills, evaluations, team
     views/       Login, Dashboards, SkillsetView, Settings
 
 tools/           Pipeline runner (Python + Poetry)
-spec/           13 specification documents
+spec/           14 specification documents
 .archgate/       5 ADRs with executable rules
 .github/         CI/CD workflows
 data/            xlsx files + SQLite DB (gitignored content)
@@ -75,40 +75,70 @@ data/            xlsx files + SQLite DB (gitignored content)
 | Import/export xlsx | Yes | No |
 | Create skillsets and skills | Yes | No |
 | View own radar chart | Yes | Yes |
-| View gap analysis (manager vs self) | Yes | Yes (own) |
+| View gap analysis (manager vs self vs team avg vs role avg) | Yes | Yes (own) |
+| Filter by region/location | Yes | No |
+| Filter by role (job title) | Yes | No |
+| Switch between teams | Yes | No |
+
+## Skillset-Role Mapping
+
+Users see only the skillsets applicable to their role:
+
+| Skillset | Applicable Roles |
+|----------|-----------------|
+| Softskills | All roles |
+| Domain | All roles |
+| Fullstack | Dev, QE, DevOps, Lead |
+| Product | UX, PM, PO, Lead |
+| AI | AI |
+| UX | UX |
+
+Lead role has the union of Dev and PO scopes.
 
 ## Data Model
 
 ```
-Team  --1:N--  User  --1:N--  Evaluation  --N:1--  Skill
-                                                      |
+Team  --N:M--  User  --1:N--  Evaluation  --N:1--  Skill
+ (via user_teams)                                     |
                                               SkillGroup (N:1)
                                                       |
                                                Skillset (N:1)
 ```
 
-Proficiency scale: 0 (None) to 5 (Expert). Evaluations track both `manager_score` and `self_score` per skill per period.
+- Users can belong to **multiple teams** (e.g., Florian Haag in both BIM and TA-DE)
+- Proficiency scale: 0 (None) to 5 (Expert)
+- Evaluations track both `manager_score` and `self_score` per skill per period
+- Gap analysis computes team averages and role averages for comparison
+- Skillsets have `applicable_roles` for role-based visibility
 
 ## xlsx Import
 
 Upload a skill matrix xlsx file. The parser handles the 3-row header format:
 
 - Row 1: Skill group names (merged cells spanning columns)
-- Row 2: Priority per skill (Critical / High / Medium)
+- Row 2: Priority per skill (supports emoji-prefixed values like "🔴 Critical", "🟠 High", "🟡 Medium")
 - Row 3: Column headers + skill names
 - Row 4+: Person data with scores
 
-Import uses Broadway-style concurrent processing for efficient bulk upserts.
+Import uses Broadway-style concurrent processing for efficient bulk upserts. Re-importing updates existing data (priorities, user details, team memberships).
+
+## Manager Dashboard
+
+The manager dashboard provides:
+- **Overview stats**: Total Skills, Average Score, Skills Rated, Completion percentage
+- **Team selector**: Switch between teams
+- **Role filter**: Filter members by job title (Dev, QE, PM, etc.) with "All" default
+- **Member cards**: Show name, email, role badge, active/inactive status, location, and applicable skillset links
 
 ## Running Tests
 
 ```bash
-# Backend (68 ExUnit tests)
+# Backend (ExUnit tests)
 docker run --rm -e MIX_ENV=test -w /app/backend \
   $(docker build -q --target backend-build .) \
   sh -c "mix deps.get --quiet && mix test"
 
-# Frontend (62 Vitest tests)
+# Frontend (Vitest tests)
 docker run --rm -w /app/frontend \
   $(docker build -q --target frontend-build .) \
   npx vitest run

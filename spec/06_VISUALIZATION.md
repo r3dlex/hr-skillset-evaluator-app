@@ -54,20 +54,23 @@ When a manager selects multiple team members, each person's polygon is drawn wit
 
 ### Structure (Horizontal Bar Chart)
 
-Displays the delta between `manager_score` and `self_score` per skill.
+Displays the delta between `manager_score` and `self_score` per skill, enriched with team and role averages.
 
 ```
-Angular          ████████░░  4 (mgr) vs ███████░░░ 3 (self)  gap: +1
-TypeScript       ██████████  5 (mgr) vs ██████████ 5 (self)  gap:  0
-RxJS             ██████░░░░  3 (mgr) vs ████████░░ 4 (self)  gap: -1
+Angular          ████████░░  4 (mgr) vs ███████░░░ 3 (self)  team: 3.2  role: 3.5  gap: +1
+TypeScript       ██████████  5 (mgr) vs ██████████ 5 (self)  team: 4.1  role: 4.3  gap:  0
+RxJS             ██████░░░░  3 (mgr) vs ████████░░ 4 (self)  team: 2.8  role: 3.0  gap: -1
 ```
 
 ### Rendering Rules
 
-- Two bars per skill: manager (primary color) and self (secondary color)
+- Four data points per skill: manager score, self score, team average, role average
+- Priority badge shown per skill (critical/high/medium/low with color coding)
 - Gap value shown at the end: positive = manager rated higher, negative = self rated higher
-- Skills sorted by absolute gap (largest first)
+- Skills sorted by priority first, then by absolute gap (largest first)
 - Color coding: green gap = aligned, yellow = small gap (1), red = large gap (2+)
+- Team average uses `user_teams` join table for accurate multi-team membership
+- Role average computed across all users with the same `job_title`
 
 ## Overview Dashboard
 

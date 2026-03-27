@@ -167,15 +167,65 @@ Returns radar-chart-ready data.
 }
 ```
 
+## Dashboard
+
+### GET /api/dashboard/stats?team_id=X&period=Y
+Returns aggregated statistics for the manager dashboard.
+```json
+{
+  "total_skills": 115,
+  "average_score": 2.8,
+  "skills_rated": 3024,
+  "completion_percentage": 87.5
+}
+```
+
+Query params:
+- `team_id` (optional) — filter stats to a specific team (uses `user_teams` join table)
+- `period` (optional) — filter by evaluation period
+
+## Periods
+
+### GET /api/periods
+Returns all distinct evaluation periods.
+```json
+{"periods": ["2025-Q1", "2024-Q4", "2024-Q3"]}
+```
+
 ## Gap Analysis
 
-### GET /api/gap-analysis?user_id=X&skillset_id=Y&period=Z
-Returns manager vs self score deltas.
+### GET /api/gap-analysis?user_id=X&skillset_id=Y&period=Z&team_id=T&location=L
+Returns manager vs self score deltas with team and role averages.
 ```json
 {
   "skills": [
-    {"name": "Angular", "manager_score": 4, "self_score": 3, "gap": 1},
-    {"name": "TypeScript", "manager_score": 5, "self_score": 5, "gap": 0}
+    {
+      "skill_id": 1,
+      "name": "Angular",
+      "priority": "critical",
+      "manager_score": 4,
+      "self_score": 3,
+      "team_avg": 3.2,
+      "role_avg": 3.5,
+      "gap": 1
+    },
+    {
+      "skill_id": 2,
+      "name": "TypeScript",
+      "priority": "high",
+      "manager_score": 5,
+      "self_score": 5,
+      "team_avg": 4.1,
+      "role_avg": 4.3,
+      "gap": 0
+    }
   ]
 }
 ```
+
+Query params:
+- `user_id` — user being analyzed
+- `skillset_id` — skillset to analyze
+- `period` — evaluation period
+- `team_id` (optional) — team for computing team average (uses `user_teams` join table)
+- `location` (optional) — filter team/role averages by user location (e.g., "DE", "IN")

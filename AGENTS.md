@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A skills radar chart application for HR evaluation. Managers evaluate team members across skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Users view their evaluations and submit self-assessments. Visualized as interactive radar/spider charts with gap analysis.
+A skills radar chart application for HR evaluation. Managers evaluate team members across skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Users view their evaluations and submit self-assessments. Visualized as interactive radar/spider charts with gap analysis showing manager scores, self scores, team averages, and role averages.
 
 ## Tech Stack
 
@@ -19,13 +19,13 @@ A skills radar chart application for HR evaluation. Managers evaluate team membe
 All specs live in `spec/` and are numbered for execution order:
 
 1. `01_ARCHITECTURE.md` -- System topology, KISS principles, monorepo layout
-2. `02_DATA_MODEL.md` -- 7 Ecto schemas, SQLite tables, relationships, xlsx mapping
+2. `02_DATA_MODEL.md` -- 8 Ecto schemas (incl. UserTeam), SQLite tables, relationships, xlsx mapping
 3. `03_AUTH_AND_ROLES.md` -- Auth flows, Manager/User roles, route protection
 4. `04_API.md` -- Full REST JSON API contract with request/response examples
 5. `05_FRONTEND.md` -- Vue component tree, Pinia stores, routing, API client
 6. `06_VISUALIZATION.md` -- SVG radar chart rendering, gap analysis chart, animations
 7. `07_XLSX_IMPORT_EXPORT.md` -- Broadway pipeline architecture, sheet parsing, import/export
-8. `08_TESTING.md` -- Coverage targets, test structure (68 backend + 62 frontend tests)
+8. `08_TESTING.md` -- Coverage targets, test structure
 9. `09_PIPELINES.md` -- archgate ADRs, pipeline runner stages, GitHub Actions
 10. `10_TROUBLESHOOTING.md` -- Common issues with SQLite, Phoenix, Vue, Docker, OAuth, xlsx
 11. `11_LEARNINGS.md` -- Decision log (SQLite over PG, SVG over D3, non-umbrella, etc.)
@@ -47,10 +47,32 @@ Enforced via archgate/cli (`.archgate/adr/`):
 | Context | Responsibility | Key Modules |
 |---------|---------------|-------------|
 | `Accounts` | User CRUD, auth, password hashing, session tokens | `User`, `UserToken` |
-| `Teams` | Team management, member queries | `Team` |
-| `Skills` | Skillset/SkillGroup/Skill hierarchy, CRUD | `Skillset`, `SkillGroup`, `Skill` |
-| `Evaluations` | Score management, radar data, gap analysis | `Evaluation` |
-| `Import` | xlsx parsing, Broadway pipeline, bulk upserts | `XlsxParser`, `Pipeline`, `BroadwayProducer` |
+| `Teams` | Team management, multi-team membership, member queries | `Team`, `UserTeam` |
+| `Skills` | Skillset/SkillGroup/Skill hierarchy, CRUD, skill_count | `Skillset`, `SkillGroup`, `Skill` |
+| `Evaluations` | Score management, radar data, gap analysis, team/role averages | `Evaluation` |
+| `Import` | xlsx parsing, Broadway pipeline, bulk upserts, job_title normalization | `XlsxParser`, `Pipeline`, `BroadwayProducer` |
+
+## Data Model Notes
+
+- Users belong to **multiple teams** via `user_teams` join table (many-to-many)
+- Skillsets have `applicable_roles` (JSON string) for role-based visibility
+- Users have `job_title` field (normalized from xlsx: "Dev.", "Dev" -> "Dev")
+- Skillsets have `skill_count` virtual field computed via subquery
+- Gap analysis computes `team_avg` and `role_avg` via aggregate queries
+- Priority parsing handles emoji-prefixed values ("🔴 Critical" -> "critical")
+
+## Skillset-Role Mapping
+
+| Skillset | Applicable Roles |
+|----------|-----------------|
+| Softskills | All (empty list) |
+| Domain | All (empty list) |
+| Fullstack | Dev, QE, DevOps, Lead |
+| Product | UX, PM, PO, Lead |
+| AI | AI |
+| UX | UX |
+
+Lead = union of Dev + PO scopes.
 
 ## Code Conventions
 
@@ -65,7 +87,6 @@ Enforced via archgate/cli (`.archgate/adr/`):
 - Frontend builds to `backend/priv/static/` -- Phoenix serves the SPA at `/`
 - All tooling runs in Docker containers -- no host dependencies assumed
 - Security scan runs on every push (trufflehog + dependency audits)
-- 68 backend tests (ExUnit) + 62 frontend tests (Vitest) must pass before merge
 
 ## Test Commands
 

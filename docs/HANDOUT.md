@@ -21,9 +21,12 @@ The HR Skillset Evaluator is an interactive web application that enables enginee
 | Radar / Spider Charts | Interactive SVG charts showing skill proficiency per person, with multi-user overlay for team comparison |
 | Manager Evaluations | Managers score team members on a 0–5 proficiency scale per skill, per period |
 | Self-Assessments | Employees submit their own scores independently from the manager evaluation |
-| Gap Analysis | Horizontal bar chart showing the delta between manager and self scores, sorted by largest gap |
+| Gap Analysis | Bar chart showing manager vs self scores with team average and role average comparisons, sorted by priority then gap size |
 | xlsx Import/Export | Full bidirectional sync with existing SkillMatrix.xlsx files via a Broadway concurrent pipeline |
-| Role-based Access | Two roles — Manager and User — each with distinct capabilities and UI |
+| Role-based Access | Two roles — Manager and User — with role-based skillset visibility (Dev, QE, UX, PM, PO, AI, Lead, DevOps) |
+| Dashboard Stats | Manager dashboard with total skills, average score, skills rated, completion percentage, and role filter |
+| Region Filter | Managers can filter team views by location (DE, IN, CN, AT, etc.) |
+| Multi-team Membership | Users can belong to multiple teams via a many-to-many join table |
 | Microsoft Entra ID SSO | OAuth 2.0 / OIDC login via Microsoft Entra ID (Azure AD), alongside email/password auth |
 | Guided Onboarding | Four-layer system: rich empty states, role-based checklists, tooltip tour, persisted progress |
 
@@ -101,12 +104,14 @@ Skillset  ──1:N──  SkillGroup  ──1:N──  Skill
                                            │
                                         N:1 (FK)
                                            │
-Team  ──1:N──  User  ──1:N──  Evaluation ──┘
-                                  │
+Team  ──N:M──  User  ──1:N──  Evaluation ──┘
+ (via user_teams)                 │
                             manager_score  (set by Manager)
                             self_score     (set by User)
                             period         (e.g., "2025-Q1")
 ```
+
+Users can belong to **multiple teams** (e.g., Florian Haag in both BIM and TA-DE) via the `user_teams` join table.
 
 ### Proficiency Scale
 
@@ -119,7 +124,24 @@ Team  ──1:N──  User  ──1:N──  Evaluation ──┘
 | 4 | Advanced | Deep expertise; can mentor others |
 | 5 | Expert | Go-to authority; shapes standards and decisions |
 
+### Skillset-Role Mapping
+
+Users see only the skillsets applicable to their `job_title`:
+
+| Skillset | Applicable Roles |
+|----------|-----------------|
+| Softskills | All roles |
+| Domain | All roles |
+| Fullstack | Dev, QE, DevOps, Lead |
+| Product | UX, PM, PO, Lead |
+| AI | AI |
+| UX | UX |
+
+Lead has the union of Dev + PO scopes (sees Fullstack and Product).
+
 ### Key Schema Details
+
+**user_teams** — Join table for many-to-many user-team membership. Unique constraint on `(user_id, team_id)`.
 
 **evaluations** — Central fact table. One record per `(user_id, skill_id, period)`.
 
@@ -228,26 +250,30 @@ The radar chart is the primary visualization — rendered as pure SVG in Vue (no
 
 ### Gap Analysis Chart
 
-Horizontal bar chart showing the delta between manager score and self-score per skill.
+Bar chart showing the delta between manager score and self-score per skill, enriched with team and role averages.
 
 ```
-Angular      ████████░░  4 (mgr)  vs  ███████░░░  3 (self)   gap: +1
-TypeScript   ██████████  5 (mgr)  vs  ██████████  5 (self)   gap:  0
-RxJS         ██████░░░░  3 (mgr)  vs  ████████░░  4 (self)   gap: -1
+Angular      ████████░░  4 (mgr)  vs  ███████░░░  3 (self)  team: 3.2  role: 3.5  gap: +1
+TypeScript   ██████████  5 (mgr)  vs  ██████████  5 (self)  team: 4.1  role: 4.3  gap:  0
+RxJS         ██████░░░░  3 (mgr)  vs  ████████░░  4 (self)  team: 2.8  role: 3.0  gap: -1
 ```
+
+**Four data points per skill:** manager score, self score, team average (via `user_teams`), role average (by `job_title`).
+
+**Priority badges** per skill: critical (red), high (orange), medium (yellow), low (green).
 
 **Color coding by gap magnitude:**
 - Green  — gap = 0 (aligned)
 - Yellow — gap = ±1 (small difference)
 - Red    — gap ≥ ±2 (significant misalignment)
 
-Skills are sorted by absolute gap (largest first) to surface the most critical misalignments immediately.
+Skills are sorted by priority first, then by absolute gap (largest first).
 
 ### Dashboard Cards
 
 | View | Cards Shown |
 |------|-------------|
-| Manager Dashboard | Team summary cards (member count + avg proficiency), skill coverage heatmap, top gaps list |
+| Manager Dashboard | Stats cards (total skills, avg score, skills rated, completion %), role filter, member cards with job title badges |
 | User Dashboard | Personal radar chart overlay, skillset progress bars, top 5 strengths and weaknesses |
 
 ---
@@ -562,7 +588,7 @@ ADRs are enforced automatically by `archgate/cli` on every CI run.
 | # | Document | Scope |
 |---|----------|-------|
 | 01 | Architecture | System topology, KISS principles, monorepo layout |
-| 02 | Data Model | 7 Ecto schemas, SQLite tables, relationships, xlsx mapping |
+| 02 | Data Model | 8 Ecto schemas (incl. UserTeam), SQLite tables, relationships, xlsx mapping |
 | 03 | Auth & Roles | Auth flows, Manager/User roles, route protection |
 | 04 | API | Full REST JSON endpoint contract with request/response examples |
 | 05 | Frontend | Vue component tree, Pinia stores, routing, typed API client |

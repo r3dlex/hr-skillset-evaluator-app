@@ -22,11 +22,14 @@
 | hashed_password | string | Nullable (OAuth users may not have one) |
 | role | string | "manager" or "user", default "user" |
 | name | string | Display name |
-| team_id | integer | FK -> teams |
-| location | string | "DE", "IN", etc. |
+| job_title | string | Original role from xlsx (e.g., "Dev", "QE", "PM", "Lead") |
+| team_id | integer | FK -> teams (primary/last assigned team) |
+| location | string | "DE", "IN", "CN", "AT", etc. |
 | active | boolean | Default true |
 | microsoft_uid | string | Nullable, for OAuth |
 | confirmed_at | naive_datetime | Email confirmation |
+| onboarding_completed_steps | string | JSON array of completed step IDs |
+| onboarding_dismissed | boolean | Default false |
 | inserted_at | naive_datetime | |
 | updated_at | naive_datetime | |
 
@@ -35,20 +38,37 @@
 | Column | Type | Notes |
 |--------|------|-------|
 | id | integer | PK |
-| name | string | Unique (e.g., "BIM", "BoQ", "Platform") |
+| name | string | Unique (e.g., "BIM", "BoQ", "Platform Core") |
 | inserted_at | naive_datetime | |
 | updated_at | naive_datetime | |
+
+### user_teams (join table for many-to-many)
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | integer | PK |
+| user_id | integer | FK -> users, on_delete: delete_all |
+| team_id | integer | FK -> teams, on_delete: delete_all |
+| inserted_at | naive_datetime | |
+| updated_at | naive_datetime | |
+
+**Unique constraint**: `(user_id, team_id)`
+
+Users can belong to multiple teams (e.g., Florian Haag in both BIM and TA-DE).
 
 ### skillsets
 
 | Column | Type | Notes |
 |--------|------|-------|
 | id | integer | PK |
-| name | string | Unique (e.g., "Domain", "Fullstack", "UX") |
+| name | string | Unique (e.g., "Domain", "Fullstack", "Softskills", "Product", "AI", "UX") |
 | description | string | Optional |
 | position | integer | Display order |
+| applicable_roles | string | JSON array of role names (empty = all roles). E.g., `["Dev","QE","DevOps","Lead"]` |
 | inserted_at | naive_datetime | |
 | updated_at | naive_datetime | |
+
+**Virtual field**: `skill_count` (computed via subquery in `list_skillsets`)
 
 ### skill_groups
 
@@ -67,7 +87,7 @@
 |--------|------|-------|
 | id | integer | PK |
 | name | string | E.g., "Angular", "TypeScript", "BIM Coordination" |
-| priority | string | "critical", "high", "medium" |
+| priority | string | "critical", "high", "medium", "low" |
 | skill_group_id | integer | FK -> skill_groups |
 | position | integer | Display order within group |
 | inserted_at | naive_datetime | |
@@ -94,6 +114,8 @@
 
 - `users.email` (unique)
 - `users.team_id`
+- `user_teams.(user_id, team_id)` (unique)
+- `user_teams.team_id`
 - `evaluations.user_id`
 - `evaluations.skill_id`
 - `evaluations.(user_id, skill_id, period)` (unique)
@@ -103,8 +125,9 @@
 ## Relationships
 
 ```
-Team has_many Users
-User belongs_to Team
+Team many_to_many Users (via user_teams)
+User many_to_many Teams (via user_teams)
+User belongs_to Team (primary team, via team_id)
 User has_many Evaluations (as subject)
 User has_many Evaluations (as evaluator, via evaluated_by_id)
 Skillset has_many SkillGroups
@@ -112,16 +135,39 @@ SkillGroup has_many Skills
 Skill has_many Evaluations
 ```
 
+## Skillset-Role Mapping
+
+Controlled by `skillsets.applicable_roles`. Empty list means all roles can access.
+
+| Skillset | applicable_roles | Visible to |
+|----------|-----------------|------------|
+| Softskills | `[]` | All roles |
+| Domain | `[]` | All roles |
+| Fullstack | `["Dev","QE","DevOps","Lead"]` | Dev, QE, DevOps, Lead |
+| Product | `["UX","PM","PO","Lead"]` | UX, PM, PO, Lead |
+| AI | `["AI"]` | AI |
+| UX | `["UX"]` | UX |
+
+Lead has the union of Dev + PO scopes (sees Fullstack and Product).
+
 ## xlsx Mapping
 
 | xlsx Column | DB Field |
 |-------------|----------|
 | Sheet name | skillsets.name |
 | Row 1 group headers | skill_groups.name |
-| Row 2 priorities | skills.priority |
+| Row 2 priorities | skills.priority (handles "🔴 Critical", "🟠 High", "🟡 Medium", "🟢 Low") |
 | Row 3 skill names | skills.name |
-| Column A (Team) | teams.name |
+| Column A (Team) | teams.name + user_teams association |
 | Column B (Location) | users.location |
-| Column C (Role) | users.role (mapped) |
+| Column C (Role) | users.role (normalized), users.job_title (original, cleaned) |
 | Column D (Name) | users.name |
 | Score cells (0-5) | evaluations.manager_score |
+
+### Job Title Normalization
+
+The import pipeline normalizes job titles from the xlsx:
+- "Dev." -> "Dev"
+- "developer" -> "Dev"
+- "qa" -> "QE"
+- Preserves: DevOps, PM, PO, UX, AI, Lead, Consulting, Apprentice
