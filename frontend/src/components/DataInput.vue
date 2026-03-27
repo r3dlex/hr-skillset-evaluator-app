@@ -87,9 +87,9 @@ function formatScore(score: number | null | undefined): string {
       <div class="flex-[3] min-w-0">Skill</div>
       <div class="w-16 shrink-0 text-center">Priority</div>
       <div class="w-16 shrink-0 text-center">Current Score</div>
-      <div v-if="isEvaluating" class="flex-1 min-w-0">New Score</div>
-      <div v-else class="flex-1 min-w-0">Score (0-5)</div>
-      <div class="w-10 shrink-0 text-center"></div>
+      <div class="flex-1 min-w-0"></div>
+      <div v-if="isEvaluating" class="w-16 shrink-0 text-center">New Score</div>
+      <div v-else class="w-16 shrink-0 text-center">Score</div>
       <template v-if="gapItems">
         <div class="w-16 shrink-0 text-center">Team</div>
         <div class="w-16 shrink-0 text-center">Role</div>
@@ -160,7 +160,7 @@ function formatScore(score: number | null | undefined): string {
         </div>
 
         <!-- New score value badge -->
-        <div class="w-10 shrink-0 text-center">
+        <div class="w-16 shrink-0 text-center">
           <span
             class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold"
             :style="
