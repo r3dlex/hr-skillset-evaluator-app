@@ -58,20 +58,31 @@ const skillGroups = computed(() => {
   return skillsStore.currentSkillset?.skill_groups || []
 })
 
+// Track the last specific group so we can restore it when leaving "All"
+const lastSpecificGroupId = ref<number | null>(null)
+
 const isAllSelected = computed(() => selectedGroupId.value === 'all')
 
 const selectedGroup = computed(() => {
   if (selectedGroupId.value === 'all') return null
   if (!selectedGroupId.value) return skillGroups.value[0] || null
-  return skillGroups.value.find(g => g.id === selectedGroupId.value) || null
+  return skillGroups.value.find(g => g.id === selectedGroupId.value) || skillGroups.value[0] || null
 })
 
-// When switching to radar chart and "All" is selected, auto-select first group
-watch(activeTab, (tab) => {
-  if (tab === 'chart' && selectedGroupId.value === 'all') {
-    selectedGroupId.value = skillGroups.value[0]?.id || null
-    loadData()
+// Auto-set selectedGroupId to first group when groups become available
+watch(skillGroups, (groups) => {
+  if (groups.length > 0 && !selectedGroupId.value) {
+    selectedGroupId.value = groups[0].id
+    lastSpecificGroupId.value = groups[0].id
   }
+}, { immediate: true })
+
+// When switching to radar chart and "All" is selected, restore last specific group
+watch(activeTab, () => {
+  if (activeTab.value === 'chart' && selectedGroupId.value === 'all') {
+    selectedGroupId.value = lastSpecificGroupId.value || skillGroups.value[0]?.id || null
+  }
+  loadData()
 })
 
 const allSkills = computed(() => {
@@ -109,6 +120,7 @@ onMounted(async () => {
   // Default selectedGroupId to first group
   if (skillGroups.value.length > 0 && !selectedGroupId.value) {
     selectedGroupId.value = skillGroups.value[0].id
+    lastSpecificGroupId.value = skillGroups.value[0].id
   }
   await fetchPeriods()
   loadData()
@@ -127,6 +139,9 @@ watch(selectedUserId, async () => {
 
 function selectGroup(groupId: number | 'all') {
   selectedGroupId.value = groupId
+  if (groupId !== 'all') {
+    lastSpecificGroupId.value = groupId
+  }
   loadData()
 }
 
