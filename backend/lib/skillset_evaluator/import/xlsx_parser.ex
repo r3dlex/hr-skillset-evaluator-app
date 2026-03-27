@@ -123,7 +123,7 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
 
     {:ok, structures}
   rescue
-    e -> {:ok, []}
+    _e -> {:ok, []}
   end
 
   @spec parse_teams_sheet(String.t()) :: {:ok, [map()]} | {:error, String.t()}

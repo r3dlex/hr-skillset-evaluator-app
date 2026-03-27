@@ -1,7 +1,7 @@
 defmodule SkillsetEvaluatorWeb.DashboardController do
   use SkillsetEvaluatorWeb, :controller
 
-  alias SkillsetEvaluator.{Repo, Evaluations.Evaluation, Skills, Skills.Skill, Skills.SkillGroup}
+  alias SkillsetEvaluator.{Repo, Evaluations.Evaluation, Skills.Skill}
   import Ecto.Query
 
   def stats(conn, params) do
