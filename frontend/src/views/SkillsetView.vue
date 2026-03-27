@@ -19,6 +19,7 @@ const teamStore = useTeamStore()
 const authStore = useAuthStore()
 
 const activeTab = ref<'chart' | 'table' | 'gap'>('chart')
+const selectedTeamId = ref<number | null>(null)
 const selectedUserId = ref<number | null>(null)
 const selectedGroupId = ref<number | 'all' | null>(null)
 
@@ -108,12 +109,21 @@ const effectiveUserId = computed(() => {
   return authStore.user?.id || null
 })
 
+async function switchTeam(teamId: number) {
+  selectedTeamId.value = teamId
+  selectedUserId.value = null
+  await teamStore.fetchMembers(teamId)
+  await fetchPeriods()
+  loadData()
+}
+
 onMounted(async () => {
   await skillsStore.fetchSkillset(skillsetId.value)
   if (authStore.isManager) {
     await teamStore.fetchTeams()
     if (teamStore.teams.length > 0) {
       const teamId = authStore.user?.team?.id || teamStore.teams[0].id
+      selectedTeamId.value = teamId
       await teamStore.fetchMembers(teamId)
     }
   }
@@ -203,23 +213,41 @@ async function handleScoreUpdate(skillId: number, score: number) {
         </div>
       </div>
 
-      <!-- Member selector for managers -->
-      <div v-if="authStore.isManager && teamStore.members.length > 0" class="mb-6">
-        <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Team Member</label>
-        <select
-          v-model="selectedUserId"
-          class="input-field w-64"
-          @change="loadData()"
-        >
-          <option :value="null">All members</option>
-          <option
-            v-for="member in teamStore.members"
-            :key="member.id"
-            :value="member.id"
+      <!-- Team & Member selector for managers -->
+      <div v-if="authStore.isManager" class="mb-6 flex items-end gap-4">
+        <div v-if="teamStore.teams.length > 1">
+          <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Team</label>
+          <select
+            v-model="selectedTeamId"
+            class="input-field w-52"
+            @change="switchTeam(Number(selectedTeamId))"
           >
-            {{ member.name }}
-          </option>
-        </select>
+            <option
+              v-for="team in teamStore.teams"
+              :key="team.id"
+              :value="team.id"
+            >
+              {{ team.name }} {{ team.member_count ? `(${team.member_count})` : '' }}
+            </option>
+          </select>
+        </div>
+        <div v-if="teamStore.members.length > 0">
+          <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Team Member</label>
+          <select
+            v-model="selectedUserId"
+            class="input-field w-64"
+            @change="loadData()"
+          >
+            <option :value="null">All members</option>
+            <option
+              v-for="member in teamStore.members"
+              :key="member.id"
+              :value="member.id"
+            >
+              {{ member.name }}
+            </option>
+          </select>
+        </div>
       </div>
 
       <!-- Skill Group Tabs -->
