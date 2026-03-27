@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import DataInput from '../DataInput.vue'
-import ScoreSlider from '../ScoreSlider.vue'
 import type { Skill } from '@/types'
 
 const sampleSkills: Skill[] = [
@@ -41,11 +40,10 @@ describe('DataInput', () => {
       props: { skills: sampleSkills, scores: sampleScores, readonly: false },
     })
 
-    // Find the first ScoreSlider and emit update:modelValue
-    const sliders = wrapper.findAllComponents(ScoreSlider)
+    const sliders = wrapper.findAll('input[type="range"]')
     expect(sliders.length).toBe(3)
 
-    await sliders[0].vm.$emit('update:modelValue', 5)
+    await sliders[0].setValue('5')
     await wrapper.vm.$nextTick()
 
     const emitted = wrapper.emitted('update:score')

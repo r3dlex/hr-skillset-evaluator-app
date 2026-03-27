@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Skill, GapAnalysisItem } from '@/types'
-import ScoreSlider from './ScoreSlider.vue'
 import { computed } from 'vue'
 
 const props = defineProps<{
@@ -87,9 +86,10 @@ function formatScore(score: number | null | undefined): string {
     >
       <div class="flex-[3] min-w-0">Skill</div>
       <div class="w-16 shrink-0 text-center">Priority</div>
-      <div class="w-14 shrink-0 text-center">Current</div>
-      <div v-if="isEvaluating" class="flex-[3] min-w-0">New Score</div>
-      <div v-else class="flex-[3] min-w-0">Score (0-5)</div>
+      <div class="w-16 shrink-0 text-center">Current Score</div>
+      <div v-if="isEvaluating" class="flex-1 min-w-0">New Score</div>
+      <div v-else class="flex-1 min-w-0">Score (0-5)</div>
+      <div class="w-10 shrink-0 text-center"></div>
       <template v-if="gapItems">
         <div class="w-16 shrink-0 text-center">Team</div>
         <div class="w-16 shrink-0 text-center">Role</div>
@@ -119,8 +119,8 @@ function formatScore(score: number | null | undefined): string {
           </span>
         </div>
 
-        <!-- Current value (saved before this editing session) -->
-        <div class="w-14 shrink-0 text-center">
+        <!-- Current score (saved before this editing session) -->
+        <div class="w-16 shrink-0 text-center">
           <span
             class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold"
             :style="
@@ -141,13 +141,36 @@ function formatScore(score: number | null | undefined): string {
           </span>
         </div>
 
-        <!-- Score slider / display -->
-        <div class="flex-[3] min-w-0">
-          <ScoreSlider
-            :model-value="scores[skill.id] ?? 0"
+        <!-- Score slider -->
+        <div class="flex-1 min-w-0">
+          <input
+            type="range"
+            min="0"
+            max="5"
+            step="1"
+            :value="scores[skill.id] ?? 0"
             :disabled="readonly"
-            @update:model-value="emit('update:score', skill.id, $event)"
+            class="w-full h-2 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            :style="{
+              background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${((scores[skill.id] ?? 0) / 5) * 100}%, var(--color-border) ${((scores[skill.id] ?? 0) / 5) * 100}%, var(--color-border) 100%)`,
+              accentColor: 'var(--color-primary)',
+            }"
+            @input="emit('update:score', skill.id, Number(($event.target as HTMLInputElement).value))"
           />
+        </div>
+
+        <!-- New score value badge -->
+        <div class="w-10 shrink-0 text-center">
+          <span
+            class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold"
+            :style="
+              (scores[skill.id] ?? 0) > 0
+                ? { backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)', color: 'var(--color-primary)' }
+                : { backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }
+            "
+          >
+            {{ scores[skill.id] ?? 0 }}
+          </span>
         </div>
 
         <!-- Gap analysis columns -->
