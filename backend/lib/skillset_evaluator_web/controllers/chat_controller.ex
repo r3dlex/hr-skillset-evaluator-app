@@ -117,6 +117,9 @@ defmodule SkillsetEvaluatorWeb.ChatController do
           content: content
         })
 
+      # Auto-title conversation from first message
+      Chat.maybe_auto_title(conversation_id, content)
+
       # Build context
       system_prompt = ContextBuilder.build_system_prompt(user)
       messages = ContextBuilder.build_messages(conversation_id)

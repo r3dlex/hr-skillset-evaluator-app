@@ -152,6 +152,36 @@ defmodule SkillsetEvaluator.Chat do
   end
 
   @doc """
+  Updates the title of a conversation.
+  """
+  def update_conversation_title(conversation_id, title) do
+    title = title |> String.trim() |> String.slice(0, 100)
+
+    from(c in Conversation, where: c.id == ^conversation_id)
+    |> Repo.update_all(set: [title: title])
+  end
+
+  @doc """
+  Auto-generates a title from the first user message content.
+  Only sets the title if it's currently nil.
+  """
+  def maybe_auto_title(conversation_id, content) do
+    conversation = Repo.get(Conversation, conversation_id)
+
+    if conversation && is_nil(conversation.title) do
+      title =
+        content
+        |> String.trim()
+        |> String.slice(0, 80)
+        |> then(fn t ->
+          if String.length(content) > 80, do: t <> "...", else: t
+        end)
+
+      update_conversation_title(conversation_id, title)
+    end
+  end
+
+  @doc """
   Gets a conversation by ID with messages preloaded.
   """
   def get_conversation(id) do

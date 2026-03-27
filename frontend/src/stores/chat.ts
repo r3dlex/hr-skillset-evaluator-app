@@ -89,6 +89,12 @@ export const useChatStore = defineStore('chat', () => {
       if (!conv) return
     }
 
+    // Auto-title: if this is the first message in the conversation, set local title
+    const conv = conversations.value.find(c => c.id === activeConversationId.value)
+    if (conv && !conv.title) {
+      conv.title = content.trim().slice(0, 80) + (content.length > 80 ? '...' : '')
+    }
+
     // Add user message locally
     const userMsg: ChatMessage = {
       id: Date.now(),
