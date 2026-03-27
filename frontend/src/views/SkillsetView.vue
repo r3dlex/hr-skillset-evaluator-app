@@ -101,8 +101,9 @@ onMounted(async () => {
   await skillsStore.fetchSkillset(skillsetId.value)
   if (authStore.isManager) {
     await teamStore.fetchTeams()
-    if (teamStore.teams.length > 0 && authStore.user?.team) {
-      await teamStore.fetchMembers(authStore.user.team.id)
+    if (teamStore.teams.length > 0) {
+      const teamId = authStore.user?.team?.id || teamStore.teams[0].id
+      await teamStore.fetchMembers(teamId)
     }
   }
   // Default selectedGroupId to first group

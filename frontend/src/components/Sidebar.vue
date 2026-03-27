@@ -133,8 +133,8 @@ async function handleLogout() {
 
     <!-- Skillsets -->
     <div
-      class="py-3 flex-1 overflow-y-auto scrollbar-thin min-h-0"
-      :class="themeStore.sidebarCollapsed ? 'px-2' : 'px-2'"
+      class="py-3 flex-1 min-h-0"
+      :class="themeStore.sidebarCollapsed ? 'px-2 overflow-hidden' : 'px-2 overflow-y-auto scrollbar-thin'"
       data-tour="skillsets-section"
     >
       <h2
