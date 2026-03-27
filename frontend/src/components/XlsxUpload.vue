@@ -44,7 +44,8 @@ async function handleUpload() {
   result.value = null
   errorMessage.value = ''
   try {
-    result.value = await xlsx.importXlsx(file.value, period.value)
+    const resp = await xlsx.importXlsx(file.value, period.value)
+    result.value = resp.data
   } catch (e) {
     errorMessage.value = e instanceof Error ? e.message : 'Upload failed'
   } finally {

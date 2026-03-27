@@ -94,9 +94,14 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
   defp load_agent_instructions(%User{} = user) do
     base_instructions =
       case File.read(@agent_instructions_path) do
-        {:ok, content} -> content
+        {:ok, content} ->
+          content
+
         {:error, _} ->
-          Logger.warning("Agent instructions not found at #{@agent_instructions_path}, using fallback")
+          Logger.warning(
+            "Agent instructions not found at #{@agent_instructions_path}, using fallback"
+          )
+
           fallback_identity()
       end
 
@@ -162,11 +167,17 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
         |> Enum.filter(&String.ends_with?(&1, ".md"))
         |> Enum.sort()
         |> Enum.map(fn file ->
-          name = file |> String.replace_suffix(".md", "") |> String.replace("_", " ") |> String.capitalize()
+          name =
+            file
+            |> String.replace_suffix(".md", "")
+            |> String.replace("_", " ")
+            |> String.capitalize()
+
           {name, Path.join(@skills_dir, file)}
         end)
 
-      {:error, _} -> []
+      {:error, _} ->
+        []
     end
   end
 
@@ -181,7 +192,8 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
           {name, Path.join(@spec_dir, file)}
         end)
 
-      {:error, _} -> []
+      {:error, _} ->
+        []
     end
   end
 
@@ -228,7 +240,11 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
         # Include a condensed summary (first ~2000 chars) to keep prompt size manageable.
         # The full glossary file path is provided for deeper reference.
         summary = String.slice(content, 0, 2000)
-        truncated = if byte_size(content) > 2000, do: "\n\n[Full AEC glossary available at #{@glossary_file_path}]", else: ""
+
+        truncated =
+          if byte_size(content) > 2000,
+            do: "\n\n[Full AEC glossary available at #{@glossary_file_path}]",
+            else: ""
 
         """
         ### AEC Construction Glossary (Summary)

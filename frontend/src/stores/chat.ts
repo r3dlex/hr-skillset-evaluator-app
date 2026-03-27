@@ -107,7 +107,7 @@ export const useChatStore = defineStore('chat', () => {
     error.value = null
 
     try {
-      const { stream } = chatApi.sendMessage(activeConversationId.value, content)
+      const { stream } = chatApi.sendMessage(activeConversationId.value!, content)
       const body = await stream
 
       if (!body) throw new Error('No response body')

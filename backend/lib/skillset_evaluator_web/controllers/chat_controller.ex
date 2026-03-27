@@ -209,16 +209,32 @@ defmodule SkillsetEvaluatorWeb.ChatController do
 
   # Maps API status codes and error types to user-friendly messages
   @anthropic_errors %{
-    400 => {"invalid_request", "The request was malformed. Please try rephrasing your message.", false},
-    401 => {"authentication_error", "The AI service credentials are invalid. Please contact your administrator.", false},
-    403 => {"permission_denied", "Access to the AI service is denied. Please contact your administrator.", false},
-    404 => {"not_found", "The AI service endpoint could not be reached. Please check the configuration.", false},
+    400 =>
+      {"invalid_request", "The request was malformed. Please try rephrasing your message.", false},
+    401 =>
+      {"authentication_error",
+       "The AI service credentials are invalid. Please contact your administrator.", false},
+    403 =>
+      {"permission_denied",
+       "Access to the AI service is denied. Please contact your administrator.", false},
+    404 =>
+      {"not_found",
+       "The AI service endpoint could not be reached. Please check the configuration.", false},
     408 => {"request_timeout", "The request timed out. Please try again.", true},
-    429 => {"rate_limit_error", "The AI service is temporarily overloaded. Please wait a moment and try again.", true},
-    500 => {"api_error", "The AI service encountered an internal error. Please try again later.", true},
-    502 => {"bad_gateway", "The AI service is temporarily unavailable. Please try again in a few moments.", true},
-    503 => {"overloaded", "The AI service is currently overloaded. Please try again in a few minutes.", true},
-    529 => {"overloaded", "The AI service is currently overloaded. Please try again in a few minutes.", true}
+    429 =>
+      {"rate_limit_error",
+       "The AI service is temporarily overloaded. Please wait a moment and try again.", true},
+    500 =>
+      {"api_error", "The AI service encountered an internal error. Please try again later.", true},
+    502 =>
+      {"bad_gateway",
+       "The AI service is temporarily unavailable. Please try again in a few moments.", true},
+    503 =>
+      {"overloaded", "The AI service is currently overloaded. Please try again in a few minutes.",
+       true},
+    529 =>
+      {"overloaded", "The AI service is currently overloaded. Please try again in a few minutes.",
+       true}
   }
 
   defp classify_error(reason) when is_binary(reason) do
@@ -238,7 +254,8 @@ defmodule SkillsetEvaluatorWeb.ChatController do
         {"request_timeout", "The AI service took too long to respond. Please try again.", true}
 
       String.contains?(reason, "connection") or String.contains?(reason, "nxdomain") ->
-        {"connection_error", "Could not connect to the AI service. Please check your network connection.", true}
+        {"connection_error",
+         "Could not connect to the AI service. Please check your network connection.", true}
 
       true ->
         {"stream_error", reason, false}

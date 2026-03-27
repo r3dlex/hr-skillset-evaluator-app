@@ -8,7 +8,7 @@ export interface User {
   id: number
   email: string
   name: string
-  role: 'manager' | 'user'
+  role: 'admin' | 'manager' | 'user'
   job_title?: string
   team: Team | null
   location: string

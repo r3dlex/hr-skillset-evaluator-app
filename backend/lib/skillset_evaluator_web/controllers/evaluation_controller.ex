@@ -3,7 +3,10 @@ defmodule SkillsetEvaluatorWeb.EvaluationController do
 
   alias SkillsetEvaluator.Evaluations
 
-  def index(conn, %{"user_id" => user_id, "skillset_id" => skillset_id, "period" => period} = params) do
+  def index(
+        conn,
+        %{"user_id" => user_id, "skillset_id" => skillset_id, "period" => period} = params
+      ) do
     opts =
       case params["skill_group_id"] do
         nil -> []

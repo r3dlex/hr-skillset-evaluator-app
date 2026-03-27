@@ -101,10 +101,18 @@ defmodule SkillsetEvaluator.Chat do
 
       Enum.flat_map(matched_ids, fn id ->
         case Map.get(convs, id) do
-          nil -> []
+          nil ->
+            []
+
           conv ->
             preview = Map.get(preview_map, id, %{match_type: "title", snippet: ""})
-            [Map.merge(Map.from_struct(conv), %{match_snippet: preview.snippet, match_type: preview.match_type})]
+
+            [
+              Map.merge(Map.from_struct(conv), %{
+                match_snippet: preview.snippet,
+                match_type: preview.match_type
+              })
+            ]
         end
       end)
     end
