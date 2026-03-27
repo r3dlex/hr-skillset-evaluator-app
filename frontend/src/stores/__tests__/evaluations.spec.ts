@@ -59,7 +59,7 @@ describe('useEvaluationsStore', () => {
     expect(store.evaluations).toEqual(mockEvaluations)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
-    expect(evalApi.getEvaluations).toHaveBeenCalledWith(1, 1, '2024-Q1')
+    expect(evalApi.getEvaluations).toHaveBeenCalledWith(1, 1, '2024-Q1', undefined)
   })
 
   it('fetchRadarData populates radarData', async () => {
@@ -83,7 +83,7 @@ describe('useEvaluationsStore', () => {
     expect(store.gapAnalysis).toEqual(mockGapItems)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
-    expect(gapApi.getGapAnalysis).toHaveBeenCalledWith(1, 1, '2024-Q1', undefined)
+    expect(gapApi.getGapAnalysis).toHaveBeenCalledWith(1, 1, '2024-Q1', { skillGroupId: undefined })
   })
 
   it('fetchEvaluations sets error on failure', async () => {
