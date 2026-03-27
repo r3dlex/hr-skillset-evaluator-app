@@ -359,7 +359,7 @@ async function handleScoreUpdate(skillId: number, score: number) {
           "
           @click="activeTab = tab"
         >
-          {{ tab === 'gap' ? 'Gap Analysis' : tab === 'chart' ? 'Radar Chart' : 'Data Table' }}
+          {{ tab === 'gap' ? 'Gap Analysis' : tab === 'chart' ? 'Radar Chart' : 'Evaluation Table' }}
         </button>
       </div>
 
@@ -378,9 +378,19 @@ async function handleScoreUpdate(skillId: number, score: number) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
-            <p v-if="authStore.isManager" class="text-sm text-center max-w-xs" :style="{ color: 'var(--color-text-secondary)' }">
+            <p v-if="authStore.isManager" class="text-sm text-center max-w-xs mb-4" :style="{ color: 'var(--color-text-secondary)' }">
               No evaluations yet. Start by evaluating team members on this skillset.
             </p>
+            <button
+              v-if="authStore.isManager"
+              class="btn-primary text-sm inline-flex items-center gap-2"
+              @click="activeTab = 'table'"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Start Evaluation
+            </button>
             <template v-else>
               <p class="text-sm text-center max-w-xs mb-4" :style="{ color: 'var(--color-text-secondary)' }">
                 No evaluations yet. Complete a self-evaluation to see your radar chart.
@@ -406,13 +416,30 @@ async function handleScoreUpdate(skillId: number, score: number) {
         </div>
       </div>
 
-      <!-- Data Table View -->
+      <!-- Evaluation Table View -->
       <div v-if="activeTab === 'table'" class="card p-6">
+        <!-- Start evaluation prompt when no user selected (manager) -->
+        <div
+          v-if="authStore.isManager && !selectedUserId"
+          class="mb-4 px-4 py-3 rounded-lg flex items-center justify-between"
+          :style="{
+            backgroundColor: 'color-mix(in srgb, var(--color-primary) 6%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border))',
+          }"
+        >
+          <div class="flex items-center gap-2 text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            <svg class="w-4 h-4" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Select a team member above to start evaluating their skills.
+          </div>
+        </div>
         <DataInput
           :skills="allSkills"
           :scores="scoreMap"
           :readonly="!authStore.isManager || !selectedUserId"
           :gap-items="evalStore.gapAnalysis"
+          :evaluations="evalStore.evaluations"
           @update:score="handleScoreUpdate"
         />
       </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Skill, GapAnalysisItem } from '@/types'
+import type { Skill, GapAnalysisItem, Evaluation } from '@/types'
 import ScoreSlider from './ScoreSlider.vue'
 import { computed } from 'vue'
 
@@ -8,6 +8,7 @@ const props = defineProps<{
   scores: Record<number, number | null>
   readonly: boolean
   gapItems?: GapAnalysisItem[]
+  evaluations?: Evaluation[]
 }>()
 
 const avgsBySkillId = computed(() => {
@@ -22,37 +23,84 @@ const avgsBySkillId = computed(() => {
   return map
 })
 
+// Build a map of existing evaluation data per skill for showing current vs new
+const evalBySkillId = computed(() => {
+  const map: Record<number, { manager_score: number | null; self_score: number | null }> = {}
+  if (props.evaluations) {
+    for (const ev of props.evaluations) {
+      map[ev.skill_id] = { manager_score: ev.manager_score, self_score: ev.self_score }
+    }
+  }
+  return map
+})
+
+const isEvaluating = computed(() => !props.readonly)
+
 const emit = defineEmits<{
   'update:score': [skillId: number, value: number]
 }>()
 
 function priorityColor(priority: string): string {
   switch (priority) {
-    case 'critical': return 'bg-red-100 text-red-800'
-    case 'high': return 'bg-orange-100 text-orange-800'
-    case 'medium': return 'bg-blue-100 text-blue-800'
-    default: return 'bg-gray-100 text-gray-600'
+    case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+    case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+    case 'medium': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+    default: return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
   }
+}
+
+function formatScore(score: number | null | undefined): string {
+  if (score === null || score === undefined) return '?'
+  return String(score)
 }
 </script>
 
 <template>
   <div>
-    <h3 class="text-lg font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
-      Score Data
-    </h3>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold" :style="{ color: 'var(--color-text-primary)' }">
+        {{ isEvaluating ? 'Evaluation Table' : 'Evaluation Data' }}
+      </h3>
+      <!-- Mode indicator -->
+      <div v-if="isEvaluating" class="flex items-center gap-2">
+        <span
+          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+          :style="{
+            backgroundColor: 'color-mix(in srgb, var(--color-success, #22c55e) 12%, transparent)',
+            color: 'var(--color-success, #22c55e)',
+            border: '1px solid color-mix(in srgb, var(--color-success, #22c55e) 25%, transparent)',
+          }"
+        >
+          <span class="w-1.5 h-1.5 rounded-full animate-pulse" :style="{ backgroundColor: 'var(--color-success, #22c55e)' }" />
+          Editing scores
+        </span>
+      </div>
+      <div v-else class="flex items-center gap-2">
+        <span
+          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
+          :style="{
+            backgroundColor: 'color-mix(in srgb, var(--color-text-muted) 10%, transparent)',
+            color: 'var(--color-text-muted)',
+          }"
+        >
+          View only
+        </span>
+      </div>
+    </div>
 
     <!-- Table header -->
     <div
-      class="flex items-center gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider"
+      class="flex items-center gap-3 px-4 py-2 text-xs font-medium uppercase tracking-wider"
       :style="{ color: 'var(--color-text-secondary)' }"
     >
       <div class="flex-[3] min-w-0">Skill</div>
-      <div class="w-20 shrink-0">Priority</div>
-      <div class="flex-[3] min-w-0">Score (0-5)</div>
+      <div class="w-16 shrink-0 text-center">Priority</div>
+      <div class="w-14 shrink-0 text-center">Current</div>
+      <div v-if="isEvaluating" class="flex-[3] min-w-0">New Score</div>
+      <div v-else class="flex-[3] min-w-0">Score (0-5)</div>
       <template v-if="gapItems">
-        <div class="w-20 shrink-0 text-center">Team Avg</div>
-        <div class="w-20 shrink-0 text-center">Role Avg</div>
+        <div class="w-16 shrink-0 text-center">Team</div>
+        <div class="w-16 shrink-0 text-center">Role</div>
       </template>
     </div>
 
@@ -61,19 +109,47 @@ function priorityColor(priority: string): string {
       <div
         v-for="skill in skills"
         :key="skill.id"
-        class="flex items-center gap-4 px-4 py-3"
+        class="flex items-center gap-3 px-4 py-3 transition-colors"
+        :class="isEvaluating ? 'hover:bg-white/5' : ''"
       >
+        <!-- Skill name -->
         <div class="flex-[3] min-w-0 text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
           {{ skill.name }}
         </div>
-        <div class="w-20 shrink-0">
+
+        <!-- Priority -->
+        <div class="w-16 shrink-0 text-center">
           <span
-            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+            class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase"
             :class="priorityColor(skill.priority)"
           >
             {{ skill.priority }}
           </span>
         </div>
+
+        <!-- Current value (existing evaluation) -->
+        <div class="w-14 shrink-0 text-center">
+          <span
+            class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold"
+            :style="
+              evalBySkillId[skill.id]?.manager_score != null
+                ? {
+                    backgroundColor: 'color-mix(in srgb, var(--color-info, #3b82f6) 12%, transparent)',
+                    color: 'var(--color-info, #3b82f6)',
+                  }
+                : {
+                    backgroundColor: 'var(--color-border)',
+                    color: 'var(--color-text-muted)',
+                    fontStyle: evalBySkillId[skill.id]?.manager_score == null ? 'italic' : 'normal',
+                  }
+            "
+            :title="evalBySkillId[skill.id]?.manager_score != null ? `Current manager score: ${evalBySkillId[skill.id].manager_score}` : 'No evaluation yet'"
+          >
+            {{ formatScore(evalBySkillId[skill.id]?.manager_score) }}
+          </span>
+        </div>
+
+        <!-- Score slider / display -->
         <div class="flex-[3] min-w-0">
           <ScoreSlider
             :model-value="scores[skill.id] ?? 0"
@@ -81,20 +157,22 @@ function priorityColor(priority: string): string {
             @update:model-value="emit('update:score', skill.id, $event)"
           />
         </div>
+
+        <!-- Gap analysis columns -->
         <template v-if="gapItems">
-          <div class="w-20 shrink-0 text-center">
+          <div class="w-16 shrink-0 text-center">
             <span
               v-if="avgsBySkillId[skill.id]?.team_avg != null"
-              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-700"
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300"
             >
               {{ avgsBySkillId[skill.id].team_avg!.toFixed(1) }}
             </span>
             <span v-else class="text-xs" :style="{ color: 'var(--color-text-muted)' }">—</span>
           </div>
-          <div class="w-20 shrink-0 text-center">
+          <div class="w-16 shrink-0 text-center">
             <span
               v-if="avgsBySkillId[skill.id]?.role_avg != null"
-              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-violet-100 text-violet-700"
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
             >
               {{ avgsBySkillId[skill.id].role_avg!.toFixed(1) }}
             </span>

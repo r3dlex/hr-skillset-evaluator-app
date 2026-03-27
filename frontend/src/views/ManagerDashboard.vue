@@ -5,14 +5,14 @@ import Overview from '@/components/Overview.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTeamStore } from '@/stores/team'
 import { useSkillsStore } from '@/stores/skills'
-import { dashboard as dashboardApi } from '@/api'
+import { dashboard as dashboardApi, teams as teamsApi } from '@/api'
 import type { User } from '@/types'
 
 const authStore = useAuthStore()
 const teamStore = useTeamStore()
 const skillsStore = useSkillsStore()
 
-const selectedTeamId = ref<number | null>(null)
+const selectedTeamId = ref<number | 'all' | null>(null)
 const selectedRole = ref<string>('')  // '' = All
 
 const stats = ref({
@@ -23,19 +23,26 @@ const stats = ref({
   team_size: 0,
 })
 
+// All members across all teams (for "All Teams" view)
+const allTeamMembers = ref<User[]>([])
+
 // Unique job titles from current team members
 const availableRoles = computed(() => {
   const roles = new Set<string>()
-  for (const m of teamStore.members) {
+  for (const m of currentMembers.value) {
     if (m.job_title) roles.add(m.job_title)
   }
   return Array.from(roles).sort()
 })
 
-// Filter members by selected role
+// Members to show: all teams or selected team, filtered by role
+const currentMembers = computed(() => {
+  return selectedTeamId.value === 'all' ? allTeamMembers.value : teamStore.members
+})
+
 const filteredMembers = computed(() => {
-  if (!selectedRole.value) return teamStore.members
-  return teamStore.members.filter(m => m.job_title === selectedRole.value)
+  if (!selectedRole.value) return currentMembers.value
+  return currentMembers.value.filter(m => m.job_title === selectedRole.value)
 })
 
 // Get applicable skillsets for a member
@@ -50,10 +57,26 @@ function memberSkillsets(member: User) {
 
 async function fetchStats() {
   try {
-    stats.value = await dashboardApi.getStats(selectedTeamId.value || undefined)
+    const teamIdParam = selectedTeamId.value === 'all' ? undefined : (selectedTeamId.value || undefined)
+    stats.value = await dashboardApi.getStats(teamIdParam)
   } catch {
     // keep defaults
   }
+}
+
+async function loadAllTeamMembers() {
+  const members: User[] = []
+  const seen = new Set<number>()
+  for (const team of teamStore.teams) {
+    const resp = await teamsApi.getTeamMembers(team.id)
+    for (const m of resp.members) {
+      if (!seen.has(m.id)) {
+        seen.add(m.id)
+        members.push(m)
+      }
+    }
+  }
+  allTeamMembers.value = members
 }
 
 onMounted(async () => {
@@ -65,8 +88,12 @@ onMounted(async () => {
 })
 
 watch(selectedTeamId, async (id) => {
-  if (id) {
-    await teamStore.fetchMembers(id)
+  if (id === 'all') {
+    await loadAllTeamMembers()
+    selectedRole.value = ''
+    await fetchStats()
+  } else if (id) {
+    await teamStore.fetchMembers(id as number)
     selectedRole.value = ''
     await fetchStats()
   }
@@ -103,6 +130,9 @@ function getMemberInitial(member: User): string {
         <div>
           <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Select Team</label>
           <select v-model="selectedTeamId" class="input-field w-64">
+            <option v-if="teamStore.teams.length > 1" value="all">
+              All Teams ({{ teamStore.teams.reduce((sum, t) => sum + (t.member_count || 0), 0) }})
+            </option>
             <option
               v-for="team in teamStore.teams"
               :key="team.id"

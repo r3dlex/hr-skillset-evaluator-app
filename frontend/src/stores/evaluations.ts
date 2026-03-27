@@ -33,7 +33,16 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
     error.value = null
     try {
       const response = await evalApi.updateManagerScores(userId, period, scores)
-      evaluations.value = response.evaluations
+      // Merge returned evaluations into existing list instead of replacing
+      const updated = response.evaluations as Evaluation[]
+      for (const upd of updated) {
+        const idx = evaluations.value.findIndex(e => e.skill_id === upd.skill_id)
+        if (idx >= 0) {
+          evaluations.value[idx] = upd
+        } else {
+          evaluations.value.push(upd)
+        }
+      }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to update scores'
       throw e
@@ -50,7 +59,16 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
     error.value = null
     try {
       const response = await evalApi.updateSelfScores(period, scores)
-      evaluations.value = response.evaluations
+      // Merge returned evaluations into existing list instead of replacing
+      const updated = response.evaluations as Evaluation[]
+      for (const upd of updated) {
+        const idx = evaluations.value.findIndex(e => e.skill_id === upd.skill_id)
+        if (idx >= 0) {
+          evaluations.value[idx] = upd
+        } else {
+          evaluations.value.push(upd)
+        }
+      }
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to update self scores'
       throw e
