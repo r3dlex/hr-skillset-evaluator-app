@@ -17,8 +17,10 @@ const tooltip = ref<{ visible: boolean; x: number; y: number; text: string }>({
   text: '',
 })
 
-const center = computed(() => props.size / 2)
-const radius = computed(() => props.size * 0.38)
+const padding = 60
+const viewBoxSize = computed(() => props.size + padding * 2)
+const center = computed(() => viewBoxSize.value / 2)
+const radius = computed(() => props.size * 0.35)
 const levels = 5
 const labelOffset = 24
 
@@ -93,8 +95,9 @@ function hideTooltip() {
     <svg
       :width="size"
       :height="size"
-      :viewBox="`0 0 ${size} ${size}`"
+      :viewBox="`0 0 ${viewBoxSize} ${viewBoxSize}`"
       class="select-none"
+      style="overflow: visible;"
     >
       <!-- Level polygons -->
       <polygon

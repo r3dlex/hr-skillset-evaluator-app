@@ -7,7 +7,9 @@ const props = defineProps<{
 }>()
 
 const sortedItems = computed(() =>
-  [...props.items].sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap)),
+  [...props.items]
+    .filter((item) => item.gap != null)
+    .sort((a, b) => Math.abs(b.gap!) - Math.abs(a.gap!)),
 )
 
 const maxScore = 5
@@ -53,7 +55,7 @@ function gapBg(gap: number): string {
             class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
             :class="[gapColor(item.gap), gapBg(item.gap)]"
           >
-            Gap: {{ item.gap > 0 ? '+' : '' }}{{ item.gap.toFixed(1) }}
+            Gap: {{ (item.gap ?? 0) > 0 ? '+' : '' }}{{ (item.gap ?? 0).toFixed(1) }}
           </span>
         </div>
 
@@ -67,7 +69,7 @@ function gapBg(gap: number): string {
             />
           </div>
           <span class="text-xs font-medium w-8 text-right" :style="{ color: 'var(--color-text-secondary)' }">
-            {{ item.manager_score.toFixed(1) }}
+            {{ (item.manager_score ?? 0).toFixed(1) }}
           </span>
         </div>
 
@@ -81,7 +83,7 @@ function gapBg(gap: number): string {
             />
           </div>
           <span class="text-xs font-medium w-8 text-right" :style="{ color: 'var(--color-text-secondary)' }">
-            {{ item.self_score.toFixed(1) }}
+            {{ (item.self_score ?? 0).toFixed(1) }}
           </span>
         </div>
       </div>

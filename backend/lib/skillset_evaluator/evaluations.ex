@@ -178,6 +178,19 @@ defmodule SkillsetEvaluator.Evaluations do
     end)
   end
 
+  def list_periods(user_ids, skillset_id) when is_list(user_ids) and length(user_ids) > 0 do
+    skill_ids = skill_ids_for_skillset(skillset_id)
+
+    Evaluation
+    |> where([e], e.user_id in ^user_ids and e.skill_id in ^skill_ids)
+    |> select([e], e.period)
+    |> distinct(true)
+    |> order_by([e], desc: e.period)
+    |> Repo.all()
+  end
+
+  def list_periods(_user_ids, _skillset_id), do: []
+
   defp skill_ids_for_skillset(skillset_id) do
     Skill
     |> join(:inner, [s], sg in SkillGroup, on: s.skill_group_id == sg.id)

@@ -9,6 +9,7 @@ export interface User {
   email: string
   name: string
   role: 'manager' | 'user'
+  job_title?: string
   team: Team | null
   location: string
   active: boolean
@@ -39,6 +40,7 @@ export interface Skillset {
   position: number
   skill_count?: number
   skill_groups?: SkillGroup[]
+  applicable_roles?: string[]
 }
 
 export interface Evaluation {

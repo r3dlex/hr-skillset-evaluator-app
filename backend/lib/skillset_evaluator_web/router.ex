@@ -16,6 +16,13 @@ defmodule SkillsetEvaluatorWeb.Router do
     plug SkillsetEvaluatorWeb.Plugs.Auth, {:require_role, "manager"}
   end
 
+  # Health check (public, no auth)
+  scope "/api", SkillsetEvaluatorWeb do
+    pipe_through :api
+
+    get "/health", HealthController, :show
+  end
+
   # Public auth routes
   scope "/api/auth", SkillsetEvaluatorWeb do
     pipe_through :api
@@ -37,6 +44,7 @@ defmodule SkillsetEvaluatorWeb.Router do
     resources "/teams", TeamController, only: [:index, :show]
     resources "/skillsets", SkillsetController, only: [:index, :show]
 
+    get "/periods", PeriodsController, :index
     get "/evaluations", EvaluationController, :index
     put "/evaluations/self", EvaluationController, :update_self_scores
 

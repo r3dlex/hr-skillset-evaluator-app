@@ -17,9 +17,10 @@ function toggleVisibility(userId: number) {
   hiddenIds.value = new Set(hiddenIds.value)
 }
 
-function averageScore(values: number[]): string {
-  if (values.length === 0) return '0.0'
-  const avg = values.reduce((a, b) => a + b, 0) / values.length
+function averageScore(values: (number | null)[]): string {
+  const valid = values.filter((v): v is number => v != null)
+  if (valid.length === 0) return '0.0'
+  const avg = valid.reduce((a, b) => a + b, 0) / valid.length
   return avg.toFixed(1)
 }
 </script>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, inject } from 'vue'
+import { onMounted, inject, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSkillsStore } from '@/stores/skills'
@@ -16,6 +16,20 @@ const onboardingStore = useOnboardingStore()
 const themeStore = useThemeStore()
 
 const startTour = inject<(steps: TourStep[]) => void>('startTour')
+
+// Filter skillsets by user's job_title — managers/admins see all
+const visibleSkillsets = computed(() => {
+  if (authStore.isManager) return skillsStore.skillsets
+  const userJobTitle = authStore.user?.job_title
+  return skillsStore.skillsets.filter((s) => {
+    const roles = s.applicable_roles
+    // Empty list or undefined = applicable to all roles
+    if (!roles || roles.length === 0) return true
+    // Check if user's job title matches any applicable role (case-insensitive)
+    if (!userJobTitle) return true
+    return roles.some((r) => r.toLowerCase() === userJobTitle.toLowerCase())
+  })
+})
 
 onMounted(() => {
   if (skillsStore.skillsets.length === 0) {
@@ -119,7 +133,7 @@ async function handleLogout() {
 
     <!-- Skillsets -->
     <div
-      class="py-3 flex-1 overflow-y-auto scrollbar-thin"
+      class="py-3 flex-1 overflow-y-auto scrollbar-thin min-h-0"
       :class="themeStore.sidebarCollapsed ? 'px-2' : 'px-2'"
       data-tour="skillsets-section"
     >
@@ -132,15 +146,26 @@ async function handleLogout() {
       </h2>
       <div class="space-y-0.5">
         <RouterLink
-          v-for="skillset in skillsStore.skillsets"
+          v-for="skillset in visibleSkillsets"
           :key="skillset.id"
           :to="`/skillsets/${skillset.id}`"
           class="flex items-center gap-3 rounded-lg text-sm transition-colors hover:bg-white/10 relative group"
-          :class="themeStore.sidebarCollapsed ? 'px-0 py-2 justify-center' : 'px-3 py-2'"
+          :class="themeStore.sidebarCollapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2'"
           active-class="bg-white/10"
           :style="{ color: 'var(--color-sidebar-text)' }"
         >
+          <!-- Skillset icon (collapsed) -->
+          <svg v-if="themeStore.sidebarCollapsed" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path v-if="skillset.name.toLowerCase().includes('domain')" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path v-else-if="skillset.name.toLowerCase().includes('fullstack') || skillset.name.toLowerCase().includes('stack')" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            <path v-else-if="skillset.name.toLowerCase().includes('soft')" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path v-else-if="skillset.name.toLowerCase().includes('product')" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            <path v-else-if="skillset.name.toLowerCase().includes('ai') || skillset.name.toLowerCase().includes('data')" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          <!-- Skillset dot (expanded) -->
           <span
+            v-else
             class="w-2 h-2 rounded-full shrink-0"
             :style="{ backgroundColor: 'var(--color-primary-light)' }"
           />
@@ -153,7 +178,7 @@ async function handleLogout() {
           </div>
         </RouterLink>
         <p
-          v-if="skillsStore.skillsets.length === 0 && !skillsStore.loading && !themeStore.sidebarCollapsed"
+          v-if="visibleSkillsets.length === 0 && !skillsStore.loading && !themeStore.sidebarCollapsed"
           class="px-3 py-2 text-sm"
           style="color: var(--color-sidebar-text); opacity: 0.5;"
         >
@@ -207,7 +232,7 @@ async function handleLogout() {
     <!-- Collapse toggle -->
     <div class="border-t border-white/10 shrink-0">
       <button
-        class="w-full flex items-center justify-center py-3 hover:bg-white/10 transition-colors"
+        class="w-full flex items-center justify-end px-4 py-3 hover:bg-white/10 transition-colors"
         :style="{ color: 'var(--color-sidebar-text)' }"
         :title="themeStore.sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         @click="themeStore.toggleSidebar()"

@@ -11,6 +11,7 @@ defmodule SkillsetEvaluator.Accounts.User do
     field :location, :string
     field :microsoft_uid, :string
     field :active, :boolean, default: true
+    field :job_title, :string
     field :confirmed_at, :utc_datetime
     field :onboarding_completed_steps, :string, default: "[]"
     field :onboarding_dismissed, :boolean, default: false
@@ -31,6 +32,7 @@ defmodule SkillsetEvaluator.Accounts.User do
       :location,
       :microsoft_uid,
       :active,
+      :job_title,
       :confirmed_at,
       :team_id
     ])

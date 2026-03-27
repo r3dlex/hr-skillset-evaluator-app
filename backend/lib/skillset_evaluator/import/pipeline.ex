@@ -229,34 +229,79 @@ defmodule SkillsetEvaluator.Import.Pipeline do
   end
 
   defp ensure_user(row, team_id) do
+    role = normalize_role(row.role)
+
+    email =
+      row.email ||
+        "#{String.downcase(String.replace(row.name, " ", "."))}@placeholder.local"
+
     case Repo.get_by(Accounts.User, name: row.name) do
       nil ->
-        role = normalize_role(row.role)
-
         Accounts.create_imported_user(%{
           name: row.name,
-          email:
-            row.email ||
-              "#{String.downcase(String.replace(row.name, " ", "."))}@placeholder.local",
+          email: email,
           role: role,
           team_id: team_id,
           location: row.location,
-          active: row.active
+          active: row.active,
+          job_title: row.role
         })
 
-      _user ->
-        :ok
+      user ->
+        # Always sync active, location, team, and job_title from the spreadsheet
+        Accounts.update_user(user, %{
+          active: row.active,
+          location: row.location,
+          team_id: team_id,
+          job_title: row.role
+        })
     end
   end
 
   defp ensure_skillset(name) do
+    applicable_roles = skillset_applicable_roles(name)
+
     case Repo.get_by(Skills.Skillset, name: name) do
       nil ->
-        {:ok, skillset} = Skills.create_skillset(%{name: name, position: 0})
+        {:ok, skillset} =
+          Skills.create_skillset(%{
+            name: name,
+            position: 0,
+            applicable_roles: Jason.encode!(applicable_roles)
+          })
+
         skillset
 
       skillset ->
-        skillset
+        # Update applicable_roles if not already set
+        if skillset.applicable_roles in [nil, "[]"] and applicable_roles != [] do
+          {:ok, updated} =
+            Skills.update_skillset(skillset, %{
+              applicable_roles: Jason.encode!(applicable_roles)
+            })
+
+          updated
+        else
+          skillset
+        end
+    end
+  end
+
+  # Role mapping: which job titles can see each skillset
+  # Empty list = all roles
+  defp skillset_applicable_roles(name) do
+    downcased = String.downcase(name)
+
+    cond do
+      String.contains?(downcased, "soft") -> []
+      String.contains?(downcased, "domain") -> []
+      String.contains?(downcased, "fullstack") -> ["Dev"]
+      String.contains?(downcased, "frontend") -> ["Dev"]
+      String.contains?(downcased, "backend") -> ["Dev"]
+      downcased == "qe" or String.contains?(downcased, "quality") -> ["Dev"]
+      String.contains?(downcased, "ai") or String.contains?(downcased, "ml") -> ["Dev"]
+      String.contains?(downcased, "product") -> ["Lead"]
+      true -> []
     end
   end
 

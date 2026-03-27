@@ -11,6 +11,7 @@ defmodule SkillsetEvaluatorWeb.AuthJSON do
       email: user.email,
       name: user.name,
       role: user.role,
+      job_title: user.job_title,
       location: user.location,
       team_id: user.team_id,
       active: user.active

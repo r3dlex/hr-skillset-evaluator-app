@@ -20,10 +20,9 @@ defmodule SkillsetEvaluatorWeb.TeamJSON do
       name: team.name
     }
 
-    if Map.has_key?(team, :member_count) do
-      Map.put(data, :member_count, team.member_count)
-    else
-      data
+    case Map.get(team, :member_count) do
+      nil -> data
+      count -> Map.put(data, :member_count, count)
     end
   end
 
@@ -33,7 +32,8 @@ defmodule SkillsetEvaluatorWeb.TeamJSON do
       email: user.email,
       name: user.name,
       role: user.role,
-      location: user.location
+      location: user.location,
+      active: user.active
     }
   end
 end

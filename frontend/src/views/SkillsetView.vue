@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 import RadarChart from '@/components/RadarChart.vue'
@@ -10,6 +10,7 @@ import { useSkillsStore } from '@/stores/skills'
 import { useEvaluationsStore } from '@/stores/evaluations'
 import { useTeamStore } from '@/stores/team'
 import { useAuthStore } from '@/stores/auth'
+import { periods as periodsApi } from '@/api'
 
 const route = useRoute()
 const skillsStore = useSkillsStore()
@@ -19,34 +20,58 @@ const authStore = useAuthStore()
 
 const activeTab = ref<'chart' | 'table' | 'gap'>('chart')
 const selectedUserId = ref<number | null>(null)
-const selectedGroupId = ref<number | null>(null)
+const selectedGroupId = ref<number | 'all' | null>(null)
 
 const skillsetId = computed(() => Number(route.params.id))
 
-// Generate available periods (current + last 4 quarters)
-const availablePeriods = computed(() => {
-  const periods: string[] = []
-  const now = new Date()
-  for (let i = 0; i < 8; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i * 3, 1)
-    const q = Math.ceil((d.getMonth() + 1) / 3)
-    const p = `${d.getFullYear()}-Q${q}`
-    if (!periods.includes(p)) periods.push(p)
-  }
-  return periods
-})
-
-const selectedPeriod = ref(availablePeriods.value[0])
+// Dynamic periods from backend — only periods with actual data for current context
+const availablePeriods = ref<string[]>([])
+const selectedPeriod = ref<string>('')
+const periodsLoading = ref(false)
 
 const currentPeriod = computed(() => selectedPeriod.value)
+
+async function fetchPeriods() {
+  // Only show periods where selected person/team has data
+  const userIds = selectedUserId.value
+    ? [selectedUserId.value]
+    : authStore.isManager
+      ? teamStore.members.map((m) => m.id)
+      : authStore.user ? [authStore.user.id] : []
+
+  if (userIds.length === 0 || !skillsetId.value) return
+
+  periodsLoading.value = true
+  try {
+    const list = await periodsApi.listPeriods(skillsetId.value, userIds)
+    availablePeriods.value = list
+    // Keep current selection if still valid, otherwise default to the most recent
+    if (list.length > 0 && !list.includes(selectedPeriod.value)) {
+      selectedPeriod.value = list[0]
+    }
+  } finally {
+    periodsLoading.value = false
+  }
+}
 
 const skillGroups = computed(() => {
   return skillsStore.currentSkillset?.skill_groups || []
 })
 
+const isAllSelected = computed(() => selectedGroupId.value === 'all')
+
 const selectedGroup = computed(() => {
+  if (selectedGroupId.value === 'all') return null
   if (!selectedGroupId.value) return skillGroups.value[0] || null
   return skillGroups.value.find(g => g.id === selectedGroupId.value) || null
+})
+
+// When switching to radar chart and "All" is selected, auto-select first group
+watch(activeTab, (tab) => {
+  if (tab === 'chart' && selectedGroupId.value === 'all') {
+    selectedGroupId.value = skillGroups.value[0]?.id || null
+    loadData()
+  }
 })
 
 const allSkills = computed(() => {
@@ -84,15 +109,22 @@ onMounted(async () => {
   if (skillGroups.value.length > 0 && !selectedGroupId.value) {
     selectedGroupId.value = skillGroups.value[0].id
   }
+  await fetchPeriods()
   loadData()
 })
 
-watch(skillsetId, () => {
-  skillsStore.fetchSkillset(skillsetId.value)
+watch(skillsetId, async () => {
+  await skillsStore.fetchSkillset(skillsetId.value)
+  await fetchPeriods()
   loadData()
 })
 
-function selectGroup(groupId: number) {
+watch(selectedUserId, async () => {
+  await fetchPeriods()
+  loadData()
+})
+
+function selectGroup(groupId: number | 'all') {
   selectedGroupId.value = groupId
   loadData()
 }
@@ -102,16 +134,19 @@ function loadData() {
     ? Array.from(teamStore.selectedMemberIds)
     : authStore.user ? [authStore.user.id] : []
 
-  const groupId = selectedGroup.value?.id
+  // For radar chart, always use a specific group; for table/gap, allow "all" (no group filter)
+  const groupId = isAllSelected.value ? undefined : selectedGroup.value?.id
 
   if (userIds.length > 0) {
-    evalStore.fetchRadarData(userIds, skillsetId.value, currentPeriod.value, groupId)
+    // Radar always needs a group — use first group if "all" is somehow active
+    const radarGroupId = groupId || skillGroups.value[0]?.id
+    evalStore.fetchRadarData(userIds, skillsetId.value, currentPeriod.value, radarGroupId)
   }
 
   const userId = effectiveUserId.value
   if (userId) {
-    evalStore.fetchEvaluations(userId, skillsetId.value, currentPeriod.value)
-    evalStore.fetchGapAnalysis(userId, skillsetId.value, currentPeriod.value)
+    evalStore.fetchEvaluations(userId, skillsetId.value, currentPeriod.value, groupId)
+    evalStore.fetchGapAnalysis(userId, skillsetId.value, currentPeriod.value, groupId)
   }
 }
 
@@ -143,8 +178,10 @@ async function handleScoreUpdate(skillId: number, score: number) {
           <select
             v-model="selectedPeriod"
             class="input-field w-auto"
+            :disabled="periodsLoading || availablePeriods.length === 0"
             @change="loadData()"
           >
+            <option v-if="availablePeriods.length === 0" value="">No data available</option>
             <option v-for="p in availablePeriods" :key="p" :value="p">{{ p }}</option>
           </select>
         </div>
@@ -175,11 +212,23 @@ async function handleScoreUpdate(skillId: number, score: number) {
           class="flex gap-1 flex-wrap rounded-lg p-1"
           :style="{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }"
         >
+          <!-- "All" tab — hidden on radar chart -->
+          <button
+            v-if="activeTab !== 'chart'"
+            class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors uppercase tracking-wide"
+            :style="isAllSelected
+              ? { backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)', border: '1px solid var(--color-border)' }
+              : { color: 'var(--color-text-secondary)' }
+            "
+            @click="selectGroup('all')"
+          >
+            All
+          </button>
           <button
             v-for="group in skillGroups"
             :key="group.id"
             class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors uppercase tracking-wide"
-            :style="selectedGroup?.id === group.id
+            :style="selectedGroup?.id === group.id && !isAllSelected
               ? { backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)', border: '1px solid var(--color-border)' }
               : { color: 'var(--color-text-secondary)' }
             "

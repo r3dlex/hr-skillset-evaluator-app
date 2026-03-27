@@ -126,6 +126,17 @@ export const radar = {
   },
 }
 
+// Periods
+export const periods = {
+  async listPeriods(skillsetId: number, userIds: number[]): Promise<string[]> {
+    const ids = userIds.join(',')
+    const resp = await apiGet<{ data: string[] }>(
+      `/periods?skillset_id=${skillsetId}&user_ids=${ids}`,
+    )
+    return resp.data
+  },
+}
+
 // Gap Analysis
 export const gapAnalysis = {
   async getGapAnalysis(userId: number, skillsetId: number, period: string): Promise<{ items: GapAnalysisItem[] }> {

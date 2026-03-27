@@ -11,7 +11,7 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchEvaluations(userId: number, skillsetId: number, period: string) {
+  async function fetchEvaluations(userId: number, skillsetId: number, period: string, skillGroupId?: number) {
     loading.value = true
     error.value = null
     try {
@@ -81,7 +81,7 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
     }
   }
 
-  async function fetchGapAnalysis(userId: number, skillsetId: number, period: string) {
+  async function fetchGapAnalysis(userId: number, skillsetId: number, period: string, skillGroupId?: number) {
     loading.value = true
     error.value = null
     try {
