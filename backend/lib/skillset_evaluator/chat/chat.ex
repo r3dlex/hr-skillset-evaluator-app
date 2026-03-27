@@ -68,8 +68,8 @@ defmodule SkillsetEvaluator.Chat do
       |> where([m, c], c.user_id == ^user_id)
       |> where([m, _c], like(fragment("lower(?)", m.content), ^String.downcase(search_term)))
       |> select([m, c], %{id: c.id, match_type: m.role, match_preview: m.content})
-      |> distinct([m, c], c.id)
       |> Repo.all()
+      |> Enum.uniq_by(& &1.id)
 
     # Merge and deduplicate, preferring title matches
     matched_ids =
