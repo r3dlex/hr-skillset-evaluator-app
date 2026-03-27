@@ -101,9 +101,54 @@ watch(
     <!-- Error display -->
     <div
       v-if="chatStore.error"
-      class="mx-4 mb-3 px-3 py-2 rounded-lg text-xs bg-red-50 text-red-700 border border-red-200"
+      class="mx-4 mb-3 rounded-lg text-xs border overflow-hidden"
+      :style="{
+        backgroundColor: 'color-mix(in srgb, var(--color-danger, #ef4444) 8%, var(--color-surface))',
+        borderColor: 'color-mix(in srgb, var(--color-danger, #ef4444) 25%, var(--color-border))',
+      }"
     >
-      {{ chatStore.error }}
+      <div class="px-3 py-2.5 flex items-start gap-2">
+        <svg class="w-4 h-4 flex-shrink-0 mt-0.5" :style="{ color: 'var(--color-danger, #ef4444)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        <div class="flex-1 min-w-0">
+          <p class="font-medium" :style="{ color: 'var(--color-danger, #ef4444)' }">
+            {{ chatStore.error.message }}
+          </p>
+          <p v-if="chatStore.error.code" class="mt-0.5 opacity-60" :style="{ color: 'var(--color-text-muted)' }">
+            Error code: {{ chatStore.error.code }}
+          </p>
+        </div>
+        <button
+          class="flex-shrink-0 p-0.5 rounded opacity-60 hover:opacity-100 transition-opacity"
+          :style="{ color: 'var(--color-text-muted)' }"
+          title="Dismiss"
+          @click="chatStore.dismissError()"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div
+        v-if="chatStore.error.retryable"
+        class="px-3 py-2 border-t flex justify-end"
+        :style="{ borderColor: 'color-mix(in srgb, var(--color-danger, #ef4444) 15%, var(--color-border))' }"
+      >
+        <button
+          class="flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-colors"
+          :style="{
+            color: 'var(--color-primary)',
+            backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)',
+          }"
+          @click="chatStore.retryLastMessage()"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Retry
+        </button>
+      </div>
     </div>
   </div>
 </template>

@@ -3,8 +3,14 @@ defmodule SkillsetEvaluatorWeb.EvaluationController do
 
   alias SkillsetEvaluator.Evaluations
 
-  def index(conn, %{"user_id" => user_id, "skillset_id" => skillset_id, "period" => period}) do
-    evaluations = Evaluations.list_evaluations(user_id, skillset_id, period)
+  def index(conn, %{"user_id" => user_id, "skillset_id" => skillset_id, "period" => period} = params) do
+    opts =
+      case params["skill_group_id"] do
+        nil -> []
+        gid -> [skill_group_id: String.to_integer(gid)]
+      end
+
+    evaluations = Evaluations.list_evaluations(user_id, skillset_id, period, opts)
     render(conn, :index, evaluations: evaluations)
   end
 

@@ -98,6 +98,10 @@ watch(activeTab, () => {
 
 const allSkills = computed(() => {
   if (!skillsStore.currentSkillset?.skill_groups) return []
+  // Filter by selected group when not "all"
+  if (selectedGroup.value) {
+    return selectedGroup.value.skills || []
+  }
   return skillsStore.currentSkillset.skill_groups.flatMap((g) => g.skills)
 })
 

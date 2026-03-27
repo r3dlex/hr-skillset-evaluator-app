@@ -1,7 +1,8 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { chatApi } from '@/api/chat'
-import type { Conversation, ChatMessage } from '@/types'
+import type { Conversation, ChatMessage, ChatError } from '@/types'
+import type { SearchResult } from '@/api/chat'
 
 export const useChatStore = defineStore('chat', () => {
   const conversations = ref<Conversation[]>([])
@@ -9,8 +10,13 @@ export const useChatStore = defineStore('chat', () => {
   const messages = ref<ChatMessage[]>([])
   const isStreaming = ref(false)
   const streamingContent = ref('')
-  const error = ref<string | null>(null)
+  const error = ref<ChatError | null>(null)
   const isPanelOpen = ref(false)
+  const searchQuery = ref('')
+  const searchResults = ref<SearchResult[]>([])
+  const isSearching = ref(false)
+  let searchTimeout: ReturnType<typeof setTimeout> | null = null
+  let lastMessageContent = ''
 
   const activeConversation = computed(() =>
     conversations.value.find(c => c.id === activeConversationId.value) || null,
@@ -20,8 +26,35 @@ export const useChatStore = defineStore('chat', () => {
     try {
       conversations.value = await chatApi.listConversations()
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to load conversations'
+      error.value = { code: 'load_error', message: e instanceof Error ? e.message : 'Failed to load conversations', retryable: true }
     }
+  }
+
+  function setSearchQuery(query: string) {
+    searchQuery.value = query
+    if (searchTimeout) clearTimeout(searchTimeout)
+    if (!query.trim()) {
+      searchResults.value = []
+      isSearching.value = false
+      return
+    }
+    isSearching.value = true
+    searchTimeout = setTimeout(async () => {
+      try {
+        searchResults.value = await chatApi.searchConversations(query.trim())
+      } catch {
+        searchResults.value = []
+      } finally {
+        isSearching.value = false
+      }
+    }, 300)
+  }
+
+  function clearSearch() {
+    searchQuery.value = ''
+    searchResults.value = []
+    isSearching.value = false
+    if (searchTimeout) clearTimeout(searchTimeout)
   }
 
   async function createConversation(locale?: string) {
@@ -32,7 +65,7 @@ export const useChatStore = defineStore('chat', () => {
       messages.value = []
       return conv
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to create conversation'
+      error.value = { code: 'create_error', message: e instanceof Error ? e.message : 'Failed to create conversation', retryable: true }
       return null
     }
   }
@@ -43,12 +76,18 @@ export const useChatStore = defineStore('chat', () => {
       const data = await chatApi.getConversation(conversationId)
       messages.value = data.messages
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to load messages'
+      error.value = { code: 'load_error', message: e instanceof Error ? e.message : 'Failed to load messages', retryable: true }
     }
   }
 
   async function sendMessage(content: string) {
-    if (!activeConversationId.value || isStreaming.value) return
+    if (isStreaming.value) return
+
+    // Auto-create conversation if none active
+    if (!activeConversationId.value) {
+      const conv = await createConversation()
+      if (!conv) return
+    }
 
     // Add user message locally
     const userMsg: ChatMessage = {
@@ -76,6 +115,7 @@ export const useChatStore = defineStore('chat', () => {
       const reader = body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
+      let currentEvent = ''
       let finalMessageId: number | null = null
       let finalTokenUsage = { input: 0, output: 0 }
 
@@ -88,20 +128,25 @@ export const useChatStore = defineStore('chat', () => {
         buffer = lines.pop() || ''
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim()
+          } else if (line.startsWith('data: ')) {
             const data = line.slice(6)
             try {
               const parsed = JSON.parse(data)
 
-              if (parsed.content !== undefined) {
+              if (currentEvent === 'delta' && parsed.content !== undefined) {
                 streamingContent.value += parsed.content
-              }
-              if (parsed.message_id) {
+              } else if (currentEvent === 'done' && parsed.message_id) {
                 finalMessageId = parsed.message_id
                 finalTokenUsage = parsed.token_usage || finalTokenUsage
-              }
-              if (parsed.code) {
-                error.value = parsed.message
+              } else if (currentEvent === 'error') {
+                error.value = {
+                  code: parsed.code || 'stream_error',
+                  message: parsed.message || 'An error occurred',
+                  retryable: parsed.retryable ?? false,
+                }
+                lastMessageContent = content
               }
             } catch {
               // ignore non-JSON SSE data
@@ -125,7 +170,8 @@ export const useChatStore = defineStore('chat', () => {
       }
     } catch (e: unknown) {
       if (e instanceof Error && e.name !== 'AbortError') {
-        error.value = e.message || 'Failed to send message'
+        error.value = { code: 'connection_error', message: e.message || 'Failed to send message', retryable: true }
+        lastMessageContent = content
       }
     } finally {
       isStreaming.value = false
@@ -142,8 +188,24 @@ export const useChatStore = defineStore('chat', () => {
         messages.value = []
       }
     } catch (e: unknown) {
-      error.value = e instanceof Error ? e.message : 'Failed to delete conversation'
+      error.value = { code: 'delete_error', message: e instanceof Error ? e.message : 'Failed to delete conversation', retryable: false }
     }
+  }
+
+  function retryLastMessage() {
+    if (lastMessageContent && error.value?.retryable) {
+      // Remove the failed user message before retrying
+      const lastUserMsgIndex = messages.value.findLastIndex(m => m.role === 'user')
+      if (lastUserMsgIndex >= 0) {
+        messages.value.splice(lastUserMsgIndex, 1)
+      }
+      error.value = null
+      sendMessage(lastMessageContent)
+    }
+  }
+
+  function dismissError() {
+    error.value = null
   }
 
   function togglePanel() {
@@ -167,11 +229,18 @@ export const useChatStore = defineStore('chat', () => {
     error,
     isPanelOpen,
     activeConversation,
+    searchQuery,
+    searchResults,
+    isSearching,
     loadConversations,
     createConversation,
     loadMessages,
     sendMessage,
     deleteConversation,
+    retryLastMessage,
+    dismissError,
+    setSearchQuery,
+    clearSearch,
     togglePanel,
     openPanel,
     closePanel,

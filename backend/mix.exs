@@ -44,6 +44,7 @@ defmodule SkillsetEvaluator.MixProject do
       {:xlsxir, "~> 1.6"},
       {:broadway, "~> 1.0"},
       {:bcrypt_elixir, "~> 3.0"},
+      {:req, "~> 0.4"},
       {:excoveralls, "~> 0.18", only: :test}
     ]
   end

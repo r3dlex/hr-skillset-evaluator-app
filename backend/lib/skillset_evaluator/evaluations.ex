@@ -9,8 +9,15 @@ defmodule SkillsetEvaluator.Evaluations do
   alias SkillsetEvaluator.Skills
   alias SkillsetEvaluator.Skills.{SkillGroup, Skill}
 
-  def list_evaluations(user_id, skillset_id, period) do
-    skill_ids = skill_ids_for_skillset(skillset_id)
+  def list_evaluations(user_id, skillset_id, period, opts \\ []) do
+    skill_group_id = Keyword.get(opts, :skill_group_id)
+
+    skill_ids =
+      if skill_group_id do
+        skill_ids_for_group(skill_group_id)
+      else
+        skill_ids_for_skillset(skillset_id)
+      end
 
     Evaluation
     |> where([e], e.user_id == ^user_id and e.period == ^period and e.skill_id in ^skill_ids)
@@ -152,7 +159,15 @@ defmodule SkillsetEvaluator.Evaluations do
   end
 
   def get_gap_analysis(user_id, skillset_id, period, opts \\ []) do
-    skill_ids = skill_ids_for_skillset(skillset_id)
+    skill_group_id = Keyword.get(opts, :skill_group_id)
+
+    skill_ids =
+      if skill_group_id do
+        skill_ids_for_group(skill_group_id)
+      else
+        skill_ids_for_skillset(skillset_id)
+      end
+
     team_id = Keyword.get(opts, :team_id)
     location = Keyword.get(opts, :location)
 
@@ -309,6 +324,13 @@ defmodule SkillsetEvaluator.Evaluations do
     Skill
     |> join(:inner, [s], sg in SkillGroup, on: s.skill_group_id == sg.id)
     |> where([s, sg], sg.skillset_id == ^skillset_id)
+    |> select([s], s.id)
+    |> Repo.all()
+  end
+
+  defp skill_ids_for_group(skill_group_id) do
+    Skill
+    |> where([s], s.skill_group_id == ^skill_group_id)
     |> select([s], s.id)
     |> Repo.all()
   end

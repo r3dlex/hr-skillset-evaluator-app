@@ -17,6 +17,10 @@ defmodule SkillsetEvaluatorWeb.ChatJSON do
     %{data: message_data(message)}
   end
 
+  def search(%{results: results}) do
+    %{data: Enum.map(results, &search_result_data/1)}
+  end
+
   def conversation_data(%Conversation{} = conv) do
     %{
       id: conv.id,
@@ -25,6 +29,19 @@ defmodule SkillsetEvaluatorWeb.ChatJSON do
       message_count: conv.message_count,
       inserted_at: conv.inserted_at,
       updated_at: conv.updated_at
+    }
+  end
+
+  defp search_result_data(result) when is_map(result) do
+    %{
+      id: result.id,
+      title: result.title,
+      locale: result.locale,
+      message_count: result.message_count,
+      inserted_at: result.inserted_at,
+      updated_at: result.updated_at,
+      match_snippet: Map.get(result, :match_snippet, ""),
+      match_type: Map.get(result, :match_type, "title")
     }
   end
 

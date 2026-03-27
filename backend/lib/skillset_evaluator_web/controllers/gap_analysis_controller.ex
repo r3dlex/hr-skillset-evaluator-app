@@ -14,6 +14,7 @@ defmodule SkillsetEvaluatorWeb.GapAnalysisController do
       []
       |> add_if(params["team_id"], fn v -> {:team_id, String.to_integer(v)} end)
       |> add_if(params["location"], fn v -> {:location, v} end)
+      |> add_if(params["skill_group_id"], fn v -> {:skill_group_id, String.to_integer(v)} end)
 
     gap_data =
       Evaluations.get_gap_analysis(user_id, String.to_integer(skillset_id), period, opts)

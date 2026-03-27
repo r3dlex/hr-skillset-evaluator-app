@@ -1,9 +1,15 @@
 import { apiGet, apiPost, apiDelete } from './client'
 import type { Conversation, ChatMessage } from '@/types'
 
+export interface SearchResult extends Conversation {
+  match_snippet: string
+  match_type: string
+}
+
 export const chatApi = {
   async createConversation(locale?: string): Promise<Conversation> {
-    return apiPost<Conversation>('/chat/conversations', { locale })
+    const resp = await apiPost<{ data: Conversation }>('/chat/conversations', { locale })
+    return resp.data
   },
 
   async listConversations(): Promise<Conversation[]> {
@@ -11,8 +17,16 @@ export const chatApi = {
     return resp.data
   },
 
+  async searchConversations(query: string): Promise<SearchResult[]> {
+    const resp = await apiGet<{ data: SearchResult[] }>(
+      `/chat/conversations?q=${encodeURIComponent(query)}`,
+    )
+    return resp.data
+  },
+
   async getConversation(id: number): Promise<{ conversation: Conversation; messages: ChatMessage[] }> {
-    return apiGet<{ conversation: Conversation; messages: ChatMessage[] }>(`/chat/conversations/${id}`)
+    const resp = await apiGet<{ data: Conversation & { messages: ChatMessage[] } }>(`/chat/conversations/${id}`)
+    return { conversation: resp.data, messages: resp.data.messages || [] }
   },
 
   async deleteConversation(id: number): Promise<void> {

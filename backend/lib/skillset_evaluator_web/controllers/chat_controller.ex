@@ -9,15 +9,26 @@ defmodule SkillsetEvaluatorWeb.ChatController do
   ## REST actions
 
   @doc """
-  GET /api/chat/conversations — list own conversations
+  GET /api/chat/conversations — list own conversations, optionally filtered by search query
   """
   def index(conn, params) do
     user = conn.assigns.current_user
     limit = Map.get(params, "limit", "20") |> String.to_integer()
     offset = Map.get(params, "offset", "0") |> String.to_integer()
 
-    conversations = Chat.list_conversations(user.id, limit: limit, offset: offset)
-    render(conn, :index, conversations: conversations)
+    case Map.get(params, "q") do
+      nil ->
+        conversations = Chat.list_conversations(user.id, limit: limit, offset: offset)
+        render(conn, :index, conversations: conversations)
+
+      "" ->
+        conversations = Chat.list_conversations(user.id, limit: limit, offset: offset)
+        render(conn, :index, conversations: conversations)
+
+      query ->
+        results = Chat.search_conversations(user.id, query, limit: limit)
+        render(conn, :search, results: results)
+    end
   end
 
   @doc """
@@ -189,11 +200,52 @@ defmodule SkillsetEvaluatorWeb.ChatController do
         conn
 
       {:error, reason} ->
-        error_data = Jason.encode!(%{code: "stream_error", message: to_string(reason)})
+        {code, message, retryable} = classify_error(reason)
+        error_data = Jason.encode!(%{code: code, message: message, retryable: retryable})
         chunk(conn, "event: error\ndata: #{error_data}\n\n")
         conn
     end
   end
+
+  # Maps API status codes and error types to user-friendly messages
+  @anthropic_errors %{
+    400 => {"invalid_request", "The request was malformed. Please try rephrasing your message.", false},
+    401 => {"authentication_error", "The AI service credentials are invalid. Please contact your administrator.", false},
+    403 => {"permission_denied", "Access to the AI service is denied. Please contact your administrator.", false},
+    404 => {"not_found", "The AI service endpoint could not be reached. Please check the configuration.", false},
+    408 => {"request_timeout", "The request timed out. Please try again.", true},
+    429 => {"rate_limit_error", "The AI service is temporarily overloaded. Please wait a moment and try again.", true},
+    500 => {"api_error", "The AI service encountered an internal error. Please try again later.", true},
+    502 => {"bad_gateway", "The AI service is temporarily unavailable. Please try again in a few moments.", true},
+    503 => {"overloaded", "The AI service is currently overloaded. Please try again in a few minutes.", true},
+    529 => {"overloaded", "The AI service is currently overloaded. Please try again in a few minutes.", true}
+  }
+
+  defp classify_error(reason) when is_binary(reason) do
+    cond do
+      String.contains?(reason, "status 4") or String.contains?(reason, "status 5") ->
+        # Extract status code from "API returned status XXX" or "API error: XXX"
+        case Regex.run(~r/(\d{3})/, reason) do
+          [_, code_str] ->
+            code = String.to_integer(code_str)
+            Map.get(@anthropic_errors, code, {"api_error", reason, code >= 500})
+
+          _ ->
+            {"api_error", reason, false}
+        end
+
+      String.contains?(reason, "timeout") ->
+        {"request_timeout", "The AI service took too long to respond. Please try again.", true}
+
+      String.contains?(reason, "connection") or String.contains?(reason, "nxdomain") ->
+        {"connection_error", "Could not connect to the AI service. Please check your network connection.", true}
+
+      true ->
+        {"stream_error", reason, false}
+    end
+  end
+
+  defp classify_error(reason), do: {"stream_error", inspect(reason), false}
 
   defp do_anthropic_stream(conn, %{url: url, headers: headers, body: body}) do
     # Use Req with into: :self for streaming
@@ -201,20 +253,40 @@ defmodule SkillsetEvaluatorWeb.ChatController do
 
     task =
       Task.async(fn ->
-        Req.post(url,
-          json: body,
-          headers: headers,
-          receive_timeout: 120_000,
-          into: fn {:data, data}, {req, resp} ->
-            send(parent, {:sse_chunk, data})
-            {:cont, {req, resp}}
-          end
-        )
+        result =
+          Req.post(url,
+            json: body,
+            headers: headers,
+            receive_timeout: 120_000,
+            into: fn {:data, data}, {req, resp} ->
+              send(parent, {:sse_chunk, data})
+              {:cont, {req, resp}}
+            end
+          )
+
+        # Notify parent about completion status with error details
+        case result do
+          {:ok, %{status: status, body: body}} when status != 200 ->
+            error_msg = extract_api_error(status, body)
+            send(parent, {:stream_error, error_msg})
+
+          {:error, %{reason: reason}} ->
+            send(parent, {:stream_error, "connection error: #{inspect(reason)}"})
+
+          {:error, reason} ->
+            send(parent, {:stream_error, inspect(reason)})
+
+          _ ->
+            :ok
+        end
+
+        result
       end)
 
     # Collect chunks and forward deltas
     result = collect_sse_chunks(conn, "", %{}, task)
-    Task.await(task, 130_000)
+    # Task already completed by the time collect_sse_chunks returns
+    Process.demonitor(task.ref, [:flush])
     result
   rescue
     e ->
@@ -234,9 +306,17 @@ defmodule SkillsetEvaluatorWeb.ChatController do
 
         collect_sse_chunks(conn, accumulated <> new_text, new_usage, task)
 
+      {:stream_error, reason} ->
+        Logger.error("LLM stream error: #{reason}")
+        {:error, reason}
+
       {ref, _result} when is_reference(ref) ->
         # Task completed
-        {:ok, accumulated, token_usage}
+        if accumulated == "" do
+          {:error, "No response from LLM provider"}
+        else
+          {:ok, accumulated, token_usage}
+        end
 
       {:DOWN, _ref, :process, _pid, _reason} ->
         {:ok, accumulated, token_usage}
@@ -329,4 +409,27 @@ defmodule SkillsetEvaluatorWeb.ChatController do
   end
 
   defp format_changeset_errors(error), do: inspect(error)
+
+  defp extract_api_error(status, body) when is_binary(body) do
+    case Jason.decode(body) do
+      {:ok, %{"error" => %{"message" => msg}}} ->
+        "API error status #{status}: #{msg}"
+
+      {:ok, %{"error" => %{"type" => type}}} ->
+        "API error status #{status}: #{type}"
+
+      _ ->
+        "API returned status #{status}"
+    end
+  end
+
+  defp extract_api_error(status, body) when is_map(body) do
+    case body do
+      %{"error" => %{"message" => msg}} -> "API error status #{status}: #{msg}"
+      %{"error" => %{"type" => type}} -> "API error status #{status}: #{type}"
+      _ -> "API returned status #{status}"
+    end
+  end
+
+  defp extract_api_error(status, _body), do: "API returned status #{status}"
 end

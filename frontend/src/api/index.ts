@@ -68,10 +68,10 @@ export const skillsets = {
 
 // Evaluations
 export const evaluations = {
-  async getEvaluations(userId: number, skillsetId: number, period: string): Promise<{ evaluations: Evaluation[] }> {
-    const resp = await apiGet<DataWrapper<Evaluation[]>>(
-      `/evaluations?user_id=${userId}&skillset_id=${skillsetId}&period=${period}`,
-    )
+  async getEvaluations(userId: number, skillsetId: number, period: string, skillGroupId?: number): Promise<{ evaluations: Evaluation[] }> {
+    let url = `/evaluations?user_id=${userId}&skillset_id=${skillsetId}&period=${period}`
+    if (skillGroupId) url += `&skill_group_id=${skillGroupId}`
+    const resp = await apiGet<DataWrapper<Evaluation[]>>(url)
     return { evaluations: resp.data }
   },
   async updateManagerScores(
@@ -143,11 +143,12 @@ export const gapAnalysis = {
     userId: number,
     skillsetId: number,
     period: string,
-    opts?: { teamId?: number; location?: string },
+    opts?: { teamId?: number; location?: string; skillGroupId?: number },
   ): Promise<{ items: GapAnalysisItem[] }> {
     let url = `/gap-analysis?user_id=${userId}&skillset_id=${skillsetId}&period=${period}`
     if (opts?.teamId) url += `&team_id=${opts.teamId}`
     if (opts?.location) url += `&location=${encodeURIComponent(opts.location)}`
+    if (opts?.skillGroupId) url += `&skill_group_id=${opts.skillGroupId}`
     const resp = await apiGet<{ data: GapAnalysisItem[] }>(url)
     return { items: resp.data }
   },

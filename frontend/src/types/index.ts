@@ -91,3 +91,28 @@ export interface TourStep {
 
 export type ThemeName = 'default' | 'rib'
 export type ColorMode = 'light' | 'dark' | 'system'
+
+export interface Conversation {
+  id: number
+  title: string | null
+  locale: string
+  message_count: number
+  inserted_at: string
+  updated_at: string
+}
+
+export interface ChatMessage {
+  id: number
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  token_usage: { input: number; output: number }
+  provider: string
+  model: string
+  inserted_at: string
+}
+
+export interface ChatError {
+  code: string
+  message: string
+  retryable: boolean
+}

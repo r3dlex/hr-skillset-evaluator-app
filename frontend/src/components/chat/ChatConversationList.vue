@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 
 const chatStore = useChatStore()
@@ -10,16 +10,30 @@ onMounted(() => {
   chatStore.loadConversations()
 })
 
+const displayedConversations = computed(() => {
+  if (chatStore.searchQuery.trim()) {
+    return chatStore.searchResults
+  }
+  return chatStore.conversations
+})
+
 function toggleExpanded() {
   isExpanded.value = !isExpanded.value
 }
 
 function selectConversation(id: number) {
+  chatStore.clearSearch()
   chatStore.loadMessages(id)
 }
 
 function handleNewConversation() {
+  chatStore.clearSearch()
   chatStore.createConversation()
+}
+
+function handleSearchInput(event: Event) {
+  const value = (event.target as HTMLInputElement).value
+  chatStore.setSearchQuery(value)
 }
 
 function requestDelete(id: number) {
@@ -76,10 +90,40 @@ function formatDate(dateStr: string): string {
     <!-- Conversation list (collapsible) -->
     <div
       v-if="isExpanded"
-      class="px-2 pb-2 max-h-48 overflow-y-auto scrollbar-thin"
+      class="px-2 pb-2 max-h-60 overflow-y-auto scrollbar-thin"
     >
+      <!-- Search input -->
+      <div class="relative mb-1.5">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Search conversations..."
+          class="w-full pl-8 pr-7 py-1.5 rounded-lg text-xs border"
+          :style="{
+            backgroundColor: 'var(--color-surface)',
+            borderColor: 'var(--color-border)',
+            color: 'var(--color-text-primary)',
+          }"
+          :value="chatStore.searchQuery"
+          @input="handleSearchInput"
+        />
+        <button
+          v-if="chatStore.searchQuery"
+          class="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded"
+          :style="{ color: 'var(--color-text-muted)' }"
+          @click="chatStore.clearSearch()"
+        >
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
       <!-- New conversation button -->
       <button
+        v-if="!chatStore.searchQuery"
         class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors mb-1"
         :style="{ color: 'var(--color-primary)' }"
         @click="handleNewConversation"
@@ -90,9 +134,22 @@ function formatDate(dateStr: string): string {
         New conversation
       </button>
 
+      <!-- Search loading indicator -->
+      <div
+        v-if="chatStore.isSearching"
+        class="flex items-center gap-2 px-3 py-2 text-xs"
+        :style="{ color: 'var(--color-text-muted)' }"
+      >
+        <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        Searching...
+      </div>
+
       <!-- Conversation items -->
       <div
-        v-for="conv in chatStore.conversations"
+        v-for="conv in displayedConversations"
         :key="conv.id"
         class="flex items-center gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors group"
         :style="{
@@ -104,6 +161,9 @@ function formatDate(dateStr: string): string {
         <div class="flex-1 min-w-0">
           <p class="truncate font-medium">
             {{ conv.title || 'New conversation' }}
+          </p>
+          <p v-if="'match_snippet' in conv && conv.match_snippet" class="truncate text-[10px] mt-0.5" :style="{ color: 'var(--color-primary)' }">
+            {{ conv.match_snippet }}
           </p>
           <p class="truncate" :style="{ color: 'var(--color-text-muted)' }">
             {{ formatDate(conv.inserted_at) }} &middot; {{ conv.message_count }} msgs
@@ -124,7 +184,15 @@ function formatDate(dateStr: string): string {
       </div>
 
       <p
-        v-if="chatStore.conversations.length === 0"
+        v-if="chatStore.searchQuery && !chatStore.isSearching && displayedConversations.length === 0"
+        class="px-3 py-2 text-xs"
+        :style="{ color: 'var(--color-text-muted)' }"
+      >
+        No matching conversations
+      </p>
+
+      <p
+        v-if="!chatStore.searchQuery && chatStore.conversations.length === 0"
         class="px-3 py-2 text-xs"
         :style="{ color: 'var(--color-text-muted)' }"
       >

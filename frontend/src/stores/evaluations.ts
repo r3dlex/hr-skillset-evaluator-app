@@ -15,7 +15,7 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await evalApi.getEvaluations(userId, skillsetId, period)
+      const response = await evalApi.getEvaluations(userId, skillsetId, period, skillGroupId)
       evaluations.value = response.evaluations
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch evaluations'
@@ -91,7 +91,10 @@ export const useEvaluationsStore = defineStore('evaluations', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await gapApi.getGapAnalysis(userId, skillsetId, period, opts)
+      const response = await gapApi.getGapAnalysis(userId, skillsetId, period, {
+        ...opts,
+        skillGroupId,
+      })
       gapAnalysis.value = response.items
     } catch (e) {
       error.value = e instanceof Error ? e.message : 'Failed to fetch gap analysis'
