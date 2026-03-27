@@ -89,7 +89,8 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
   end
 
   @doc "Returns skill structure metadata for all skill sheets (even those with no data rows)."
-  @spec parse_skill_structures(String.t()) :: {:ok, [%{sheet_name: String.t(), groups: [map()], skills: [map()]}]}
+  @spec parse_skill_structures(String.t()) ::
+          {:ok, [%{sheet_name: String.t(), groups: [map()], skills: [map()]}]}
   def parse_skill_structures(file_path) do
     result = Xlsxir.multi_extract(file_path)
     table_ids = extract_table_ids(result)
@@ -104,11 +105,13 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
             nil
           else
             rows = Xlsxir.get_list(table_id)
+
             case rows do
               [group_row, priority_row, header_row | _] ->
                 skill_groups = extract_skill_groups(group_row)
                 skills = extract_skills(header_row, priority_row, skill_groups)
                 %{sheet_name: sheet_name, groups: skill_groups, skills: skills}
+
               _ ->
                 nil
             end
@@ -270,6 +273,7 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
 
   defp normalize_priority(val) do
     cleaned = val |> to_string() |> String.trim() |> String.downcase()
+
     cond do
       String.contains?(cleaned, "critical") -> "critical"
       String.contains?(cleaned, "crit") -> "critical"

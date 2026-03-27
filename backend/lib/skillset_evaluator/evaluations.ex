@@ -238,12 +238,16 @@ defmodule SkillsetEvaluator.Evaluations do
       if team_id do
         query
         |> join(:inner, [e, u], ut in SkillsetEvaluator.Teams.UserTeam,
-          on: ut.user_id == u.id and ut.team_id == ^team_id)
+          on: ut.user_id == u.id and ut.team_id == ^team_id
+        )
       else
         query
       end
 
-    query = if location && location != "", do: where(query, [e, u], u.location == ^location), else: query
+    query =
+      if location && location != "",
+        do: where(query, [e, u], u.location == ^location),
+        else: query
 
     query
     |> group_by([e, u], e.skill_id)
@@ -267,7 +271,10 @@ defmodule SkillsetEvaluator.Evaluations do
       |> where([e, u], not is_nil(e.manager_score))
       |> where([e, u], u.job_title == ^job_title)
 
-    query = if location && location != "", do: where(query, [e, u], u.location == ^location), else: query
+    query =
+      if location && location != "",
+        do: where(query, [e, u], u.location == ^location),
+        else: query
 
     query
     |> group_by([e, u], e.skill_id)

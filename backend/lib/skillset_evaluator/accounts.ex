@@ -33,7 +33,8 @@ defmodule SkillsetEvaluator.Accounts do
   def list_users_by_team(team_id) do
     User
     |> join(:inner, [u], ut in SkillsetEvaluator.Teams.UserTeam,
-      on: ut.user_id == u.id and ut.team_id == ^team_id)
+      on: ut.user_id == u.id and ut.team_id == ^team_id
+    )
     |> where([u], u.active == true)
     |> Repo.all()
   end

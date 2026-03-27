@@ -48,9 +48,12 @@ defmodule SkillsetEvaluator.TeamsTest do
   describe "list_team_members/1" do
     test "returns active users in the team" do
       team = team_fixture()
-      user1 = user_fixture(%{team_id: team.id, name: "Member1"})
-      user2 = user_fixture(%{team_id: team.id, name: "Member2"})
+      user1 = user_fixture(%{name: "Member1"})
+      user2 = user_fixture(%{name: "Member2"})
       _outsider = user_fixture(%{name: "Outsider"})
+
+      Teams.add_user_to_team(user1.id, team.id)
+      Teams.add_user_to_team(user2.id, team.id)
 
       members = Teams.list_team_members(team.id)
       ids = Enum.map(members, & &1.id)

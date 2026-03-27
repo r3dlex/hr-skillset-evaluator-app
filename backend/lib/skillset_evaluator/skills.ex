@@ -12,7 +12,8 @@ defmodule SkillsetEvaluator.Skills do
   def list_skillsets do
     skill_count_query =
       from s in Skill,
-        join: sg in SkillGroup, on: s.skill_group_id == sg.id,
+        join: sg in SkillGroup,
+        on: s.skill_group_id == sg.id,
         where: sg.skillset_id == parent_as(:skillset).id,
         select: count(s.id)
 

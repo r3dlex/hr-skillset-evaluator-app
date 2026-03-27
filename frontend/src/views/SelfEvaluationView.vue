@@ -6,11 +6,25 @@ import ScoreSlider from '@/components/ScoreSlider.vue'
 import { useSkillsStore } from '@/stores/skills'
 import { useEvaluationsStore } from '@/stores/evaluations'
 import { useAuthStore } from '@/stores/auth'
+import { useChatStore } from '@/stores/chat'
 
 const route = useRoute()
 const skillsStore = useSkillsStore()
 const evalStore = useEvaluationsStore()
 const authStore = useAuthStore()
+const chatStore = useChatStore()
+
+async function openChatAssistant() {
+  chatStore.openPanel()
+  const conv = await chatStore.createConversation()
+  if (conv) {
+    const skillsetName = skillsStore.currentSkillset?.name || 'this skillset'
+    const period = currentPeriod.value
+    await chatStore.sendMessage(
+      `I'd like help with my self-evaluation for ${skillsetName} in period ${period}. Can you walk me through the skills?`
+    )
+  }
+}
 
 const skillsetId = computed(() => Number(route.params.skillsetId))
 const saving = ref(false)
@@ -98,6 +112,27 @@ function priorityColor(priority: string): string {
           @click="handleSave"
         >
           {{ saving ? 'Saving...' : 'Save Scores' }}
+        </button>
+      </div>
+
+      <!-- AI Assistant Prompt -->
+      <div
+        class="card p-4 mb-6 flex items-center gap-3"
+        :style="{ borderLeft: '4px solid var(--color-primary)' }"
+      >
+        <svg class="w-8 h-8 flex-shrink-0" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+        <div>
+          <p class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
+            Need help deciding your scores?
+          </p>
+          <p class="text-xs mt-0.5" :style="{ color: 'var(--color-text-secondary)' }">
+            The AI assistant can explain proficiency levels and guide you through your self-evaluation.
+          </p>
+        </div>
+        <button class="btn-primary text-sm ml-auto flex-shrink-0" @click="openChatAssistant">
+          Ask AI Assistant
         </button>
       </div>
 

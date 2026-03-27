@@ -20,7 +20,8 @@ defmodule SkillsetEvaluatorWeb.DashboardController do
           join: ut in SkillsetEvaluator.Teams.UserTeam,
           on: ut.user_id == u.id and ut.team_id == ^team_id,
           where: u.active == true,
-          select: u.id)
+          select: u.id
+        )
       else
         from(u in SkillsetEvaluator.Accounts.User, where: u.active == true, select: u.id)
       end

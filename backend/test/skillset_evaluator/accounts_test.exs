@@ -108,9 +108,12 @@ defmodule SkillsetEvaluator.AccountsTest do
   describe "list_users_by_team/1" do
     test "returns active users belonging to the given team" do
       team = team_fixture()
-      user1 = user_fixture(%{team_id: team.id, name: "TeamUser1"})
-      user2 = user_fixture(%{team_id: team.id, name: "TeamUser2"})
+      user1 = user_fixture(%{name: "TeamUser1"})
+      user2 = user_fixture(%{name: "TeamUser2"})
       _other = user_fixture(%{name: "OtherUser"})
+
+      SkillsetEvaluator.Teams.add_user_to_team(user1.id, team.id)
+      SkillsetEvaluator.Teams.add_user_to_team(user2.id, team.id)
 
       result = Accounts.list_users_by_team(team.id)
       ids = Enum.map(result, & &1.id)

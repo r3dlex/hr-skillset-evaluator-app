@@ -83,7 +83,7 @@ describe('useEvaluationsStore', () => {
     expect(store.gapAnalysis).toEqual(mockGapItems)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
-    expect(gapApi.getGapAnalysis).toHaveBeenCalledWith(1, 1, '2024-Q1')
+    expect(gapApi.getGapAnalysis).toHaveBeenCalledWith(1, 1, '2024-Q1', undefined)
   })
 
   it('fetchEvaluations sets error on failure', async () => {

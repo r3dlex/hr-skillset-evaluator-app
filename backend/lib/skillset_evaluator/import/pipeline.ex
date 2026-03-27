@@ -292,8 +292,10 @@ defmodule SkillsetEvaluator.Import.Pipeline do
 
   defp normalize_job_title(nil), do: nil
   defp normalize_job_title(""), do: nil
+
   defp normalize_job_title(val) do
     cleaned = val |> String.trim() |> String.trim_trailing(".")
+
     case String.downcase(cleaned) do
       "dev" -> "Dev"
       "developer" -> "Dev"
@@ -328,6 +330,7 @@ defmodule SkillsetEvaluator.Import.Pipeline do
       skillset ->
         # Always update applicable_roles to match current mapping
         encoded = Jason.encode!(applicable_roles)
+
         if skillset.applicable_roles != encoded do
           {:ok, updated} =
             Skills.update_skillset(skillset, %{
@@ -348,8 +351,10 @@ defmodule SkillsetEvaluator.Import.Pipeline do
     downcased = String.downcase(name)
 
     cond do
-      String.contains?(downcased, "soft") -> []  # All roles
-      String.contains?(downcased, "domain") -> [] # All roles
+      # All roles
+      String.contains?(downcased, "soft") -> []
+      # All roles
+      String.contains?(downcased, "domain") -> []
       String.contains?(downcased, "fullstack") -> ["Dev", "QE", "DevOps", "Lead"]
       String.contains?(downcased, "product") -> ["UX", "PM", "PO", "Lead"]
       downcased == "ai" or String.contains?(downcased, "ai") -> ["AI"]
