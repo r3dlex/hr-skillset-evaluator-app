@@ -7,6 +7,9 @@ services:
       - "4000:4000"
     volumes:
       - ./data:/app/data
+      - ./spec:/app/spec:ro
+      - ./llm:/app/llm:ro
+      - ./AGENTS.md:/app/AGENTS.md:ro
     env_file:
       - .env
     environment:

@@ -1,11 +1,12 @@
 defmodule SkillsetEvaluator.LLM.ContextBuilder do
   @moduledoc """
-  Assembles the 4-layer system prompt and conversation messages for LLM calls.
+  Assembles the multi-layer system prompt and conversation messages for LLM calls.
 
-  Layer 1: Identity — static role description
-  Layer 2: Glossary — domain terms from glossary_terms table
-  Layer 3: User Context — role-scoped data (admin/manager/user)
-  Layer 4: Conversation history (via messages)
+  Progressive disclosure layers:
+  Layer 0: Agent identity + guidelines (from llm/AGENTS.md)
+  Layer 1: Domain glossary (from data/glossary_aec_construction.md + DB terms)
+  Layer 2: User context — role-scoped data (admin/manager/user)
+  Layer 3: Available skills reference (file paths for on-demand knowledge)
   """
 
   import Ecto.Query
@@ -17,16 +18,26 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
   alias SkillsetEvaluator.Evaluations
   alias SkillsetEvaluator.Skills
 
+  require Logger
+
   @max_user_context_chars 16_000
+
+  # Paths to mounted knowledge files (read-only mounts in Docker)
+  @agent_instructions_path "/app/llm/AGENTS.md"
+  @glossary_file_path "/app/data/glossary_aec_construction.md"
+  @skills_dir "/app/llm/skills"
+  @spec_dir "/app/spec"
 
   @doc """
   Builds the full system prompt for the given user.
+  Uses progressive disclosure: loads agent instructions + glossary summary + user context.
   """
   def build_system_prompt(%User{} = user) do
     [
-      build_identity(user),
+      load_agent_instructions(user),
       build_glossary_context(),
-      build_user_context(user)
+      build_user_context(user),
+      build_available_knowledge()
     ]
     |> Enum.reject(&is_nil/1)
     |> Enum.join("\n\n---\n\n")
@@ -80,29 +91,117 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
 
   # -- Private --
 
-  defp build_identity(%User{} = user) do
-    """
-    ## Identity
+  defp load_agent_instructions(%User{} = user) do
+    base_instructions =
+      case File.read(@agent_instructions_path) do
+        {:ok, content} -> content
+        {:error, _} ->
+          Logger.warning("Agent instructions not found at #{@agent_instructions_path}, using fallback")
+          fallback_identity()
+      end
 
-    You are an AI assistant for the HR Skillset Evaluator application. Your name is SkillBot.
-    You help users understand their skill evaluations, provide guidance on professional development,
-    and answer questions about skillsets, competency frameworks, and evaluation processes.
+    """
+    #{base_instructions}
+
+    ---
+
+    ## Current Session
 
     Current user: #{user.name || user.email}
     Role: #{user.role}
+    #{if user.job_title, do: "Job title: #{user.job_title}", else: ""}
     Locale: en
-
-    Guidelines:
-    - Be professional, concise, and helpful.
-    - Use the glossary terms correctly when discussing skills and competencies.
-    - Scores range from 0 (no competency) to 5 (expert level).
-    - When discussing evaluations, distinguish between self-assessment and manager assessment.
-    - Do not fabricate data; only reference information provided in the context below.
-    - If you don't know something, say so honestly.
+    Period: #{current_period()}
     """
   end
 
+  defp fallback_identity do
+    """
+    ## Identity
+
+    You are **SkillBot**, the AI assistant for the HR Skillset Evaluator application.
+    You help users understand skill evaluations, provide professional development guidance,
+    and answer questions about skillsets, competency frameworks, and evaluation processes.
+
+    - Scores range from 0 (no competency) to 5 (expert level).
+    - Distinguish between manager assessment and self-assessment.
+    - Do not fabricate data. If you don't know something, say so honestly.
+    """
+  end
+
+  defp build_available_knowledge do
+    skills = list_available_skills()
+    specs = list_available_specs()
+
+    if Enum.empty?(skills) and Enum.empty?(specs) do
+      nil
+    else
+      skill_lines = Enum.map(skills, fn {name, path} -> "- **#{name}**: `#{path}`" end)
+      spec_lines = Enum.map(specs, fn {name, path} -> "- **#{name}**: `#{path}`" end)
+
+      """
+      ## Available Knowledge (Progressive Disclosure)
+
+      You have access to detailed knowledge files. Reference them when relevant to the conversation.
+
+      ### Skills (How-to guides)
+      #{Enum.join(skill_lines, "\n")}
+
+      ### Specifications (System documentation)
+      #{Enum.join(spec_lines, "\n")}
+
+      When a user's question requires deeper knowledge, consult the relevant file above.
+      """
+    end
+  end
+
+  defp list_available_skills do
+    case File.ls(@skills_dir) do
+      {:ok, files} ->
+        files
+        |> Enum.filter(&String.ends_with?(&1, ".md"))
+        |> Enum.sort()
+        |> Enum.map(fn file ->
+          name = file |> String.replace_suffix(".md", "") |> String.replace("_", " ") |> String.capitalize()
+          {name, Path.join(@skills_dir, file)}
+        end)
+
+      {:error, _} -> []
+    end
+  end
+
+  defp list_available_specs do
+    case File.ls(@spec_dir) do
+      {:ok, files} ->
+        files
+        |> Enum.filter(&String.ends_with?(&1, ".md"))
+        |> Enum.sort()
+        |> Enum.map(fn file ->
+          name = file |> String.replace_suffix(".md", "") |> String.replace("_", " ")
+          {name, Path.join(@spec_dir, file)}
+        end)
+
+      {:error, _} -> []
+    end
+  end
+
   defp do_build_glossary_context do
+    # Layer 1a: Load glossary from database (if available)
+    db_terms = load_db_glossary_terms()
+
+    # Layer 1b: Load AEC glossary summary from mounted file
+    file_glossary = load_file_glossary()
+
+    parts = [db_terms, file_glossary] |> Enum.reject(&is_nil/1)
+
+    if Enum.empty?(parts) do
+      nil
+    else
+      "## Glossary\n\n" <> Enum.join(parts, "\n\n")
+    end
+  end
+
+  defp load_db_glossary_terms do
     terms = Repo.all(from(t in Term, order_by: [t.domain, t.concept]))
 
     if Enum.empty?(terms) do
@@ -116,12 +215,29 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
         end)
 
       """
-      ## Glossary
-
-      The following domain terms are used in this application:
+      ### Application Terms
 
       #{Enum.join(term_lines, "\n")}
       """
+    end
+  end
+
+  defp load_file_glossary do
+    case File.read(@glossary_file_path) do
+      {:ok, content} ->
+        # Include a condensed summary (first ~2000 chars) to keep prompt size manageable.
+        # The full glossary file path is provided for deeper reference.
+        summary = String.slice(content, 0, 2000)
+        truncated = if byte_size(content) > 2000, do: "\n\n[Full AEC glossary available at #{@glossary_file_path}]", else: ""
+
+        """
+        ### AEC Construction Glossary (Summary)
+
+        #{summary}#{truncated}
+        """
+
+      {:error, _} ->
+        nil
     end
   end
 
