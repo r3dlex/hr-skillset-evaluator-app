@@ -51,6 +51,10 @@ defmodule SkillsetEvaluatorWeb.Router do
 
     get "/radar", RadarController, :show
     get "/gap-analysis", GapAnalysisController, :show
+
+    # Chat routes (authenticated)
+    resources "/chat/conversations", ChatController, only: [:index, :create, :show, :delete]
+    post "/chat/conversations/:id/messages", ChatController, :send_message
   end
 
   # Manager-only routes
