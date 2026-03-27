@@ -43,6 +43,25 @@
 **Why**: ecto_sqlite3 in-memory databases have limitations with concurrent access and the Ecto sandbox. A file-based test DB is more reliable and closer to production behavior.
 **Trade-off**: Slightly slower test setup, but negligible at current test count.
 
+### Anthropic over MiniMax as primary LLM
+**Decision**: Use Claude (Anthropic) as primary, MiniMax as optional Chinese fallback.
+**Why**: Claude handles EN/DE/ZH well. Provider abstraction layer allows adding providers later.
+**Trade-off**: Requires internet connectivity for chat. Glossary-only fallback mode when API is unreachable.
+
+### SSE over WebSocket for chat streaming
+**Decision**: Server-Sent Events for chat response streaming.
+**Why**: Simpler than WebSocket. Unidirectional (server -> client). No Phoenix Channels needed. Standard HTTP.
+**Trade-off**: No bidirectional streaming. Acceptable since user sends discrete messages, not continuous input.
+
+### Dual theme system (Default + RIB)
+**Decision**: CSS variables for theming with two presets.
+**Why**: Company branding requirement. CSS vars allow runtime switching without rebuild.
+**Trade-off**: Slightly more complex CSS. Mitigated by centralized theme store.
+
+### Collapsible sidebar
+**Decision**: Sidebar docks to icons-only strip (64px) with tooltips.
+**Why**: Maximizes content area on smaller screens. Common UX pattern.
+
 ---
 
 *This document is updated as new decisions and learnings emerge during development.*

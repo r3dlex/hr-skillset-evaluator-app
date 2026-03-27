@@ -76,3 +76,23 @@
 
 ### Volume permissions
 - SQLite needs write access: check data/ directory permissions in container
+
+## AI Chat / LLM
+
+### "ANTHROPIC_API_KEY is not set"
+- Chat feature is optional -- set `ANTHROPIC_API_KEY` in `.env` to enable
+- Without it, the chat FAB still appears but shows "AI chat is not configured"
+
+### Rate limited (429)
+- Per-user limits: 30 (user), 60 (manager), 120 (admin) messages per hour
+- Check ETS table state or wait for the hourly reset
+
+### SSE stream hangs
+- Check network tab for the `/api/chat/conversations/:id/messages` request
+- Verify the Anthropic API key is valid and has credits
+- Check Phoenix logs for LLM client errors
+
+### Chat context too large
+- Token budget: ~4,000 tokens for user context
+- Managers with 30+ members get summarized aggregates
+- Reduce by scoping to specific skill groups or periods

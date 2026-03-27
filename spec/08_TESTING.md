@@ -4,8 +4,9 @@
 
 | Layer | Tests | Status |
 |-------|-------|--------|
-| Backend (ExUnit) | 68 tests | All passing |
-| Frontend (Vitest) | 62 tests | All passing |
+| Backend (ExUnit) | 84 tests | All passing |
+| Frontend (Vitest) | 85 tests | All passing |
+| Total | 169 tests | All passing |
 | E2E (Playwright) | Planned | Not yet implemented |
 
 ## Coverage Targets
@@ -37,6 +38,12 @@ backend/test/
       skillset_controller_test.exs   # Skillset CRUD endpoints
     plugs/
       auth_test.exs                  # Auth plug, role enforcement
+  skillset_evaluator/
+    chat_test.exs                    # Chat context: conversations, messages CRUD
+    glossary_test.exs                # Glossary term lookup, multilingual
+    llm/
+      guardrails_test.exs            # Input/output validation
+      rate_limiter_test.exs          # Per-user rate limiting
   support/
     fixtures.ex              # Test data factories
     conn_case.ex             # Authenticated conn helpers
@@ -81,7 +88,7 @@ frontend/src/
     client.spec.ts           # 6 tests: get, post, 401 redirect, errors, non-JSON, 204
 ```
 
-### Key Test Cases (62 total)
+### Key Test Cases (85 total)
 
 - RadarChart renders SVG with correct axes count and polygon count
 - GapAnalysis sorts by absolute gap magnitude, handles null scores
@@ -89,6 +96,8 @@ frontend/src/
 - ScoreSlider 0-5 range, disabled state, value display
 - Auth store handles full login/logout lifecycle + error states
 - API client handles 401 redirect, non-2xx errors, multipart uploads
+- Chat store handles SSE streaming, conversation CRUD, message sending
+- Onboarding store tracks step completion and dismissal
 
 ### Running
 

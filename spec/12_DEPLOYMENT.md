@@ -47,6 +47,12 @@ MICROSOFT_TENANT_ID=
 # Default admin (seeded on first run)
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=change-me-in-production
+
+# AI Chat (optional)
+ANTHROPIC_API_KEY=         # Enables AI chat feature
+LLM_PROVIDER=anthropic    # anthropic (default), minimax, or auto
+MINIMAX_API_KEY=           # Optional Chinese LLM provider
+MINIMAX_GROUP_ID=          # Required if MiniMax enabled
 ```
 
 ### Data Persistence

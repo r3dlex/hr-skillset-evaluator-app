@@ -174,6 +174,28 @@ module.exports = {
 }
 ```
 
+## RIB Theme
+
+| Token | Light | Dark |
+|-------|-------|------|
+| Primary | `#0078B8` | `#4DA6D9` |
+| Sidebar | `#003B5C` | `#001F33` |
+| Background | `#F5F7FA` | `#0A1628` |
+| Surface | `#FFFFFF` | `#132238` |
+| Text Primary | `#1A2B3C` | `#E8EDF2` |
+| Accent | `#00A3E0` | `#00A3E0` |
+
+The RIB theme uses the company's blue-teal palette. Logo switches to RibLogo.vue.
+
+## Collapsible Sidebar
+
+| State | Width | Content |
+|-------|-------|---------|
+| Expanded | 260px | Logo, nav labels, skillset list, user info |
+| Collapsed | 64px | Icons only, tooltips on hover, mini logo |
+
+Toggle via chevron button at sidebar bottom.
+
 ## Layout Structure
 
 ```

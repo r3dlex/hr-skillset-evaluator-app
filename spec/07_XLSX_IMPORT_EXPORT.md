@@ -112,3 +112,18 @@ Export matches the original xlsx format so re-import is idempotent.
 - Duplicate names in same team → log warning, skip
 - Unicode characters in names → preserve as-is
 - Very large sheets (100+ columns) → stream processing via xlsxir
+
+## Chat-Triggered Import (Phase 9)
+
+### Chat-Triggered Import
+
+The AI chat agent can trigger xlsx imports for Manager and Admin users.
+The agent has an internal `import_xlsx` tool that calls the existing
+`Import.Pipeline.run_import/3`. The flow:
+
+1. Manager uploads xlsx via chat upload endpoint
+2. Agent validates: role check, file exists, period format
+3. Agent calls Broadway pipeline
+4. Agent streams progress: "Processing... 45 users found... Import complete."
+
+Endpoint: `POST /api/chat/conversations/:id/upload` (Manager/Admin only)

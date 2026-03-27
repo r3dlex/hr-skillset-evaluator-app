@@ -27,6 +27,15 @@ MICROSOFT_TENANT_ID=<your tenant>
 
 ## Roles
 
+### Admin
+
+- Inherits all Manager capabilities
+- Can view ALL teams, ALL users, ALL evaluations (cross-team visibility)
+- Can ask aggregate questions about the entire organization via AI chat
+- First seeded user gets admin role
+- Can configure LLM settings
+- 120 chat messages per hour (vs 60 for Manager, 30 for User)
+
 ### Manager
 
 - Can view all team members assigned to their team(s)
@@ -73,6 +82,8 @@ end
 | `/api/import/*` | Manager only |
 | `/api/export/*` | Manager only |
 | `/api/teams/:id/members` | Manager (own team) |
+| `/api/chat/conversations` | Authenticated |
+| `/api/chat/conversations/:id/messages` | Owner only (SSE stream) |
 
 ## Session Management
 

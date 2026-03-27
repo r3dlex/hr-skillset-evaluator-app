@@ -50,6 +50,12 @@ App.vue
 │   ├── SkillsetTabs.vue        # Tab bar for switching skillsets
 │   ├── XlsxUpload.vue          # Drag-and-drop xlsx import
 │   └── ProjectExamplesModal.vue # Modal for project examples
+├── components/chat/
+│   ├── ChatPanel.vue          # Slide-out drawer (400px, right side)
+│   ├── ChatMessageList.vue    # Scrollable messages with auto-scroll
+│   ├── ChatMessage.vue        # User/assistant message bubbles
+│   ├── ChatInput.vue          # Auto-growing textarea + send
+│   └── ChatConversationList.vue # Past conversation history
 ```
 
 ## Routing
@@ -90,6 +96,20 @@ const routes = [
 - `selectedMembers` — for radar chart overlay
 - `fetchTeams()` / `fetchMembers(teamId)`
 
+### chatStore
+- `conversations` — list of chat conversations
+- `activeConversationId` / `messages` — current conversation state
+- `isStreaming` / `streamingContent` — SSE streaming state
+- `isPanelOpen` — slide-out panel visibility
+- `sendMessage(content)` — sends message, handles SSE stream response
+- `createConversation()` / `loadConversations()` / `deleteConversation(id)`
+
+### themeStore
+- `currentTheme` — 'default' or 'rib'
+- `colorMode` — 'light', 'dark', or 'system'
+- `sidebarCollapsed` — boolean
+- Persists to localStorage, respects browser prefers-color-scheme
+
 ## API Client
 
 Typed API client using `fetch` (no external HTTP lib):
@@ -109,3 +129,7 @@ async function apiPut<T>(path: string, body: unknown): Promise<T> { ... }
 4. **Manager uploads xlsx** → progress indicator, then refresh
 5. **Tab switching** → loads different skillset radar chart
 6. **Hover on radar axis** → tooltip with skill name + scores
+7. **AI Chat FAB** → opens slide-out chat panel, SSE-streamed responses
+8. **Self-eval "Ask AI Assistant"** → opens chat with pre-seeded evaluation guidance
+9. **Sidebar collapse** → icons-only mode with tooltips
+10. **Theme switching** → Default/RIB theme + light/dark mode
