@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { chatApi } from '@/api/chat'
 import type { Conversation, ChatMessage, ChatError } from '@/types'
 import type { SearchResult } from '@/api/chat'
+import { getScreenContext } from '@/composables/useScreenContext'
 
 export const useChatStore = defineStore('chat', () => {
   const conversations = ref<Conversation[]>([])
@@ -12,6 +13,9 @@ export const useChatStore = defineStore('chat', () => {
   const streamingContent = ref('')
   const error = ref<ChatError | null>(null)
   const isPanelOpen = ref(false)
+  const panelWidth = ref(400)
+  const MIN_PANEL_WIDTH = 360
+  const MAX_PANEL_WIDTH = 800
   const searchQuery = ref('')
   const searchResults = ref<SearchResult[]>([])
   const isSearching = ref(false)
@@ -113,7 +117,7 @@ export const useChatStore = defineStore('chat', () => {
     error.value = null
 
     try {
-      const { stream } = chatApi.sendMessage(activeConversationId.value!, content)
+      const { stream } = chatApi.sendMessage(activeConversationId.value!, content, getScreenContext())
       const body = await stream
 
       if (!body) throw new Error('No response body')
@@ -229,6 +233,14 @@ export const useChatStore = defineStore('chat', () => {
     isPanelOpen.value = false
   }
 
+  function setPanelWidth(width: number) {
+    panelWidth.value = Math.max(MIN_PANEL_WIDTH, Math.min(MAX_PANEL_WIDTH, width))
+  }
+
+  function togglePanelExpand() {
+    panelWidth.value = panelWidth.value >= MAX_PANEL_WIDTH ? 400 : MAX_PANEL_WIDTH
+  }
+
   return {
     conversations,
     activeConversationId,
@@ -250,8 +262,13 @@ export const useChatStore = defineStore('chat', () => {
     dismissError,
     setSearchQuery,
     clearSearch,
+    panelWidth,
+    MIN_PANEL_WIDTH,
+    MAX_PANEL_WIDTH,
     togglePanel,
     openPanel,
     closePanel,
+    setPanelWidth,
+    togglePanelExpand,
   }
 })

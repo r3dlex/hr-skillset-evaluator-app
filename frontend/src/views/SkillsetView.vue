@@ -11,6 +11,7 @@ import { useEvaluationsStore } from '@/stores/evaluations'
 import { useTeamStore } from '@/stores/team'
 import { useAuthStore } from '@/stores/auth'
 import { periods as periodsApi } from '@/api'
+import { useScreenContext } from '@/composables/useScreenContext'
 
 const route = useRoute()
 const skillsStore = useSkillsStore()
@@ -194,7 +195,28 @@ function loadData() {
       location: selectedLocation.value || undefined,
     })
   }
+
+  updateScreenContext()
 }
+
+// -- AI Assistant screen context --
+const { setScreenContext } = useScreenContext()
+
+function updateScreenContext() {
+  setScreenContext({
+    screen: 'skillset',
+    skillset_id: skillsetId.value,
+    skill_group_id: typeof selectedGroupId.value === 'number' ? selectedGroupId.value : null,
+    user_id: effectiveUserId.value,
+    team_id: selectedTeamId.value,
+    period: currentPeriod.value,
+    active_tab: activeTab.value,
+  })
+}
+
+watch([activeTab, selectedGroupId, selectedUserId, selectedPeriod, selectedTeamId], () => {
+  updateScreenContext()
+})
 
 async function handleScoreUpdate(skillId: number, score: number) {
   if (!selectedUserId.value) return

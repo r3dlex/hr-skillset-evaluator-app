@@ -14,6 +14,8 @@ defmodule SkillsetEvaluator.LLM.Guardrails do
   - Data leak check for "user" role
   """
 
+  import Ecto.Query
+
   require Logger
 
   @max_input_length 2000
@@ -102,8 +104,17 @@ defmodule SkillsetEvaluator.LLM.Guardrails do
 
   @doc """
   Validates and cleans LLM output before returning to user.
+  Accepts either a User struct or a role string for backward compatibility.
   """
-  def validate_output(content, user_role) when is_binary(content) do
+  def validate_output(content, %{role: role} = user) when is_binary(content) do
+    content
+    |> strip_code_blocks()
+    |> check_score_boundaries()
+    |> check_data_leaks(role)
+    |> check_cross_user_leaks(user)
+  end
+
+  def validate_output(content, user_role) when is_binary(content) and is_binary(user_role) do
     content
     |> strip_code_blocks()
     |> check_score_boundaries()
@@ -160,4 +171,47 @@ defmodule SkillsetEvaluator.LLM.Guardrails do
 
   defp check_data_leaks({:ok, content}, _role), do: {:ok, content}
   defp check_data_leaks(error, _role), do: error
+
+  # Enhanced cross-user data leak detection for regular users
+  defp check_cross_user_leaks({:ok, content}, %{role: "user"} = user) do
+    # For regular users, check if output mentions other users' names or emails
+    # by querying the DB for all user names and checking if any appear in the output
+    other_users =
+      SkillsetEvaluator.Repo.all(
+        from(u in SkillsetEvaluator.Accounts.User,
+          where: u.id != ^user.id and u.active == true,
+          select: {u.name, u.email}
+        )
+      )
+
+    leaked_names =
+      Enum.filter(other_users, fn {name, email} ->
+        name_match =
+          name && String.length(name) > 3 &&
+            String.contains?(String.downcase(content), String.downcase(name))
+
+        email_match = email && String.contains?(String.downcase(content), String.downcase(email))
+        name_match || email_match
+      end)
+
+    if Enum.empty?(leaked_names) do
+      {:ok, content}
+    else
+      Logger.warning(
+        "Data leak detected: LLM output for user #{user.id} mentions #{length(leaked_names)} other user(s)"
+      )
+
+      # Redact the leaked names
+      cleaned =
+        Enum.reduce(leaked_names, content, fn {name, email}, acc ->
+          acc = if name, do: String.replace(acc, name, "[redacted]", global: true), else: acc
+          if email, do: String.replace(acc, email, "[redacted]", global: true), else: acc
+        end)
+
+      {:ok, cleaned}
+    end
+  end
+
+  defp check_cross_user_leaks({:ok, content}, _user), do: {:ok, content}
+  defp check_cross_user_leaks(error, _user), do: error
 end

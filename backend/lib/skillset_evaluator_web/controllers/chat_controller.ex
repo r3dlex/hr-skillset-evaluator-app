@@ -102,8 +102,9 @@ defmodule SkillsetEvaluatorWeb.ChatController do
   @doc """
   POST /api/chat/conversations/:id/messages — send message, get AI response via SSE stream
   """
-  def send_message(conn, %{"id" => conversation_id, "content" => content}) do
+  def send_message(conn, %{"id" => conversation_id, "content" => content} = params) do
     user = conn.assigns.current_user
+    screen_context = Map.get(params, "screen_context", %{})
 
     with {:conv, conversation} when not is_nil(conversation) <-
            {:conv, Chat.get_conversation(conversation_id)},
@@ -120,8 +121,8 @@ defmodule SkillsetEvaluatorWeb.ChatController do
       # Auto-title conversation from first message
       Chat.maybe_auto_title(conversation_id, content)
 
-      # Build context
-      system_prompt = ContextBuilder.build_system_prompt(user)
+      # Build context with screen awareness
+      system_prompt = ContextBuilder.build_system_prompt(user, screen_context)
       messages = ContextBuilder.build_messages(conversation_id)
 
       # Get provider
@@ -180,7 +181,7 @@ defmodule SkillsetEvaluatorWeb.ChatController do
     case accumulated do
       {:ok, full_content, token_usage} ->
         # Validate output
-        {:ok, cleaned_content} = Guardrails.validate_output(full_content, user.role)
+        {:ok, cleaned_content} = Guardrails.validate_output(full_content, user)
 
         # Save assistant message
         {:ok, assistant_msg} =
@@ -395,7 +396,7 @@ defmodule SkillsetEvaluatorWeb.ChatController do
     case provider.chat(messages, system: system_prompt) do
       {:ok, %{content: content, token_usage: token_usage, model: model}} ->
         # Validate output
-        {:ok, cleaned_content} = Guardrails.validate_output(content, user.role)
+        {:ok, cleaned_content} = Guardrails.validate_output(content, user)
 
         # Save assistant message
         {:ok, assistant_msg} =

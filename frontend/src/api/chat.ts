@@ -1,5 +1,6 @@
 import { apiGet, apiPost, apiDelete } from './client'
 import type { Conversation, ChatMessage } from '@/types'
+import type { ScreenContext } from '@/composables/useScreenContext'
 
 export interface SearchResult extends Conversation {
   match_snippet: string
@@ -33,13 +34,13 @@ export const chatApi = {
     await apiDelete(`/chat/conversations/${id}`)
   },
 
-  sendMessage(conversationId: number, content: string): { stream: Promise<ReadableStream<Uint8Array>>; abort: () => void } {
+  sendMessage(conversationId: number, content: string, screenContext?: ScreenContext): { stream: Promise<ReadableStream<Uint8Array>>; abort: () => void } {
     const controller = new AbortController()
 
     const stream = fetch(`/api/chat/conversations/${conversationId}/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, screen_context: screenContext }),
       signal: controller.signal,
       credentials: 'same-origin',
     }).then(response => {

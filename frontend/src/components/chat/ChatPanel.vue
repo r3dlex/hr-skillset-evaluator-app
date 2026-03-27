@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useChatStore } from '@/stores/chat'
 import ChatConversationList from './ChatConversationList.vue'
 import ChatMessageList from './ChatMessageList.vue'
 import ChatInput from './ChatInput.vue'
 
 const chatStore = useChatStore()
+const isResizing = ref(false)
 
 onMounted(() => {
   chatStore.loadConversations()
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', handleMouseUp)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', handleMouseUp)
 })
 
 function handleNewConversation() {
@@ -16,10 +24,35 @@ function handleNewConversation() {
 }
 
 function handleUpload(file: File) {
-  // For now, notify user that file upload via chat is available for managers
-  // The actual upload is handled by the import_xlsx tool on the backend
   const fileName = file.name
   chatStore.sendMessage(`I'd like to import the file "${fileName}". Please process it.`)
+}
+
+function startResize() {
+  isResizing.value = true
+  document.body.style.cursor = 'col-resize'
+  document.body.style.userSelect = 'none'
+}
+
+function handleMouseMove(e: MouseEvent) {
+  if (!isResizing.value) return
+  const newWidth = window.innerWidth - e.clientX
+  chatStore.setPanelWidth(newWidth)
+}
+
+function handleMouseUp() {
+  if (isResizing.value) {
+    isResizing.value = false
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+  }
+}
+
+const isExpanded = ref(false)
+
+function toggleExpand() {
+  chatStore.togglePanelExpand()
+  isExpanded.value = chatStore.panelWidth >= chatStore.MAX_PANEL_WIDTH
 }
 </script>
 
@@ -29,12 +62,29 @@ function handleUpload(file: File) {
       v-if="chatStore.isPanelOpen"
       class="fixed right-0 top-0 bottom-0 z-40 flex flex-col shadow-xl"
       :style="{
-        width: '400px',
+        width: chatStore.panelWidth + 'px',
         maxWidth: '100vw',
         backgroundColor: 'var(--color-bg)',
         borderLeft: '1px solid var(--color-border)',
       }"
     >
+      <!-- Resize handle (left edge) -->
+      <div
+        class="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize z-50 group"
+        @mousedown.prevent="startResize"
+      >
+        <div
+          class="absolute inset-0 transition-colors"
+          :style="{
+            backgroundColor: isResizing ? 'var(--color-primary)' : 'transparent',
+          }"
+        />
+        <div
+          class="absolute inset-0 group-hover:opacity-100 opacity-0 transition-opacity"
+          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 40%, transparent)' }"
+        />
+      </div>
+
       <!-- Header -->
       <div
         class="flex items-center justify-between px-4 py-3 border-b shrink-0"
@@ -63,7 +113,7 @@ function handleUpload(file: File) {
         <div class="flex items-center gap-1">
           <!-- New conversation -->
           <button
-            class="p-1.5 rounded-lg transition-colors"
+            class="p-1.5 rounded-lg transition-colors hover:bg-white/10"
             :style="{ color: 'var(--color-text-muted)' }"
             title="New conversation"
             @click="handleNewConversation"
@@ -73,9 +123,24 @@ function handleUpload(file: File) {
             </svg>
           </button>
 
+          <!-- Expand/Collapse -->
+          <button
+            class="p-1.5 rounded-lg transition-colors hover:bg-white/10"
+            :style="{ color: 'var(--color-text-muted)' }"
+            :title="isExpanded ? 'Collapse panel' : 'Expand panel'"
+            @click="toggleExpand"
+          >
+            <svg v-if="!isExpanded" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.5 3.5M9 15v4.5M9 15H4.5M9 15l-5.5 5.5M15 9h4.5M15 9V4.5M15 9l5.5-5.5M15 15h4.5M15 15v4.5m0-4.5l5.5 5.5" />
+            </svg>
+          </button>
+
           <!-- Close -->
           <button
-            class="p-1.5 rounded-lg transition-colors"
+            class="p-1.5 rounded-lg transition-colors hover:bg-white/10"
             :style="{ color: 'var(--color-text-muted)' }"
             title="Close panel"
             @click="chatStore.closePanel()"
