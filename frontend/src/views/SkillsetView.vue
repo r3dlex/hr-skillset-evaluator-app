@@ -10,7 +10,8 @@ import { useSkillsStore } from '@/stores/skills'
 import { useEvaluationsStore } from '@/stores/evaluations'
 import { useTeamStore } from '@/stores/team'
 import { useAuthStore } from '@/stores/auth'
-import { periods as periodsApi } from '@/api'
+import { assessments as assessmentsApi } from '@/api'
+import type { Assessment } from '@/types'
 import { useScreenContext } from '@/composables/useScreenContext'
 
 const route = useRoute()
@@ -27,15 +28,21 @@ const selectedLocation = ref<string>('')  // '' means "All"
 
 const skillsetId = computed(() => Number(route.params.id))
 
-// Dynamic periods from backend — only periods with actual data for current context
-const availablePeriods = ref<string[]>([])
-const selectedPeriod = ref<string>('')
-const periodsLoading = ref(false)
+// Assessments — replaces the old "periods" concept
+const availableAssessments = ref<Assessment[]>([])
+const selectedAssessmentId = ref<number | null>(null)
+const assessmentsLoading = ref(false)
+const showNewAssessmentForm = ref(false)
+const newAssessmentName = ref('')
+const newAssessmentDescription = ref('')
+const creatingAssessment = ref(false)
 
-const currentPeriod = computed(() => selectedPeriod.value)
+const currentAssessment = computed(() =>
+  availableAssessments.value.find(a => a.id === selectedAssessmentId.value) || null
+)
+const currentPeriod = computed(() => currentAssessment.value?.name || '')
 
-async function fetchPeriods() {
-  // Only show periods where selected person/team has data
+async function fetchAssessments() {
   const userIds = selectedUserId.value
     ? [selectedUserId.value]
     : authStore.isManager
@@ -44,16 +51,38 @@ async function fetchPeriods() {
 
   if (userIds.length === 0 || !skillsetId.value) return
 
-  periodsLoading.value = true
+  assessmentsLoading.value = true
   try {
-    const list = await periodsApi.listPeriods(skillsetId.value, userIds)
-    availablePeriods.value = list
+    const list = await assessmentsApi.list(skillsetId.value, userIds)
+    availableAssessments.value = list
     // Keep current selection if still valid, otherwise default to the most recent
-    if (list.length > 0 && !list.includes(selectedPeriod.value)) {
-      selectedPeriod.value = list[0]
+    if (list.length > 0 && !list.find(a => a.id === selectedAssessmentId.value)) {
+      selectedAssessmentId.value = list[0].id
     }
   } finally {
-    periodsLoading.value = false
+    assessmentsLoading.value = false
+  }
+}
+
+async function createAssessment() {
+  if (!newAssessmentName.value.trim()) return
+  creatingAssessment.value = true
+  try {
+    const assessment = await assessmentsApi.create(
+      newAssessmentName.value.trim(),
+      newAssessmentDescription.value.trim() || undefined,
+    )
+    availableAssessments.value.unshift(assessment)
+    selectedAssessmentId.value = assessment.id
+    showNewAssessmentForm.value = false
+    newAssessmentName.value = ''
+    newAssessmentDescription.value = ''
+    loadData()
+  } catch (e) {
+    // If it already exists, re-fetch to show it
+    await fetchAssessments()
+  } finally {
+    creatingAssessment.value = false
   }
 }
 
@@ -106,17 +135,13 @@ const allSkills = computed(() => {
   return skillsStore.currentSkillset.skill_groups.flatMap((g) => g.skills)
 })
 
-const scoreMap = computed(() => {
-  const map: Record<number, number | null> = {}
-  for (const ev of evalStore.evaluations) {
-    map[ev.skill_id] = ev.manager_score
-  }
-  return map
-})
-
-// Snapshot of scores when evaluations were first loaded for this user/period.
-// This stays frozen during an editing session so "Current" shows the original value.
+// Saved scores snapshot: frozen when evaluations load, represents the DB state
 const savedScores = ref<Record<number, number | null>>({})
+
+// Pending scores: local edits not yet saved
+const pendingScores = ref<Record<number, number>>({})
+const saving = ref(false)
+const saveMessage = ref('')
 
 function captureInitialScores() {
   const map: Record<number, number | null> = {}
@@ -124,7 +149,33 @@ function captureInitialScores() {
     map[ev.skill_id] = ev.manager_score
   }
   savedScores.value = map
+  pendingScores.value = {}
 }
+
+// scoreMap merges saved scores with pending (unsaved) edits for the slider display
+const scoreMap = computed(() => {
+  const map: Record<number, number | null> = { ...savedScores.value }
+  for (const [skillId, score] of Object.entries(pendingScores.value)) {
+    map[Number(skillId)] = score
+  }
+  return map
+})
+
+const hasPendingChanges = computed(() => {
+  for (const [skillId, score] of Object.entries(pendingScores.value)) {
+    const saved = savedScores.value[Number(skillId)]
+    if (saved !== score) return true
+  }
+  return false
+})
+
+const pendingChangeCount = computed(() => {
+  let count = 0
+  for (const [skillId, score] of Object.entries(pendingScores.value)) {
+    if (savedScores.value[Number(skillId)] !== score) count++
+  }
+  return count
+})
 
 // Effective userId for evaluations and gap analysis
 const effectiveUserId = computed(() => {
@@ -140,7 +191,7 @@ async function switchTeam(teamId: number) {
   selectedTeamId.value = teamId
   selectedUserId.value = null
   await teamStore.fetchMembers(teamId)
-  await fetchPeriods()
+  await fetchAssessments()
   loadData()
 }
 
@@ -159,18 +210,18 @@ onMounted(async () => {
     selectedGroupId.value = skillGroups.value[0].id
     lastSpecificGroupId.value = skillGroups.value[0].id
   }
-  await fetchPeriods()
+  await fetchAssessments()
   loadData()
 })
 
 watch(skillsetId, async () => {
   await skillsStore.fetchSkillset(skillsetId.value)
-  await fetchPeriods()
+  await fetchAssessments()
   loadData()
 })
 
 watch(selectedUserId, async () => {
-  await fetchPeriods()
+  await fetchAssessments()
   loadData()
 })
 
@@ -236,17 +287,43 @@ function updateScreenContext() {
   })
 }
 
-watch([activeTab, selectedGroupId, selectedUserId, selectedPeriod, selectedTeamId], () => {
+watch([activeTab, selectedGroupId, selectedUserId, selectedAssessmentId, selectedTeamId], () => {
   updateScreenContext()
 })
 
-async function handleScoreUpdate(skillId: number, score: number) {
-  if (!selectedUserId.value) return
-  await evalStore.updateManagerScores(
-    selectedUserId.value,
-    currentPeriod.value,
-    [{ skill_id: skillId, score }],
-  )
+function handleScoreUpdate(skillId: number, score: number) {
+  pendingScores.value[skillId] = score
+}
+
+async function handleSave() {
+  if (!selectedUserId.value || !currentPeriod.value) return
+  saving.value = true
+  saveMessage.value = ''
+  try {
+    const scores = Object.entries(pendingScores.value)
+      .filter(([skillId, score]) => savedScores.value[Number(skillId)] !== score)
+      .map(([skillId, score]) => ({ skill_id: Number(skillId), score }))
+
+    if (scores.length === 0) return
+
+    await evalStore.updateManagerScores(
+      selectedUserId.value,
+      currentPeriod.value,
+      scores,
+    )
+    // Re-capture saved scores from the updated evaluations
+    captureInitialScores()
+    saveMessage.value = 'Scores saved successfully!'
+    setTimeout(() => { saveMessage.value = '' }, 3000)
+  } catch (e) {
+    saveMessage.value = e instanceof Error ? e.message : 'Failed to save'
+  } finally {
+    saving.value = false
+  }
+}
+
+function handleDiscard() {
+  pendingScores.value = {}
 }
 </script>
 
@@ -264,17 +341,84 @@ async function handleScoreUpdate(skillId: number, score: number) {
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <label class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Period:</label>
+          <label class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Assessment:</label>
           <select
-            v-model="selectedPeriod"
+            v-model="selectedAssessmentId"
             class="input-field w-auto"
-            :disabled="periodsLoading || availablePeriods.length === 0"
+            :disabled="assessmentsLoading || availableAssessments.length === 0"
             @change="loadData()"
           >
-            <option v-if="availablePeriods.length === 0" value="">No data available</option>
-            <option v-for="p in availablePeriods" :key="p" :value="p">{{ p }}</option>
+            <option v-if="availableAssessments.length === 0" :value="null">No assessments</option>
+            <option v-for="a in availableAssessments" :key="a.id" :value="a.id">{{ a.name }}</option>
           </select>
+          <button
+            v-if="authStore.isManager"
+            class="inline-flex items-center justify-center w-8 h-8 rounded-lg transition-colors"
+            :style="{
+              backgroundColor: showNewAssessmentForm
+                ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)'
+                : 'transparent',
+              color: 'var(--color-primary)',
+              border: '1px solid var(--color-border)',
+            }"
+            title="Create new assessment"
+            @click="showNewAssessmentForm = !showNewAssessmentForm"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
         </div>
+      </div>
+
+      <!-- New Assessment Form -->
+      <div
+        v-if="showNewAssessmentForm"
+        class="mb-6 card p-4"
+      >
+        <h3 class="text-sm font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">Create New Assessment</h3>
+        <div class="flex items-end gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Name</label>
+            <input
+              v-model="newAssessmentName"
+              class="input-field w-full"
+              placeholder="e.g. 2026-Q1, Annual Review 2026"
+              @keyup.enter="createAssessment"
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Description (optional)</label>
+            <input
+              v-model="newAssessmentDescription"
+              class="input-field w-full"
+              placeholder="Brief description"
+              @keyup.enter="createAssessment"
+            />
+          </div>
+          <button
+            class="btn-primary text-sm"
+            :disabled="!newAssessmentName.trim() || creatingAssessment"
+            @click="createAssessment"
+          >
+            {{ creatingAssessment ? 'Creating...' : 'Create' }}
+          </button>
+          <button
+            class="btn-secondary text-sm"
+            @click="showNewAssessmentForm = false"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <!-- Save message -->
+      <div
+        v-if="saveMessage"
+        class="mb-4 px-4 py-3 rounded-lg text-sm"
+        :class="saveMessage.includes('success') ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'"
+      >
+        {{ saveMessage }}
       </div>
 
       <!-- Team & Member selector for managers -->
@@ -456,6 +600,38 @@ async function handleScoreUpdate(skillId: number, score: number) {
           :saved-scores="savedScores"
           @update:score="handleScoreUpdate"
         />
+
+        <!-- Save / Discard bar -->
+        <div
+          v-if="hasPendingChanges"
+          class="mt-4 flex items-center justify-between px-4 py-3 rounded-lg"
+          :style="{
+            backgroundColor: 'color-mix(in srgb, var(--color-primary) 6%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border))',
+          }"
+        >
+          <span class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+            {{ pendingChangeCount }} unsaved change{{ pendingChangeCount !== 1 ? 's' : '' }}
+          </span>
+          <div class="flex items-center gap-2">
+            <button
+              class="btn-secondary text-sm"
+              @click="handleDiscard"
+            >
+              Discard
+            </button>
+            <button
+              class="btn-primary text-sm inline-flex items-center gap-1.5"
+              :disabled="saving"
+              @click="handleSave"
+            >
+              <svg v-if="!saving" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              {{ saving ? 'Saving...' : 'Save Evaluation' }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Gap Analysis View -->

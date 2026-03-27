@@ -17,6 +17,7 @@ defmodule SkillsetEvaluatorWeb.EvaluationJSON do
       manager_score: eval.manager_score,
       self_score: eval.self_score,
       period: eval.period,
+      assessment_id: eval.assessment_id,
       notes: eval.notes,
       evaluated_by_id: eval.evaluated_by_id
     }

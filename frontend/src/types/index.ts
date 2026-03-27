@@ -43,11 +43,21 @@ export interface Skillset {
   applicable_roles?: string[]
 }
 
+export interface Assessment {
+  id: number
+  name: string
+  description: string | null
+  created_by_id: number | null
+  inserted_at: string
+  updated_at: string
+}
+
 export interface Evaluation {
   skill_id: number
   skill_name: string
   manager_score: number | null
   self_score: number | null
+  assessment_id?: number
   evaluated_by?: string
 }
 

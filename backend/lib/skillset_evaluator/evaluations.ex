@@ -8,6 +8,7 @@ defmodule SkillsetEvaluator.Evaluations do
   alias SkillsetEvaluator.Evaluations.Evaluation
   alias SkillsetEvaluator.Skills
   alias SkillsetEvaluator.Skills.{SkillGroup, Skill}
+  alias SkillsetEvaluator.Assessments
 
   def list_evaluations(user_id, skillset_id, period, opts \\ []) do
     skill_group_id = Keyword.get(opts, :skill_group_id)
@@ -28,6 +29,8 @@ defmodule SkillsetEvaluator.Evaluations do
   def get_evaluation(id), do: Repo.get(Evaluation, id)
 
   def upsert_manager_scores(evaluator, user_id, period, scores_list) do
+    {:ok, assessment} = Assessments.find_or_create_assessment(period, evaluator)
+
     Repo.transaction(fn ->
       Enum.map(scores_list, fn %{skill_id: skill_id, score: score} = entry ->
         notes = Map.get(entry, :notes)
@@ -38,7 +41,8 @@ defmodule SkillsetEvaluator.Evaluations do
             |> Evaluation.changeset(%{
               manager_score: score,
               evaluated_by_id: evaluator.id,
-              notes: notes
+              notes: notes,
+              assessment_id: assessment.id
             })
             |> Repo.update!()
 
@@ -50,7 +54,8 @@ defmodule SkillsetEvaluator.Evaluations do
               period: period,
               manager_score: score,
               evaluated_by_id: evaluator.id,
-              notes: notes
+              notes: notes,
+              assessment_id: assessment.id
             })
             |> Repo.insert!()
         end
@@ -59,12 +64,14 @@ defmodule SkillsetEvaluator.Evaluations do
   end
 
   def upsert_self_scores(user_id, period, scores_list) do
+    {:ok, assessment} = Assessments.find_or_create_assessment(period)
+
     Repo.transaction(fn ->
       Enum.map(scores_list, fn %{skill_id: skill_id, score: score} ->
         case Repo.get_by(Evaluation, user_id: user_id, skill_id: skill_id, period: period) do
           %Evaluation{} = eval ->
             eval
-            |> Evaluation.changeset(%{self_score: score})
+            |> Evaluation.changeset(%{self_score: score, assessment_id: assessment.id})
             |> Repo.update!()
 
           nil ->
@@ -73,7 +80,8 @@ defmodule SkillsetEvaluator.Evaluations do
               user_id: user_id,
               skill_id: skill_id,
               period: period,
-              self_score: score
+              self_score: score,
+              assessment_id: assessment.id
             })
             |> Repo.insert!()
         end

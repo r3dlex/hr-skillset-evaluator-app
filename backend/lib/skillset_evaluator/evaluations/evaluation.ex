@@ -11,6 +11,7 @@ defmodule SkillsetEvaluator.Evaluations.Evaluation do
     belongs_to :user, SkillsetEvaluator.Accounts.User
     belongs_to :skill, SkillsetEvaluator.Skills.Skill
     belongs_to :evaluated_by, SkillsetEvaluator.Accounts.User
+    belongs_to :assessment, SkillsetEvaluator.Assessments.Assessment
 
     timestamps(type: :utc_datetime)
   end
@@ -24,7 +25,8 @@ defmodule SkillsetEvaluator.Evaluations.Evaluation do
       :notes,
       :user_id,
       :skill_id,
-      :evaluated_by_id
+      :evaluated_by_id,
+      :assessment_id
     ])
     |> validate_required([:period, :user_id, :skill_id])
     |> validate_score(:manager_score)

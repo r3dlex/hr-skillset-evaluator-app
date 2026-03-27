@@ -5,8 +5,8 @@ import Overview from '@/components/Overview.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTeamStore } from '@/stores/team'
 import { useSkillsStore } from '@/stores/skills'
-import { dashboard as dashboardApi, teams as teamsApi } from '@/api'
-import type { User } from '@/types'
+import { dashboard as dashboardApi, teams as teamsApi, assessments as assessmentsApi } from '@/api'
+import type { User, Assessment } from '@/types'
 
 const authStore = useAuthStore()
 const teamStore = useTeamStore()
@@ -14,6 +14,8 @@ const skillsStore = useSkillsStore()
 
 const selectedTeamId = ref<number | 'all' | null>(null)
 const selectedRole = ref<string>('')  // '' = All
+const selectedAssessment = ref<string>('')  // '' = All
+const allAssessments = ref<Assessment[]>([])
 
 const stats = ref({
   total_skills: 0,
@@ -58,9 +60,18 @@ function memberSkillsets(member: User) {
 async function fetchStats() {
   try {
     const teamIdParam = selectedTeamId.value === 'all' ? undefined : (selectedTeamId.value || undefined)
-    stats.value = await dashboardApi.getStats(teamIdParam)
+    const periodParam = selectedAssessment.value || undefined
+    stats.value = await dashboardApi.getStats(teamIdParam, periodParam)
   } catch {
     // keep defaults
+  }
+}
+
+async function fetchAllAssessments() {
+  try {
+    allAssessments.value = await assessmentsApi.list()
+  } catch {
+    // keep empty
   }
 }
 
@@ -81,7 +92,7 @@ async function loadAllTeamMembers() {
 
 onMounted(async () => {
   await teamStore.fetchTeams()
-  await skillsStore.fetchSkillsets()
+  await Promise.all([skillsStore.fetchSkillsets(), fetchAllAssessments()])
   if (teamStore.teams.length > 0) {
     selectedTeamId.value = teamStore.teams[0].id
   }
@@ -147,6 +158,13 @@ function getMemberInitial(member: User): string {
           <select v-model="selectedRole" class="input-field w-52">
             <option value="">All</option>
             <option v-for="role in availableRoles" :key="role" :value="role">{{ role }}</option>
+          </select>
+        </div>
+        <div v-if="allAssessments.length > 0">
+          <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Assessment</label>
+          <select v-model="selectedAssessment" class="input-field w-52" @change="fetchStats()">
+            <option value="">All</option>
+            <option v-for="a in allAssessments" :key="a.id" :value="a.name">{{ a.name }}</option>
           </select>
         </div>
       </div>

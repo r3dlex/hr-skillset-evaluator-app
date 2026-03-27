@@ -3,6 +3,7 @@ import type {
   User,
   Team,
   Skillset,
+  Assessment,
   Evaluation,
   RadarData,
   GapAnalysisItem,
@@ -126,13 +127,30 @@ export const radar = {
   },
 }
 
-// Periods
+// Periods (legacy — use assessments API instead)
 export const periods = {
   async listPeriods(skillsetId: number, userIds: number[]): Promise<string[]> {
     const ids = userIds.join(',')
     const resp = await apiGet<{ data: string[] }>(
       `/periods?skillset_id=${skillsetId}&user_ids=${ids}`,
     )
+    return resp.data
+  },
+}
+
+// Assessments
+export const assessments = {
+  async list(skillsetId?: number, userIds?: number[]): Promise<Assessment[]> {
+    let url = '/assessments'
+    const params: string[] = []
+    if (skillsetId) params.push(`skillset_id=${skillsetId}`)
+    if (userIds?.length) params.push(`user_ids=${userIds.join(',')}`)
+    if (params.length) url += '?' + params.join('&')
+    const resp = await apiGet<DataWrapper<Assessment[]>>(url)
+    return resp.data
+  },
+  async create(name: string, description?: string): Promise<Assessment> {
+    const resp = await apiPost<DataWrapper<Assessment>>('/assessments', { name, description })
     return resp.data
   },
 }

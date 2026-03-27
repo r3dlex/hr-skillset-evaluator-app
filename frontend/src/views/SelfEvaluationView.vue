@@ -103,7 +103,7 @@ function priorityColor(priority: string): string {
             Self Evaluation
           </h1>
           <p class="mt-1" :style="{ color: 'var(--color-text-secondary)' }">
-            {{ skillsStore.currentSkillset?.name }} - {{ currentPeriod }}
+            {{ skillsStore.currentSkillset?.name }} — Assessment: {{ currentPeriod }}
           </p>
         </div>
         <button

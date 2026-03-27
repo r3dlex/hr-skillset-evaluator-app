@@ -46,6 +46,7 @@ defmodule SkillsetEvaluatorWeb.Router do
 
     get "/dashboard/stats", DashboardController, :stats
     get "/periods", PeriodsController, :index
+    resources "/assessments", AssessmentController, only: [:index]
     get "/evaluations", EvaluationController, :index
     put "/evaluations/self", EvaluationController, :update_self_scores
 
@@ -62,6 +63,7 @@ defmodule SkillsetEvaluatorWeb.Router do
     pipe_through [:api, :require_manager]
 
     resources "/skillsets", SkillsetController, only: [:create]
+    resources "/assessments", AssessmentController, only: [:create]
     put "/evaluations/manager", EvaluationController, :update_manager_scores
     post "/import", ImportController, :create
     get "/export", ExportController, :show
