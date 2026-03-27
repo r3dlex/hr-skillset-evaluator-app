@@ -16,7 +16,8 @@ defmodule SkillsetEvaluator.Assessments do
   @doc """
   List assessments that have evaluations for the given users and skillset.
   """
-  def list_assessments_with_data(user_ids, skillset_id) when is_list(user_ids) and length(user_ids) > 0 do
+  def list_assessments_with_data(user_ids, skillset_id)
+      when is_list(user_ids) and length(user_ids) > 0 do
     skill_ids = skill_ids_for_skillset(skillset_id)
 
     Assessment
@@ -47,7 +48,9 @@ defmodule SkillsetEvaluator.Assessments do
   """
   def find_or_create_assessment(name, created_by \\ nil) do
     case get_assessment_by_name(name) do
-      %Assessment{} = a -> {:ok, a}
+      %Assessment{} = a ->
+        {:ok, a}
+
       nil ->
         attrs = %{name: name}
         attrs = if created_by, do: Map.put(attrs, :created_by_id, created_by.id), else: attrs
