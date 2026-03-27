@@ -194,6 +194,27 @@ Example terms: BIM, LOD, IFC, MEP, CDE, Clash Detection, Rebar, Formwork, As-Bui
 
 The glossary context is injected into the system prompt when terms are relevant to the conversation topic.
 
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|:--------:|---------|-------------|
+| `ANTHROPIC_API_KEY` | Yes (for chat) | — | Anthropic API key. Chat is disabled without it. |
+| `ANTHROPIC_BASE_URL` | No | `https://api.anthropic.com/v1/messages` | Override for proxies, custom deployments, or compatible APIs |
+| `ANTHROPIC_MODEL` | No | `claude-sonnet-4-20250514` | Model ID to use |
+| `LLM_PROVIDER` | No | `anthropic` | `anthropic`, `minimax`, or `auto` |
+| `MINIMAX_API_KEY` | No | — | MiniMax API key (Chinese fallback) |
+| `MINIMAX_BASE_URL` | No | `https://api.minimax.chat/v1/text/chatcompletion_v2` | Override for MiniMax endpoint |
+| `MINIMAX_GROUP_ID` | No | — | Required if MiniMax is enabled |
+| `LLM_MAX_TOKENS` | No | `2048` | Max response tokens |
+| `LLM_TEMPERATURE` | No | `0.3` | Low for factual responses |
+| `CHAT_RETENTION_DAYS` | No | `90` | Auto-delete conversations older than this |
+
+All URLs are configurable to support:
+- Corporate proxies
+- Self-hosted LLM deployments (e.g., vLLM with Anthropic-compatible API)
+- MiniMax or other providers with different base URLs
+- API gateway routing
+
 ## Agent Tool: import_xlsx
 
 The chat agent has an internal tool for triggering xlsx imports:

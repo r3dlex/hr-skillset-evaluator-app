@@ -7,8 +7,20 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
 
   require Logger
 
-  @api_url "https://api.anthropic.com/v1/messages"
+  @default_api_url "https://api.anthropic.com/v1/messages"
   @default_model "claude-sonnet-4-20250514"
+
+  defp api_url do
+    Application.get_env(:skillset_evaluator, :anthropic_base_url) ||
+      System.get_env("ANTHROPIC_BASE_URL") ||
+      @default_api_url
+  end
+
+  defp model do
+    Application.get_env(:skillset_evaluator, :anthropic_model) ||
+      System.get_env("ANTHROPIC_MODEL") ||
+      @default_model
+  end
 
   @impl true
   def name, do: "anthropic"
@@ -16,14 +28,14 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
   @impl true
   def chat(messages, opts \\ []) do
     api_key = get_api_key()
-    model = Keyword.get(opts, :model, @default_model)
+    selected_model = Keyword.get(opts, :model, model())
     max_tokens = Keyword.get(opts, :max_tokens, 2048)
     temperature = Keyword.get(opts, :temperature, 0.3)
     system = Keyword.get(opts, :system, nil)
 
     body =
       %{
-        model: model,
+        model: selected_model,
         max_tokens: max_tokens,
         temperature: temperature,
         messages: format_messages(messages)
@@ -31,7 +43,7 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
 
     body = if system, do: Map.put(body, :system, system), else: body
 
-    case Req.post(@api_url,
+    case Req.post(api_url(),
            json: body,
            headers: [
              {"x-api-key", api_key},
@@ -51,7 +63,7 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
              input: usage["input_tokens"] || 0,
              output: usage["output_tokens"] || 0
            },
-           model: resp["model"] || model
+           model: resp["model"] || selected_model
          }}
 
       {:ok, %{status: status, body: body}} ->
@@ -67,14 +79,14 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
   @impl true
   def stream(messages, opts \\ []) do
     api_key = get_api_key()
-    model = Keyword.get(opts, :model, @default_model)
+    selected_model = Keyword.get(opts, :model, model())
     max_tokens = Keyword.get(opts, :max_tokens, 2048)
     temperature = Keyword.get(opts, :temperature, 0.3)
     system = Keyword.get(opts, :system, nil)
 
     body =
       %{
-        model: model,
+        model: selected_model,
         max_tokens: max_tokens,
         temperature: temperature,
         stream: true,
@@ -85,7 +97,7 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
 
     {:ok,
      %{
-       url: @api_url,
+       url: api_url(),
        headers: [
          {"x-api-key", api_key},
          {"anthropic-version", "2023-06-01"},

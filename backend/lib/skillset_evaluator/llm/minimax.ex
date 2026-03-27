@@ -7,7 +7,13 @@ defmodule SkillsetEvaluator.LLM.MiniMax do
 
   require Logger
 
-  @api_url "https://api.minimax.chat/v1/text/chatcompletion_v2"
+  @default_api_url "https://api.minimax.chat/v1/text/chatcompletion_v2"
+
+  defp api_url do
+    Application.get_env(:skillset_evaluator, :minimax_base_url) ||
+      System.get_env("MINIMAX_BASE_URL") ||
+      @default_api_url
+  end
 
   @impl true
   def name, do: "minimax"
@@ -26,7 +32,7 @@ defmodule SkillsetEvaluator.LLM.MiniMax do
 
       mm_messages = format_messages(messages, system)
 
-      case Req.post("#{@api_url}?GroupId=#{group_id}",
+      case Req.post("#{api_url()}?GroupId=#{group_id}",
              json: %{model: model, messages: mm_messages, tokens_to_generate: max_tokens},
              headers: [{"Authorization", "Bearer #{api_key}"}],
              receive_timeout: 60_000

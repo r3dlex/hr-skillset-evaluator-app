@@ -52,7 +52,10 @@ ADMIN_PASSWORD=change-me-in-production
 ANTHROPIC_API_KEY=         # Enables AI chat feature
 LLM_PROVIDER=anthropic    # anthropic (default), minimax, or auto
 MINIMAX_API_KEY=           # Optional Chinese LLM provider
+MINIMAX_BASE_URL=          # Override MiniMax endpoint (default: https://api.minimax.chat/v1/text/chatcompletion_v2)
 MINIMAX_GROUP_ID=          # Required if MiniMax enabled
+ANTHROPIC_BASE_URL=        # Override Anthropic endpoint (for proxies, self-hosted, compatible APIs)
+ANTHROPIC_MODEL=           # Override model (default: claude-sonnet-4-20250514)
 ```
 
 ### Data Persistence
