@@ -166,11 +166,28 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
     period = ctx["period"] || current_period()
     active_tab = ctx["active_tab"] || "chart"
     target_user_id = get_int(ctx, "user_id")
+    team_id = get_int(ctx, "team_id")
+    visible_member_count = get_int(ctx, "visible_member_count")
+    visible_member_names = Map.get(ctx, "visible_member_names")
 
     skillset = if skillset_id, do: Skills.get_skillset(skillset_id), else: nil
 
     # Determine which user's data to show, respecting role boundaries
     viewable_user_ids = authorized_user_ids(user, target_user_id)
+
+    # For team overview (no specific user), get actual team members
+    viewable_user_ids =
+      if is_nil(target_user_id) and user.role in ["admin", "manager"] do
+        actual_team_id = team_id || user.team_id
+
+        if actual_team_id do
+          SkillsetEvaluator.Accounts.list_users_by_team(actual_team_id) |> Enum.map(& &1.id)
+        else
+          viewable_user_ids
+        end
+      else
+        viewable_user_ids
+      end
 
     if is_nil(skillset) do
       "The user is viewing a Skillset page, but no skillset is selected."
@@ -181,7 +198,15 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
       viewing_label =
         case {user.role, target_user_id} do
           {_, nil} when user.role in ["admin", "manager"] ->
-            "team overview"
+            member_desc =
+              if visible_member_names && is_list(visible_member_names) do
+                " (#{Enum.join(visible_member_names, ", ")})"
+              else
+                count = visible_member_count || length(List.wrap(viewable_user_ids))
+                " (#{count} team members)"
+              end
+
+            "team overview — All members#{member_desc}"
 
           {_, uid} when uid == user.id ->
             "their own evaluations"
@@ -202,11 +227,22 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
           "All skill groups"
         end
 
+      # Summarize how many evaluations have actual scores
+      scored_count = Enum.count(evals, fn e -> e.manager_score != nil or e.self_score != nil end)
+      total_count = length(evals)
+
       """
       The user is viewing: **#{skillset.name}** — #{viewing_label}
       Active tab: **#{active_tab}** (chart = radar chart, table = data table, gap = gap analysis)
       Period: #{period}
       #{group_label}
+      Data: #{scored_count} scored evaluations out of #{total_count} total
+
+      #{if active_tab == "chart" do
+        "The radar chart is currently displayed. Each colored line represents a different team member's manager assessment scores. The chart axes are the skills in the selected group."
+      else
+        ""
+      end}
 
       ### Evaluation Data Currently on Screen
       #{format_eval_table(evals)}
@@ -349,18 +385,18 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
     # For admin "all" view, show aggregated — fetch a sample set
     users = Repo.all(from(u in User, where: u.active == true, limit: 10, select: u.id))
 
-    Enum.flat_map(users, fn uid ->
-      Evaluations.list_evaluations(uid, skillset_id, period, opts)
-    end)
+    users
+    |> Enum.flat_map(fn uid -> Evaluations.list_evaluations(uid, skillset_id, period, opts) end)
+    |> Repo.preload(:user)
   end
 
   defp fetch_scoped_evaluations(user_ids, skillset_id, period, skill_group_id)
        when is_list(user_ids) do
     opts = if skill_group_id, do: [skill_group_id: skill_group_id], else: []
 
-    Enum.flat_map(user_ids, fn uid ->
-      Evaluations.list_evaluations(uid, skillset_id, period, opts)
-    end)
+    user_ids
+    |> Enum.flat_map(fn uid -> Evaluations.list_evaluations(uid, skillset_id, period, opts) end)
+    |> Repo.preload(:user)
   end
 
   defp fetch_scoped_gap_analysis(:all, skillset_id, period, skill_group_id) do

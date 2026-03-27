@@ -203,14 +203,22 @@ function loadData() {
 const { setScreenContext } = useScreenContext()
 
 function updateScreenContext() {
+  // Send the actual selected user (null = "All members" / team overview)
+  // Don't send effectiveUserId because that defaults to first member
+  const contextUserId = selectedUserId.value || null
   setScreenContext({
     screen: 'skillset',
     skillset_id: skillsetId.value,
     skill_group_id: typeof selectedGroupId.value === 'number' ? selectedGroupId.value : null,
-    user_id: effectiveUserId.value,
+    user_id: contextUserId,
     team_id: selectedTeamId.value,
     period: currentPeriod.value,
     active_tab: activeTab.value,
+    // Include how many team members are visible for the LLM's awareness
+    visible_member_count: selectedUserId.value ? 1 : teamStore.members.length,
+    visible_member_names: selectedUserId.value
+      ? undefined
+      : teamStore.members.map(m => m.name || m.email).slice(0, 20),
   })
 }
 
