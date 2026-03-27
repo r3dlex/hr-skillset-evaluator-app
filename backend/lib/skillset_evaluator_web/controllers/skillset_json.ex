@@ -15,6 +15,7 @@ defmodule SkillsetEvaluatorWeb.SkillsetJSON do
       name: skillset.name,
       description: skillset.description,
       position: skillset.position,
+      skill_count: skillset.skill_count || 0,
       applicable_roles: Skillset.roles(skillset)
     }
   end

@@ -65,9 +65,13 @@ export interface RadarData {
 
 export interface GapAnalysisItem {
   name: string
-  manager_score: number
-  self_score: number
-  gap: number
+  skill_id?: number
+  priority?: string
+  manager_score: number | null
+  self_score: number | null
+  gap: number | null
+  team_avg?: number | null
+  role_avg?: number | null
 }
 
 export interface OnboardingStep {

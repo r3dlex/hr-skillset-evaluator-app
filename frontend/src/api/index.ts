@@ -139,11 +139,40 @@ export const periods = {
 
 // Gap Analysis
 export const gapAnalysis = {
-  async getGapAnalysis(userId: number, skillsetId: number, period: string): Promise<{ items: GapAnalysisItem[] }> {
-    const resp = await apiGet<{ data: GapAnalysisItem[] }>(
-      `/gap-analysis?user_id=${userId}&skillset_id=${skillsetId}&period=${period}`,
-    )
+  async getGapAnalysis(
+    userId: number,
+    skillsetId: number,
+    period: string,
+    opts?: { teamId?: number; location?: string },
+  ): Promise<{ items: GapAnalysisItem[] }> {
+    let url = `/gap-analysis?user_id=${userId}&skillset_id=${skillsetId}&period=${period}`
+    if (opts?.teamId) url += `&team_id=${opts.teamId}`
+    if (opts?.location) url += `&location=${encodeURIComponent(opts.location)}`
+    const resp = await apiGet<{ data: GapAnalysisItem[] }>(url)
     return { items: resp.data }
+  },
+}
+
+// Dashboard
+export const dashboard = {
+  async getStats(teamId?: number, period?: string): Promise<{
+    total_skills: number
+    average_score: number
+    skills_rated: number
+    completion_percentage: number
+    team_size: number
+  }> {
+    let url = '/dashboard/stats?'
+    if (teamId) url += `team_id=${teamId}&`
+    if (period) url += `period=${period}&`
+    const resp = await apiGet<DataWrapper<{
+      total_skills: number
+      average_score: number
+      skills_rated: number
+      completion_percentage: number
+      team_size: number
+    }>>(url)
+    return resp.data
   },
 }
 

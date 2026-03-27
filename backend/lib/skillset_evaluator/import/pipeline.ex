@@ -36,6 +36,9 @@ defmodule SkillsetEvaluator.Import.Pipeline do
     # Step 1: Parse teams sheet and upsert teams + users
     teams_result = import_teams(file_path)
 
+    # Step 1b: Ensure all skillsets/groups/skills exist (even sheets with no data rows)
+    ensure_all_skill_structures(file_path)
+
     # Step 2: Parse skill sheets into PersonRow messages
     case XlsxParser.parse(file_path, period) do
       {:ok, person_rows} when person_rows != [] ->
@@ -111,7 +114,10 @@ defmodule SkillsetEvaluator.Import.Pipeline do
           team = ensure_team(row.team)
 
           if team && row.name && row.name != "" do
-            ensure_user(row, team.id)
+            case ensure_user(row, team.id) do
+              {:ok, user} -> Teams.add_user_to_team(user.id, team.id)
+              _ -> :ok
+            end
           end
         end)
 
@@ -119,6 +125,28 @@ defmodule SkillsetEvaluator.Import.Pipeline do
 
       {:error, _} ->
         0
+    end
+  end
+
+  defp ensure_all_skill_structures(file_path) do
+    case XlsxParser.parse_skill_structures(file_path) do
+      {:ok, structures} ->
+        Enum.each(structures, fn %{sheet_name: sheet_name, skills: skills} ->
+          skillset = ensure_skillset(sheet_name)
+
+          skills
+          |> Enum.group_by(& &1.group_name)
+          |> Enum.each(fn {group_name, group_skills} ->
+            group = ensure_skill_group(group_name, skillset.id)
+
+            Enum.each(group_skills, fn skill ->
+              ensure_skill(skill.name, skill.priority, group.id)
+            end)
+          end)
+        end)
+
+      _ ->
+        :ok
     end
   end
 
@@ -151,6 +179,9 @@ defmodule SkillsetEvaluator.Import.Pipeline do
   defp process_person_row(%PersonRow{} = row, evaluator_id) do
     team = ensure_team(row.team)
     user = find_user_by_name_and_team(row.name, team && team.id)
+
+    # Ensure user is associated with this team in the join table
+    if user && team, do: Teams.add_user_to_team(user.id, team.id)
 
     if user do
       skillset = get_skillset_by_name(row.sheet_name)
@@ -230,6 +261,7 @@ defmodule SkillsetEvaluator.Import.Pipeline do
 
   defp ensure_user(row, team_id) do
     role = normalize_role(row.role)
+    job_title = normalize_job_title(row.role)
 
     email =
       row.email ||
@@ -244,7 +276,7 @@ defmodule SkillsetEvaluator.Import.Pipeline do
           team_id: team_id,
           location: row.location,
           active: row.active,
-          job_title: row.role
+          job_title: job_title
         })
 
       user ->
@@ -253,8 +285,29 @@ defmodule SkillsetEvaluator.Import.Pipeline do
           active: row.active,
           location: row.location,
           team_id: team_id,
-          job_title: row.role
+          job_title: job_title
         })
+    end
+  end
+
+  defp normalize_job_title(nil), do: nil
+  defp normalize_job_title(""), do: nil
+  defp normalize_job_title(val) do
+    cleaned = val |> String.trim() |> String.trim_trailing(".")
+    case String.downcase(cleaned) do
+      "dev" -> "Dev"
+      "developer" -> "Dev"
+      "devops" -> "DevOps"
+      "qe" -> "QE"
+      "qa" -> "QE"
+      "ux" -> "UX"
+      "pm" -> "PM"
+      "po" -> "PO"
+      "ai" -> "AI"
+      "lead" -> "Lead"
+      "consulting" -> "Consulting"
+      "apprentice" -> "Apprentice"
+      _ -> cleaned
     end
   end
 
@@ -273,11 +326,12 @@ defmodule SkillsetEvaluator.Import.Pipeline do
         skillset
 
       skillset ->
-        # Update applicable_roles if not already set
-        if skillset.applicable_roles in [nil, "[]"] and applicable_roles != [] do
+        # Always update applicable_roles to match current mapping
+        encoded = Jason.encode!(applicable_roles)
+        if skillset.applicable_roles != encoded do
           {:ok, updated} =
             Skills.update_skillset(skillset, %{
-              applicable_roles: Jason.encode!(applicable_roles)
+              applicable_roles: encoded
             })
 
           updated
@@ -289,18 +343,18 @@ defmodule SkillsetEvaluator.Import.Pipeline do
 
   # Role mapping: which job titles can see each skillset
   # Empty list = all roles
+  # Lead = union of Dev + PO scopes
   defp skillset_applicable_roles(name) do
     downcased = String.downcase(name)
 
     cond do
-      String.contains?(downcased, "soft") -> []
-      String.contains?(downcased, "domain") -> []
-      String.contains?(downcased, "fullstack") -> ["Dev"]
-      String.contains?(downcased, "frontend") -> ["Dev"]
-      String.contains?(downcased, "backend") -> ["Dev"]
-      downcased == "qe" or String.contains?(downcased, "quality") -> ["Dev"]
-      String.contains?(downcased, "ai") or String.contains?(downcased, "ml") -> ["Dev"]
-      String.contains?(downcased, "product") -> ["Lead"]
+      String.contains?(downcased, "soft") -> []  # All roles
+      String.contains?(downcased, "domain") -> [] # All roles
+      String.contains?(downcased, "fullstack") -> ["Dev", "QE", "DevOps", "Lead"]
+      String.contains?(downcased, "product") -> ["UX", "PM", "PO", "Lead"]
+      downcased == "ai" or String.contains?(downcased, "ai") -> ["AI"]
+      downcased == "ux" -> ["UX"]
+      downcased == "qe" or String.contains?(downcased, "quality") -> ["QE"]
       true -> []
     end
   end
@@ -332,22 +386,18 @@ defmodule SkillsetEvaluator.Import.Pipeline do
         skill
 
       skill ->
-        skill
+        if skill.priority != priority do
+          {:ok, updated} = Skills.update_skill(skill, %{priority: priority})
+          updated
+        else
+          skill
+        end
     end
   end
 
-  defp find_user_by_name_and_team(name, nil) do
+  defp find_user_by_name_and_team(name, _team_id) do
+    # Users can be in multiple teams, so just find by name
     Repo.get_by(Accounts.User, name: name)
-  end
-
-  defp find_user_by_name_and_team(name, team_id) do
-    Accounts.User
-    |> where([u], u.name == ^name and u.team_id == ^team_id)
-    |> Repo.one()
-    |> case do
-      nil -> Repo.get_by(Accounts.User, name: name)
-      user -> user
-    end
   end
 
   defp get_skillset_by_name(name) do

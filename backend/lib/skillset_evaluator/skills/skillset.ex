@@ -8,6 +8,8 @@ defmodule SkillsetEvaluator.Skills.Skillset do
     field :position, :integer
     field :applicable_roles, :string, default: "[]"
 
+    field :skill_count, :integer, virtual: true
+
     has_many :skill_groups, SkillsetEvaluator.Skills.SkillGroup
 
     timestamps(type: :utc_datetime)

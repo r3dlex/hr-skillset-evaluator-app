@@ -44,6 +44,7 @@ defmodule SkillsetEvaluatorWeb.Router do
     resources "/teams", TeamController, only: [:index, :show]
     resources "/skillsets", SkillsetController, only: [:index, :show]
 
+    get "/dashboard/stats", DashboardController, :stats
     get "/periods", PeriodsController, :index
     get "/evaluations", EvaluationController, :index
     put "/evaluations/self", EvaluationController, :update_self_scores

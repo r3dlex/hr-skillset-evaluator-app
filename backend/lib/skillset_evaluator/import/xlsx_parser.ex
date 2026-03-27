@@ -88,6 +88,41 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
     e -> {:error, "Xlsx parsing error: #{Exception.message(e)}"}
   end
 
+  @doc "Returns skill structure metadata for all skill sheets (even those with no data rows)."
+  @spec parse_skill_structures(String.t()) :: {:ok, [%{sheet_name: String.t(), groups: [map()], skills: [map()]}]}
+  def parse_skill_structures(file_path) do
+    result = Xlsxir.multi_extract(file_path)
+    table_ids = extract_table_ids(result)
+
+    structures =
+      table_ids
+      |> Enum.flat_map(fn table_id ->
+        sheet_name = Xlsxir.get_info(table_id, :name)
+
+        structure =
+          if sheet_name in @skip_sheets do
+            nil
+          else
+            rows = Xlsxir.get_list(table_id)
+            case rows do
+              [group_row, priority_row, header_row | _] ->
+                skill_groups = extract_skill_groups(group_row)
+                skills = extract_skills(header_row, priority_row, skill_groups)
+                %{sheet_name: sheet_name, groups: skill_groups, skills: skills}
+              _ ->
+                nil
+            end
+          end
+
+        Xlsxir.close(table_id)
+        if structure, do: [structure], else: []
+      end)
+
+    {:ok, structures}
+  rescue
+    e -> {:ok, []}
+  end
+
   @spec parse_teams_sheet(String.t()) :: {:ok, [map()]} | {:error, String.t()}
   def parse_teams_sheet(file_path) do
     result = Xlsxir.multi_extract(file_path)
@@ -234,12 +269,19 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
   defp normalize_priority(""), do: "medium"
 
   defp normalize_priority(val) do
-    case String.downcase(String.trim(to_string(val))) do
-      v when v in ["critical", "c", "crit", "1"] -> "critical"
-      v when v in ["high", "h", "2"] -> "high"
-      v when v in ["medium", "m", "med", "3"] -> "medium"
-      v when v in ["low", "l", "4"] -> "low"
-      _ -> "medium"
+    cleaned = val |> to_string() |> String.trim() |> String.downcase()
+    cond do
+      String.contains?(cleaned, "critical") -> "critical"
+      String.contains?(cleaned, "crit") -> "critical"
+      String.contains?(cleaned, "high") -> "high"
+      String.contains?(cleaned, "medium") -> "medium"
+      String.contains?(cleaned, "med") -> "medium"
+      String.contains?(cleaned, "low") -> "low"
+      cleaned in ["c", "1"] -> "critical"
+      cleaned in ["h", "2"] -> "high"
+      cleaned in ["m", "3"] -> "medium"
+      cleaned in ["l", "4"] -> "low"
+      true -> "medium"
     end
   end
 

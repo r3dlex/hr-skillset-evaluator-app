@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import Overview from '@/components/Overview.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTeamStore } from '@/stores/team'
 import { useSkillsStore } from '@/stores/skills'
+import { dashboard as dashboardApi } from '@/api'
 import type { User } from '@/types'
 
 const authStore = useAuthStore()
@@ -12,6 +13,48 @@ const teamStore = useTeamStore()
 const skillsStore = useSkillsStore()
 
 const selectedTeamId = ref<number | null>(null)
+const selectedRole = ref<string>('')  // '' = All
+
+const stats = ref({
+  total_skills: 0,
+  average_score: 0,
+  skills_rated: 0,
+  completion_percentage: 0,
+  team_size: 0,
+})
+
+// Unique job titles from current team members
+const availableRoles = computed(() => {
+  const roles = new Set<string>()
+  for (const m of teamStore.members) {
+    if (m.job_title) roles.add(m.job_title)
+  }
+  return Array.from(roles).sort()
+})
+
+// Filter members by selected role
+const filteredMembers = computed(() => {
+  if (!selectedRole.value) return teamStore.members
+  return teamStore.members.filter(m => m.job_title === selectedRole.value)
+})
+
+// Get applicable skillsets for a member
+function memberSkillsets(member: User) {
+  return skillsStore.skillsets.filter(s => {
+    const roles = s.applicable_roles
+    if (!roles || roles.length === 0) return true
+    if (!member.job_title) return true
+    return roles.some(r => r.toLowerCase() === member.job_title!.toLowerCase())
+  })
+}
+
+async function fetchStats() {
+  try {
+    stats.value = await dashboardApi.getStats(selectedTeamId.value || undefined)
+  } catch {
+    // keep defaults
+  }
+}
 
 onMounted(async () => {
   await teamStore.fetchTeams()
@@ -21,9 +64,11 @@ onMounted(async () => {
   }
 })
 
-watch(selectedTeamId, (id) => {
+watch(selectedTeamId, async (id) => {
   if (id) {
-    teamStore.fetchMembers(id)
+    await teamStore.fetchMembers(id)
+    selectedRole.value = ''
+    await fetchStats()
   }
 })
 
@@ -47,33 +92,39 @@ function getMemberInitial(member: User): string {
 
       <!-- Overview Stats -->
       <Overview
-        :total-skills="skillsStore.skillsets.reduce((sum, s) => sum + (s.skill_count || 0), 0)"
-        :total-skillsets="skillsStore.skillsets.length"
-        :team-size="teamStore.members.length"
-        :completion-percentage="0"
+        :total-skills="stats.total_skills"
+        :average-score="stats.average_score"
+        :skills-rated="stats.skills_rated"
+        :completion-percentage="stats.completion_percentage"
       />
 
-      <!-- Team Selector -->
-      <div class="mt-8 mb-6">
-        <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Select Team</label>
-        <select
-          v-model="selectedTeamId"
-          class="input-field w-64"
-        >
-          <option
-            v-for="team in teamStore.teams"
-            :key="team.id"
-            :value="team.id"
-          >
-            {{ team.name }} {{ team.member_count ? `(${team.member_count})` : '' }}
-          </option>
-        </select>
+      <!-- Team & Role Selectors -->
+      <div class="mt-8 mb-6 flex items-end gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Select Team</label>
+          <select v-model="selectedTeamId" class="input-field w-64">
+            <option
+              v-for="team in teamStore.teams"
+              :key="team.id"
+              :value="team.id"
+            >
+              {{ team.name }} {{ team.member_count ? `(${team.member_count})` : '' }}
+            </option>
+          </select>
+        </div>
+        <div v-if="availableRoles.length > 1">
+          <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Role</label>
+          <select v-model="selectedRole" class="input-field w-52">
+            <option value="">All</option>
+            <option v-for="role in availableRoles" :key="role" :value="role">{{ role }}</option>
+          </select>
+        </div>
       </div>
 
       <!-- Team Members Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div
-          v-for="member in teamStore.members"
+          v-for="member in filteredMembers"
           :key="member.id"
           class="card-hover p-5 cursor-pointer"
         >
@@ -96,11 +147,17 @@ function getMemberInitial(member: User): string {
             >
               {{ member.active ? 'Active' : 'Inactive' }}
             </span>
+            <span
+              v-if="member.job_title"
+              class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+            >
+              {{ member.job_title }}
+            </span>
             <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ member.location }}</span>
           </div>
-          <div class="mt-3 flex gap-2">
+          <div class="mt-3 flex flex-wrap gap-2">
             <RouterLink
-              v-for="skillset in skillsStore.skillsets"
+              v-for="skillset in memberSkillsets(member)"
               :key="skillset.id"
               :to="`/skillsets/${skillset.id}`"
               class="text-xs font-medium"
@@ -132,19 +189,13 @@ function getMemberInitial(member: User): string {
           Get started by importing your existing skill matrix or creating skillsets manually.
         </p>
         <div class="flex items-center justify-center gap-3">
-          <RouterLink
-            to="/settings/skillsets"
-            class="btn-primary inline-flex items-center gap-2"
-          >
+          <RouterLink to="/settings/skillsets" class="btn-primary inline-flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
             </svg>
             Import xlsx
           </RouterLink>
-          <RouterLink
-            to="/settings/skillsets"
-            class="btn-secondary inline-flex items-center gap-2"
-          >
+          <RouterLink to="/settings/skillsets" class="btn-secondary inline-flex items-center gap-2">
             Create skillset manually
           </RouterLink>
         </div>
@@ -152,13 +203,13 @@ function getMemberInitial(member: User): string {
 
       <!-- Empty State: Has teams but no members selected -->
       <div
-        v-else-if="teamStore.members.length === 0 && !teamStore.loading"
+        v-else-if="filteredMembers.length === 0 && !teamStore.loading"
         class="text-center py-16"
       >
         <svg class="w-16 h-16 mx-auto mb-4" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-        <p :style="{ color: 'var(--color-text-secondary)' }">Select a team to view members</p>
+        <p :style="{ color: 'var(--color-text-secondary)' }">No members match the selected filters</p>
       </div>
     </div>
   </AppLayout>

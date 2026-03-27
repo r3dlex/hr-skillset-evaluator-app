@@ -10,8 +10,16 @@ defmodule SkillsetEvaluator.Skills do
   ## Skillsets
 
   def list_skillsets do
+    skill_count_query =
+      from s in Skill,
+        join: sg in SkillGroup, on: s.skill_group_id == sg.id,
+        where: sg.skillset_id == parent_as(:skillset).id,
+        select: count(s.id)
+
     Skillset
+    |> from(as: :skillset)
     |> order_by(:position)
+    |> select_merge([ss], %{skill_count: subquery(skill_count_query)})
     |> Repo.all()
   end
 

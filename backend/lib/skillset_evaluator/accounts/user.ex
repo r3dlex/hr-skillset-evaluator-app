@@ -18,6 +18,9 @@ defmodule SkillsetEvaluator.Accounts.User do
 
     belongs_to :team, SkillsetEvaluator.Teams.Team
 
+    many_to_many :teams, SkillsetEvaluator.Teams.Team,
+      join_through: SkillsetEvaluator.Teams.UserTeam
+
     has_many :evaluations, SkillsetEvaluator.Evaluations.Evaluation
 
     timestamps(type: :utc_datetime)

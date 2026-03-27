@@ -6,9 +6,12 @@ defmodule SkillsetEvaluatorWeb.GapAnalysisJSON do
           %{
             name: item.skill_name,
             skill_id: item.skill_id,
+            priority: item[:priority],
             manager_score: item.manager_score,
             self_score: item.self_score,
-            gap: item.gap
+            gap: item.gap,
+            team_avg: item[:team_avg],
+            role_avg: item[:role_avg]
           }
         end)
     }

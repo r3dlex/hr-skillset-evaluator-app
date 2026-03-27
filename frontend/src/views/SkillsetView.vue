@@ -22,6 +22,7 @@ const activeTab = ref<'chart' | 'table' | 'gap'>('chart')
 const selectedTeamId = ref<number | null>(null)
 const selectedUserId = ref<number | null>(null)
 const selectedGroupId = ref<number | 'all' | null>(null)
+const selectedLocation = ref<string>('')  // '' means "All"
 
 const skillsetId = computed(() => Number(route.params.id))
 
@@ -63,6 +64,15 @@ const skillGroups = computed(() => {
 const lastSpecificGroupId = ref<number | null>(null)
 
 const isAllSelected = computed(() => selectedGroupId.value === 'all')
+
+// Unique locations from current team members for region filter
+const availableLocations = computed(() => {
+  const locs = new Set<string>()
+  for (const m of teamStore.members) {
+    if (m.location) locs.add(m.location)
+  }
+  return Array.from(locs).sort()
+})
 
 const selectedGroup = computed(() => {
   if (selectedGroupId.value === 'all') return null
@@ -156,23 +166,29 @@ function selectGroup(groupId: number | 'all') {
 }
 
 function loadData() {
-  const userIds = authStore.isManager
-    ? Array.from(teamStore.selectedMemberIds)
-    : authStore.user ? [authStore.user.id] : []
+  // Radar: if a specific user is selected, show only that user; otherwise show all team members
+  const radarUserIds = selectedUserId.value
+    ? [selectedUserId.value]
+    : authStore.isManager
+      ? Array.from(teamStore.selectedMemberIds)
+      : authStore.user ? [authStore.user.id] : []
 
   // For radar chart, always use a specific group; for table/gap, allow "all" (no group filter)
   const groupId = isAllSelected.value ? undefined : selectedGroup.value?.id
 
-  if (userIds.length > 0) {
+  if (radarUserIds.length > 0) {
     // Radar always needs a group — use first group if "all" is somehow active
     const radarGroupId = groupId || skillGroups.value[0]?.id
-    evalStore.fetchRadarData(userIds, skillsetId.value, currentPeriod.value, radarGroupId)
+    evalStore.fetchRadarData(radarUserIds, skillsetId.value, currentPeriod.value, radarGroupId)
   }
 
   const userId = effectiveUserId.value
   if (userId) {
     evalStore.fetchEvaluations(userId, skillsetId.value, currentPeriod.value, groupId)
-    evalStore.fetchGapAnalysis(userId, skillsetId.value, currentPeriod.value, groupId)
+    evalStore.fetchGapAnalysis(userId, skillsetId.value, currentPeriod.value, groupId, {
+      teamId: selectedTeamId.value || undefined,
+      location: selectedLocation.value || undefined,
+    })
   }
 }
 
@@ -246,6 +262,17 @@ async function handleScoreUpdate(skillId: number, score: number) {
             >
               {{ member.name }}
             </option>
+          </select>
+        </div>
+        <div v-if="availableLocations.length > 1">
+          <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Region</label>
+          <select
+            v-model="selectedLocation"
+            class="input-field w-44"
+            @change="loadData()"
+          >
+            <option value="">All</option>
+            <option v-for="loc in availableLocations" :key="loc" :value="loc">{{ loc }}</option>
           </select>
         </div>
       </div>
@@ -351,6 +378,7 @@ async function handleScoreUpdate(skillId: number, score: number) {
           :skills="allSkills"
           :scores="scoreMap"
           :readonly="!authStore.isManager || !selectedUserId"
+          :gap-items="evalStore.gapAnalysis"
           @update:score="handleScoreUpdate"
         />
       </div>

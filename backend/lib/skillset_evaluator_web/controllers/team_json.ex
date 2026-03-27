@@ -32,6 +32,7 @@ defmodule SkillsetEvaluatorWeb.TeamJSON do
       email: user.email,
       name: user.name,
       role: user.role,
+      job_title: user.job_title,
       location: user.location,
       active: user.active
     }
