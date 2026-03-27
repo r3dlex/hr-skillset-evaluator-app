@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Skill, GapAnalysisItem, Evaluation } from '@/types'
+import type { Skill, GapAnalysisItem } from '@/types'
 import ScoreSlider from './ScoreSlider.vue'
 import { computed } from 'vue'
 
@@ -8,7 +8,7 @@ const props = defineProps<{
   scores: Record<number, number | null>
   readonly: boolean
   gapItems?: GapAnalysisItem[]
-  evaluations?: Evaluation[]
+  savedScores?: Record<number, number | null>
 }>()
 
 const avgsBySkillId = computed(() => {
@@ -23,16 +23,8 @@ const avgsBySkillId = computed(() => {
   return map
 })
 
-// Build a map of existing evaluation data per skill for showing current vs new
-const evalBySkillId = computed(() => {
-  const map: Record<number, { manager_score: number | null; self_score: number | null }> = {}
-  if (props.evaluations) {
-    for (const ev of props.evaluations) {
-      map[ev.skill_id] = { manager_score: ev.manager_score, self_score: ev.self_score }
-    }
-  }
-  return map
-})
+// savedScores represents the original values before the current editing session
+// so "Current" column stays frozen while the user adjusts sliders
 
 const isEvaluating = computed(() => !props.readonly)
 
@@ -127,12 +119,12 @@ function formatScore(score: number | null | undefined): string {
           </span>
         </div>
 
-        <!-- Current value (existing evaluation) -->
+        <!-- Current value (saved before this editing session) -->
         <div class="w-14 shrink-0 text-center">
           <span
             class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-sm font-semibold"
             :style="
-              evalBySkillId[skill.id]?.manager_score != null
+              savedScores?.[skill.id] != null
                 ? {
                     backgroundColor: 'color-mix(in srgb, var(--color-info, #3b82f6) 12%, transparent)',
                     color: 'var(--color-info, #3b82f6)',
@@ -140,12 +132,12 @@ function formatScore(score: number | null | undefined): string {
                 : {
                     backgroundColor: 'var(--color-border)',
                     color: 'var(--color-text-muted)',
-                    fontStyle: evalBySkillId[skill.id]?.manager_score == null ? 'italic' : 'normal',
+                    fontStyle: 'italic',
                   }
             "
-            :title="evalBySkillId[skill.id]?.manager_score != null ? `Current manager score: ${evalBySkillId[skill.id].manager_score}` : 'No evaluation yet'"
+            :title="savedScores?.[skill.id] != null ? `Saved score: ${savedScores[skill.id]}` : 'No evaluation yet'"
           >
-            {{ formatScore(evalBySkillId[skill.id]?.manager_score) }}
+            {{ formatScore(savedScores?.[skill.id]) }}
           </span>
         </div>
 

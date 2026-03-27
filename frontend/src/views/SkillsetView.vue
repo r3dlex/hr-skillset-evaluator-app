@@ -114,6 +114,18 @@ const scoreMap = computed(() => {
   return map
 })
 
+// Snapshot of scores when evaluations were first loaded for this user/period.
+// This stays frozen during an editing session so "Current" shows the original value.
+const savedScores = ref<Record<number, number | null>>({})
+
+function captureInitialScores() {
+  const map: Record<number, number | null> = {}
+  for (const ev of evalStore.evaluations) {
+    map[ev.skill_id] = ev.manager_score
+  }
+  savedScores.value = map
+}
+
 // Effective userId for evaluations and gap analysis
 const effectiveUserId = computed(() => {
   if (selectedUserId.value) return selectedUserId.value
@@ -189,7 +201,9 @@ function loadData() {
 
   const userId = effectiveUserId.value
   if (userId) {
-    evalStore.fetchEvaluations(userId, skillsetId.value, currentPeriod.value, groupId)
+    evalStore.fetchEvaluations(userId, skillsetId.value, currentPeriod.value, groupId).then(() => {
+      captureInitialScores()
+    })
     evalStore.fetchGapAnalysis(userId, skillsetId.value, currentPeriod.value, groupId, {
       teamId: selectedTeamId.value || undefined,
       location: selectedLocation.value || undefined,
@@ -439,7 +453,7 @@ async function handleScoreUpdate(skillId: number, score: number) {
           :scores="scoreMap"
           :readonly="!authStore.isManager || !selectedUserId"
           :gap-items="evalStore.gapAnalysis"
-          :evaluations="evalStore.evaluations"
+          :saved-scores="savedScores"
           @update:score="handleScoreUpdate"
         />
       </div>
