@@ -40,8 +40,9 @@ COPY backend/ ./
 # Copy frontend build into priv/static
 COPY --from=frontend-build /app/frontend/dist ./priv/static
 
-# Compile application and build release
+# Compile application, digest static assets, and build release
 RUN mix compile && \
+    mix phx.digest && \
     mix release
 
 # =============================================================================
@@ -76,4 +77,4 @@ USER appuser
 EXPOSE 4000
 
 # Run migrations then start the server
-CMD ["/bin/sh", "-c", "/app/bin/skillset_evaluator eval 'SkillsetEvaluator.Release.migrate()' && /app/bin/skillset_evaluator start"]
+CMD ["/bin/sh", "-c", "/app/bin/skillset_evaluator eval 'SkillsetEvaluator.Release.migrate()' && /app/bin/skillset_evaluator eval 'SkillsetEvaluator.Release.seed()' && /app/bin/skillset_evaluator start"]

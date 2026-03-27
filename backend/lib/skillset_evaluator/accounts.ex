@@ -45,6 +45,16 @@ defmodule SkillsetEvaluator.Accounts do
     |> Repo.insert()
   end
 
+  @doc """
+  Creates a user without a password (for xlsx imports and OAuth).
+  These users can set a password later or log in via OAuth.
+  """
+  def create_imported_user(attrs) do
+    %User{}
+    |> User.changeset(attrs)
+    |> Repo.insert()
+  end
+
   def update_user(%User{} = user, attrs) do
     user
     |> User.changeset(attrs)

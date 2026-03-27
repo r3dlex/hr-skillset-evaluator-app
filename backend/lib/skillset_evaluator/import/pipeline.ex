@@ -233,7 +233,7 @@ defmodule SkillsetEvaluator.Import.Pipeline do
       nil ->
         role = normalize_role(row.role)
 
-        Accounts.create_user(%{
+        Accounts.create_imported_user(%{
           name: row.name,
           email:
             row.email ||

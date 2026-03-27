@@ -34,19 +34,15 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
-  microsoft_client_id =
-    System.get_env("MICROSOFT_CLIENT_ID") ||
-      raise "environment variable MICROSOFT_CLIENT_ID is missing."
+  # Microsoft OAuth — optional (only configure if env vars are set)
+  microsoft_client_id = System.get_env("MICROSOFT_CLIENT_ID")
+  microsoft_client_secret = System.get_env("MICROSOFT_CLIENT_SECRET")
+  microsoft_tenant = System.get_env("MICROSOFT_TENANT_ID") || "common"
 
-  microsoft_client_secret =
-    System.get_env("MICROSOFT_CLIENT_SECRET") ||
-      raise "environment variable MICROSOFT_CLIENT_SECRET is missing."
-
-  microsoft_tenant =
-    System.get_env("MICROSOFT_TENANT") || "common"
-
-  config :ueberauth, Ueberauth.Strategy.Microsoft.OAuth,
-    client_id: microsoft_client_id,
-    client_secret: microsoft_client_secret,
-    tenant_id: microsoft_tenant
+  if microsoft_client_id && microsoft_client_secret do
+    config :ueberauth, Ueberauth.Strategy.Microsoft.OAuth,
+      client_id: microsoft_client_id,
+      client_secret: microsoft_client_secret,
+      tenant_id: microsoft_tenant
+  end
 end
