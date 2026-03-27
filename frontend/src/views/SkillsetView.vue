@@ -131,18 +131,18 @@ async function handleScoreUpdate(skillId: number, score: number) {
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">
+          <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
             {{ skillsStore.currentSkillset?.name || 'Loading...' }}
           </h1>
-          <p class="text-gray-500 mt-1">
+          <p class="mt-1" :style="{ color: 'var(--color-text-secondary)' }">
             {{ skillsStore.currentSkillset?.description }}
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <label class="text-sm text-gray-500">Period:</label>
+          <label class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">Period:</label>
           <select
             v-model="selectedPeriod"
-            class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white"
+            class="input-field w-auto"
             @change="loadData()"
           >
             <option v-for="p in availablePeriods" :key="p" :value="p">{{ p }}</option>
@@ -152,10 +152,10 @@ async function handleScoreUpdate(skillId: number, score: number) {
 
       <!-- Member selector for managers -->
       <div v-if="authStore.isManager && teamStore.members.length > 0" class="mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Team Member</label>
+        <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Team Member</label>
         <select
           v-model="selectedUserId"
-          class="w-64 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white"
+          class="input-field w-64"
           @change="loadData()"
         >
           <option :value="null">All members</option>
@@ -171,14 +171,18 @@ async function handleScoreUpdate(skillId: number, score: number) {
 
       <!-- Skill Group Tabs -->
       <div v-if="skillGroups.length > 0" class="mb-6">
-        <div class="flex gap-1 flex-wrap bg-gray-50 rounded-lg p-1 border border-gray-200">
+        <div
+          class="flex gap-1 flex-wrap rounded-lg p-1"
+          :style="{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }"
+        >
           <button
             v-for="group in skillGroups"
             :key="group.id"
             class="px-3 py-1.5 text-xs font-semibold rounded-md transition-colors uppercase tracking-wide"
-            :class="selectedGroup?.id === group.id
-              ? 'bg-white text-primary shadow-sm border border-gray-200'
-              : 'text-gray-500 hover:text-gray-700'"
+            :style="selectedGroup?.id === group.id
+              ? { backgroundColor: 'var(--color-surface)', color: 'var(--color-primary)', boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)', border: '1px solid var(--color-border)' }
+              : { color: 'var(--color-text-secondary)' }
+            "
             @click="selectGroup(group.id)"
           >
             {{ group.name }}
@@ -187,12 +191,18 @@ async function handleScoreUpdate(skillId: number, score: number) {
       </div>
 
       <!-- Tab navigation -->
-      <div class="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+      <div
+        class="flex gap-1 mb-6 rounded-lg p-1 w-fit"
+        :style="{ backgroundColor: 'var(--color-border)' }"
+      >
         <button
           v-for="tab in (['chart', 'table', 'gap'] as const)"
           :key="tab"
           class="px-4 py-2 text-sm font-medium rounded-md transition-colors capitalize"
-          :class="activeTab === tab ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'"
+          :style="activeTab === tab
+            ? { backgroundColor: 'var(--color-surface)', color: 'var(--color-text-primary)', boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' }
+            : { color: 'var(--color-text-secondary)' }
+          "
           @click="activeTab = tab"
         >
           {{ tab === 'gap' ? 'Gap Analysis' : tab === 'chart' ? 'Radar Chart' : 'Data Table' }}
@@ -206,16 +216,19 @@ async function handleScoreUpdate(skillId: number, score: number) {
             <RadarChart :radar-data="evalStore.radarData" :size="500" />
           </div>
           <div v-else class="flex flex-col items-center justify-center h-80">
-            <div class="w-14 h-14 mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div
+              class="w-14 h-14 mb-4 rounded-2xl flex items-center justify-center"
+              :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
+            >
+              <svg class="w-7 h-7" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
             </div>
-            <p v-if="authStore.isManager" class="text-sm text-gray-500 text-center max-w-xs">
+            <p v-if="authStore.isManager" class="text-sm text-center max-w-xs" :style="{ color: 'var(--color-text-secondary)' }">
               No evaluations yet. Start by evaluating team members on this skillset.
             </p>
             <template v-else>
-              <p class="text-sm text-gray-500 text-center max-w-xs mb-4">
+              <p class="text-sm text-center max-w-xs mb-4" :style="{ color: 'var(--color-text-secondary)' }">
                 No evaluations yet. Complete a self-evaluation to see your radar chart.
               </p>
               <RouterLink

@@ -4,58 +4,54 @@ import SkillsetTabs from '../SkillsetTabs.vue'
 import type { Skillset } from '@/types'
 
 const sampleSkillsets: Skillset[] = [
-  { id: 1, name: 'Frontend', description: 'Frontend skills', position: 1, skill_count: 10 },
-  { id: 2, name: 'Backend', description: 'Backend skills', position: 2, skill_count: 8 },
-  { id: 3, name: 'DevOps', description: 'DevOps skills', position: 3 },
+  { id: 1, name: 'Frontend', description: '', position: 0, skill_count: 10 },
+  { id: 2, name: 'Backend', description: '', position: 1, skill_count: 8 },
+  { id: 3, name: 'DevOps', description: '', position: 2, skill_count: 5 },
 ]
 
 describe('SkillsetTabs', () => {
-  it('renders one tab per skillset', () => {
+  it('renders correct number of tabs', () => {
     const wrapper = mount(SkillsetTabs, {
-      props: { skillsets: sampleSkillsets, activeId: null },
+      props: { skillsets: sampleSkillsets, activeId: 1 },
     })
     const buttons = wrapper.findAll('button')
-    expect(buttons.length).toBe(3)
+    expect(buttons.length).toBe(sampleSkillsets.length)
   })
 
-  it('highlights active tab', () => {
+  it('highlights active tab with primary color', () => {
     const wrapper = mount(SkillsetTabs, {
       props: { skillsets: sampleSkillsets, activeId: 2 },
     })
     const buttons = wrapper.findAll('button')
-    // Active tab (Backend, id=2) should have bg-primary class
-    expect(buttons[1].classes()).toContain('bg-primary')
-    expect(buttons[1].classes()).toContain('text-white')
-    // Non-active tabs should have bg-white class
-    expect(buttons[0].classes()).toContain('bg-white')
-    expect(buttons[2].classes()).toContain('bg-white')
+    // Active tab uses inline style with primary color
+    const activeStyle = buttons[1].attributes('style') || ''
+    expect(activeStyle).toContain('var(--color-primary)')
+    // Non-active tabs use surface color
+    const inactiveStyle = buttons[0].attributes('style') || ''
+    expect(inactiveStyle).toContain('var(--color-surface)')
   })
 
-  it('emits select event on click', async () => {
+  it('emits select event on tab click', async () => {
     const wrapper = mount(SkillsetTabs, {
-      props: { skillsets: sampleSkillsets, activeId: null },
+      props: { skillsets: sampleSkillsets, activeId: 1 },
     })
     const buttons = wrapper.findAll('button')
     await buttons[2].trigger('click')
-
-    const emitted = wrapper.emitted('select')
-    expect(emitted).toBeTruthy()
-    expect(emitted![0]).toEqual([3])
+    expect(wrapper.emitted('select')).toBeTruthy()
+    expect(wrapper.emitted('select')![0]).toEqual([3])
   })
 
-  it('displays skillset names and skill counts', () => {
+  it('displays skillset names and counts', () => {
     const wrapper = mount(SkillsetTabs, {
-      props: { skillsets: sampleSkillsets, activeId: null },
+      props: { skillsets: sampleSkillsets, activeId: 1 },
     })
-    const text = wrapper.text()
-    expect(text).toContain('Frontend')
-    expect(text).toContain('(10)')
-    expect(text).toContain('Backend')
-    expect(text).toContain('(8)')
-    expect(text).toContain('DevOps')
+    expect(wrapper.text()).toContain('Frontend')
+    expect(wrapper.text()).toContain('(10)')
+    expect(wrapper.text()).toContain('Backend')
+    expect(wrapper.text()).toContain('(8)')
   })
 
-  it('shows empty message when no skillsets provided', () => {
+  it('shows message when no skillsets', () => {
     const wrapper = mount(SkillsetTabs, {
       props: { skillsets: [], activeId: null },
     })

@@ -4,13 +4,16 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSkillsStore } from '@/stores/skills'
 import { useOnboardingStore } from '@/stores/onboarding'
+import { useThemeStore } from '@/stores/theme'
 import OnboardingChecklist from '@/components/OnboardingChecklist.vue'
+import AppLogo from '@/components/logos/AppLogo.vue'
 import type { TourStep } from '@/types'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const skillsStore = useSkillsStore()
 const onboardingStore = useOnboardingStore()
+const themeStore = useThemeStore()
 
 const startTour = inject<(steps: TourStep[]) => void>('startTour')
 
@@ -44,52 +47,87 @@ async function handleLogout() {
 </script>
 
 <template>
-  <aside class="fixed left-0 top-0 bottom-0 w-[260px] bg-sidebar text-white flex flex-col z-30">
+  <aside
+    class="fixed left-0 top-0 bottom-0 flex flex-col z-30 transition-all duration-200 ease-in-out overflow-hidden"
+    :style="{
+      width: themeStore.sidebarCollapsed ? 'var(--sidebar-collapsed-width)' : 'var(--sidebar-width)',
+      backgroundColor: 'var(--color-sidebar-bg)',
+      color: 'var(--color-sidebar-active)',
+    }"
+  >
     <!-- Logo -->
-    <div class="px-6 py-5 border-b border-white/10">
-      <h1 class="text-lg font-semibold tracking-tight">
-        HR Skillset Evaluator
-      </h1>
+    <div
+      class="flex items-center border-b border-white/10 shrink-0 transition-all duration-200"
+      :class="themeStore.sidebarCollapsed ? 'px-3 py-4 justify-center' : 'px-5 py-4'"
+    >
+      <AppLogo :size="28" :collapsed="themeStore.sidebarCollapsed" />
     </div>
 
     <!-- Navigation -->
-    <nav class="px-4 py-4 space-y-1">
+    <nav class="px-2 py-3 space-y-0.5 shrink-0">
+      <!-- Dashboard -->
       <RouterLink
         to="/dashboard"
         data-tour="dashboard-link"
-        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
+        class="flex items-center gap-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/10 relative group"
+        :class="themeStore.sidebarCollapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5'"
         active-class="bg-white/15 text-white"
+        :style="{ color: 'var(--color-sidebar-text)' }"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
-        Dashboard
+        <span v-if="!themeStore.sidebarCollapsed" class="truncate">Dashboard</span>
+        <!-- Tooltip when collapsed -->
+        <div
+          v-if="themeStore.sidebarCollapsed"
+          class="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50"
+        >
+          Dashboard
+        </div>
       </RouterLink>
 
+      <!-- Settings (manager only) -->
       <RouterLink
         v-if="authStore.isManager"
         to="/settings/skillsets"
         data-tour="settings-link"
-        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors hover:bg-white/10"
+        class="flex items-center gap-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/10 relative group"
+        :class="themeStore.sidebarCollapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5'"
         active-class="bg-white/15 text-white"
+        :style="{ color: 'var(--color-sidebar-text)' }"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-        Settings
+        <span v-if="!themeStore.sidebarCollapsed" class="truncate">Settings</span>
+        <div
+          v-if="themeStore.sidebarCollapsed"
+          class="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50"
+        >
+          Settings
+        </div>
       </RouterLink>
     </nav>
 
     <!-- Onboarding Checklist -->
     <OnboardingChecklist
-      v-if="onboardingStore.isVisible"
+      v-if="onboardingStore.isVisible && !themeStore.sidebarCollapsed"
       @start-tour="handleStartTour"
     />
 
     <!-- Skillsets -->
-    <div class="px-4 py-3 flex-1 overflow-y-auto" data-tour="skillsets-section">
-      <h2 class="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-white/50">
+    <div
+      class="py-3 flex-1 overflow-y-auto scrollbar-thin"
+      :class="themeStore.sidebarCollapsed ? 'px-2' : 'px-2'"
+      data-tour="skillsets-section"
+    >
+      <h2
+        v-if="!themeStore.sidebarCollapsed"
+        class="px-3 mb-2 text-xs font-semibold uppercase tracking-wider"
+        style="color: var(--color-sidebar-text); opacity: 0.6;"
+      >
         Skillsets
       </h2>
       <div class="space-y-0.5">
@@ -97,15 +135,27 @@ async function handleLogout() {
           v-for="skillset in skillsStore.skillsets"
           :key="skillset.id"
           :to="`/skillsets/${skillset.id}`"
-          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors hover:bg-white/10 text-white/70"
-          active-class="bg-primary/20 text-primary-light"
+          class="flex items-center gap-3 rounded-lg text-sm transition-colors hover:bg-white/10 relative group"
+          :class="themeStore.sidebarCollapsed ? 'px-0 py-2 justify-center' : 'px-3 py-2'"
+          active-class="bg-white/10"
+          :style="{ color: 'var(--color-sidebar-text)' }"
         >
-          <span class="w-2 h-2 rounded-full bg-primary shrink-0" />
-          {{ skillset.name }}
+          <span
+            class="w-2 h-2 rounded-full shrink-0"
+            :style="{ backgroundColor: 'var(--color-primary-light)' }"
+          />
+          <span v-if="!themeStore.sidebarCollapsed" class="truncate">{{ skillset.name }}</span>
+          <div
+            v-if="themeStore.sidebarCollapsed"
+            class="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50"
+          >
+            {{ skillset.name }}
+          </div>
         </RouterLink>
         <p
-          v-if="skillsStore.skillsets.length === 0 && !skillsStore.loading"
-          class="px-3 py-2 text-sm text-white/40"
+          v-if="skillsStore.skillsets.length === 0 && !skillsStore.loading && !themeStore.sidebarCollapsed"
+          class="px-3 py-2 text-sm"
+          style="color: var(--color-sidebar-text); opacity: 0.5;"
         >
           No skillsets yet
         </p>
@@ -113,29 +163,66 @@ async function handleLogout() {
     </div>
 
     <!-- User info -->
-    <div class="px-4 py-4 border-t border-white/10" data-tour="user-info">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full bg-primary/30 flex items-center justify-center text-sm font-semibold text-primary-light shrink-0">
-          {{ authStore.user?.name?.charAt(0)?.toUpperCase() || '?' }}
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium truncate">
-            {{ authStore.user?.name }}
-          </p>
-          <p class="text-xs text-white/50 truncate">
-            {{ authStore.user?.email }}
-          </p>
-        </div>
-        <button
-          class="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white"
-          title="Sign out"
-          @click="handleLogout"
+    <div class="border-t border-white/10 shrink-0" data-tour="user-info">
+      <div
+        class="flex items-center transition-all duration-200"
+        :class="themeStore.sidebarCollapsed ? 'px-2 py-3 justify-center' : 'px-4 py-3 gap-3'"
+      >
+        <div
+          class="rounded-full flex items-center justify-center text-sm font-semibold shrink-0 relative group"
+          :class="themeStore.sidebarCollapsed ? 'w-8 h-8' : 'w-9 h-9'"
+          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 30%, transparent)', color: 'var(--color-primary-light)' }"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-        </button>
+          {{ authStore.user?.name?.charAt(0)?.toUpperCase() || '?' }}
+          <div
+            v-if="themeStore.sidebarCollapsed"
+            class="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50"
+          >
+            {{ authStore.user?.name }}
+          </div>
+        </div>
+        <template v-if="!themeStore.sidebarCollapsed">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate" style="color: var(--color-sidebar-active);">
+              {{ authStore.user?.name }}
+            </p>
+            <p class="text-xs truncate" style="color: var(--color-sidebar-text); opacity: 0.7;">
+              {{ authStore.user?.email }}
+            </p>
+          </div>
+          <button
+            class="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            :style="{ color: 'var(--color-sidebar-text)' }"
+            title="Sign out"
+            @click="handleLogout"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </template>
       </div>
+    </div>
+
+    <!-- Collapse toggle -->
+    <div class="border-t border-white/10 shrink-0">
+      <button
+        class="w-full flex items-center justify-center py-3 hover:bg-white/10 transition-colors"
+        :style="{ color: 'var(--color-sidebar-text)' }"
+        :title="themeStore.sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        @click="themeStore.toggleSidebar()"
+      >
+        <!-- Chevron left (collapse) or chevron right (expand) -->
+        <svg
+          class="w-5 h-5 transition-transform duration-200"
+          :class="themeStore.sidebarCollapsed ? 'rotate-180' : ''"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
     </div>
   </aside>
 </template>

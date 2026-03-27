@@ -15,7 +15,7 @@ describe('GapAnalysis', () => {
     const wrapper = mount(GapAnalysis, {
       props: { items: sampleItems },
     })
-    const rows = wrapper.findAll('.border.border-gray-100')
+    const rows = wrapper.findAll('.rounded-lg.p-4')
     expect(rows.length).toBe(sampleItems.length)
   })
 
@@ -34,11 +34,10 @@ describe('GapAnalysis', () => {
       props: { items: sampleItems },
     })
     const text = wrapper.text()
-    // Scores are displayed with .toFixed(1)
-    expect(text).toContain('4.0') // JavaScript manager_score
-    expect(text).toContain('3.0') // JavaScript self_score / Go scores
-    expect(text).toContain('2.0') // Python manager_score / Rust self_score
-    expect(text).toContain('5.0') // Rust manager_score
+    expect(text).toContain('4.0')
+    expect(text).toContain('3.0')
+    expect(text).toContain('2.0')
+    expect(text).toContain('5.0')
   })
 
   it('calculates and displays gap values', () => {
@@ -57,7 +56,7 @@ describe('GapAnalysis', () => {
       props: { items: sampleItems },
     })
     // Sorted order by absolute gap: Rust(3), Python(2), JavaScript(1), Go(0)
-    const skillNames = wrapper.findAll('.text-sm.font-medium.text-gray-900')
+    const skillNames = wrapper.findAll('.text-sm.font-medium')
     const names = skillNames.map((el) => el.text())
     expect(names[0]).toBe('Rust')
     expect(names[1]).toBe('Python')
@@ -70,6 +69,6 @@ describe('GapAnalysis', () => {
       props: { items: [] },
     })
     expect(wrapper.text()).toContain('No gap analysis data available')
-    expect(wrapper.findAll('.border.border-gray-100').length).toBe(0)
+    expect(wrapper.findAll('.rounded-lg.p-4').length).toBe(0)
   })
 })

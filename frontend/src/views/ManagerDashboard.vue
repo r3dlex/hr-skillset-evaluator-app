@@ -37,10 +37,10 @@ function getMemberInitial(member: User): string {
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-900">
+        <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
           Manager Dashboard
         </h1>
-        <p class="text-gray-500 mt-1">
+        <p class="mt-1" :style="{ color: 'var(--color-text-secondary)' }">
           Welcome back, {{ authStore.user?.name }}
         </p>
       </div>
@@ -55,10 +55,10 @@ function getMemberInitial(member: User): string {
 
       <!-- Team Selector -->
       <div class="mt-8 mb-6">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Select Team</label>
+        <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Select Team</label>
         <select
           v-model="selectedTeamId"
-          class="w-64 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white"
+          class="input-field w-64"
         >
           <option
             v-for="team in teamStore.teams"
@@ -75,15 +75,18 @@ function getMemberInitial(member: User): string {
         <div
           v-for="member in teamStore.members"
           :key="member.id"
-          class="card p-5 hover:shadow-md transition-shadow cursor-pointer"
+          class="card-hover p-5 cursor-pointer"
         >
           <div class="flex items-center gap-4">
-            <div class="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-sm shrink-0">
+            <div
+              class="w-11 h-11 rounded-full flex items-center justify-center font-semibold text-sm shrink-0"
+              :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)', color: 'var(--color-primary)' }"
+            >
               {{ getMemberInitial(member) }}
             </div>
             <div class="min-w-0">
-              <p class="font-medium text-gray-900 truncate">{{ member.name }}</p>
-              <p class="text-sm text-gray-500 truncate">{{ member.email }}</p>
+              <p class="font-medium truncate" :style="{ color: 'var(--color-text-primary)' }">{{ member.name }}</p>
+              <p class="text-sm truncate" :style="{ color: 'var(--color-text-secondary)' }">{{ member.email }}</p>
             </div>
           </div>
           <div class="mt-4 flex items-center gap-2">
@@ -93,14 +96,15 @@ function getMemberInitial(member: User): string {
             >
               {{ member.active ? 'Active' : 'Inactive' }}
             </span>
-            <span class="text-xs text-gray-400">{{ member.location }}</span>
+            <span class="text-xs" :style="{ color: 'var(--color-text-muted)' }">{{ member.location }}</span>
           </div>
           <div class="mt-3 flex gap-2">
             <RouterLink
               v-for="skillset in skillsStore.skillsets"
               :key="skillset.id"
               :to="`/skillsets/${skillset.id}`"
-              class="text-xs text-primary hover:text-primary-dark font-medium"
+              class="text-xs font-medium"
+              :style="{ color: 'var(--color-primary)' }"
             >
               {{ skillset.name }}
             </RouterLink>
@@ -113,15 +117,18 @@ function getMemberInitial(member: User): string {
         v-if="teamStore.teams.length === 0 && !teamStore.loading && teamStore.members.length === 0"
         class="card p-10 text-center max-w-lg mx-auto mt-8"
       >
-        <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+          class="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center"
+          :style="{ backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)' }"
+        >
+          <svg class="w-8 h-8" :style="{ color: 'var(--color-primary)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
           </svg>
         </div>
-        <h3 class="text-lg font-bold text-gray-900 mb-2">
+        <h3 class="text-lg font-bold mb-2" :style="{ color: 'var(--color-text-primary)' }">
           Welcome! Let's set up your team evaluation
         </h3>
-        <p class="text-sm text-gray-500 mb-6">
+        <p class="text-sm mb-6" :style="{ color: 'var(--color-text-secondary)' }">
           Get started by importing your existing skill matrix or creating skillsets manually.
         </p>
         <div class="flex items-center justify-center gap-3">
@@ -148,10 +155,10 @@ function getMemberInitial(member: User): string {
         v-else-if="teamStore.members.length === 0 && !teamStore.loading"
         class="text-center py-16"
       >
-        <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-16 h-16 mx-auto mb-4" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-        <p class="text-gray-500">Select a team to view members</p>
+        <p :style="{ color: 'var(--color-text-secondary)' }">Select a team to view members</p>
       </div>
     </div>
   </AppLayout>

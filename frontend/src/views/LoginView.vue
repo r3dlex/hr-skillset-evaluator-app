@@ -29,20 +29,23 @@ async function handleSubmit() {
 <template>
   <AuthLayout>
     <div class="text-center mb-8">
-      <div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+      <div
+        class="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4"
+        :style="{ backgroundColor: 'var(--color-primary)' }"
+      >
         <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       </div>
-      <h2 class="text-2xl font-bold text-gray-900">
+      <h2 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
         HR Skillset Evaluator
       </h2>
-      <p class="text-sm text-gray-500 mt-1">
+      <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
         Sign in to your account
       </p>
     </div>
 
-    <form @submit.prevent="handleSubmit" class="space-y-5">
+    <form class="space-y-5" @submit.prevent="handleSubmit">
       <div
         v-if="errorMessage"
         class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3"
@@ -51,7 +54,7 @@ async function handleSubmit() {
       </div>
 
       <div>
-        <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">
+        <label for="email" class="block text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-secondary)' }">
           Email address
         </label>
         <input
@@ -60,13 +63,13 @@ async function handleSubmit() {
           type="email"
           required
           autocomplete="email"
-          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-colors"
+          class="input-field"
           placeholder="you@company.com"
         />
       </div>
 
       <div>
-        <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">
+        <label for="password" class="block text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-secondary)' }">
           Password
         </label>
         <input
@@ -75,7 +78,7 @@ async function handleSubmit() {
           type="password"
           required
           autocomplete="current-password"
-          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-colors"
+          class="input-field"
           placeholder="Enter your password"
         />
       </div>
@@ -83,23 +86,28 @@ async function handleSubmit() {
       <button
         type="submit"
         :disabled="submitting"
-        class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+        class="w-full btn-primary"
       >
         {{ submitting ? 'Signing in...' : 'Sign in' }}
       </button>
 
       <div class="relative my-4">
         <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-200" />
+          <div class="w-full" :style="{ borderTop: '1px solid var(--color-border)' }" />
         </div>
         <div class="relative flex justify-center text-xs uppercase">
-          <span class="bg-white px-3 text-gray-400">or</span>
+          <span class="px-3" :style="{ backgroundColor: 'var(--color-surface)', color: 'var(--color-text-muted)' }">or</span>
         </div>
       </div>
 
       <button
         type="button"
-        class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
+        class="w-full flex items-center justify-center gap-3 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
+        :style="{
+          backgroundColor: 'var(--color-surface)',
+          border: '1px solid var(--color-border)',
+          color: 'var(--color-text-secondary)',
+        }"
       >
         <svg class="w-5 h-5" viewBox="0 0 21 21" fill="none">
           <path d="M10 0H0V10H10V0Z" fill="#F25022" />

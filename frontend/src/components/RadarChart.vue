@@ -102,7 +102,7 @@ function hideTooltip() {
         :key="`level-${level}`"
         :points="levelPolygon(level)"
         fill="none"
-        stroke="#e5e7eb"
+        :stroke="'var(--color-border)'"
         stroke-width="1"
       />
 
@@ -114,7 +114,7 @@ function hideTooltip() {
         :y1="center"
         :x2="axisEndpoint(i).x"
         :y2="axisEndpoint(i).y"
-        stroke="#e5e7eb"
+        :stroke="'var(--color-border)'"
         stroke-width="1"
       />
 
@@ -136,7 +136,7 @@ function hideTooltip() {
           :cy="pointAt(angleFor(i), animated ? (radius * val) / levels : 0).y"
           r="4"
           :fill="series.color"
-          stroke="white"
+          :stroke="'var(--color-surface)'"
           stroke-width="2"
           class="cursor-pointer transition-all duration-300 ease-out"
           @mouseenter="handlePointHover($event, series.name, i, val)"
@@ -152,8 +152,8 @@ function hideTooltip() {
         :y="labelPosition(i).y"
         :text-anchor="labelPosition(i).anchor"
         dominant-baseline="middle"
-        class="text-xs fill-gray-600"
-        font-family="Inter, sans-serif"
+        :fill="'var(--color-text-secondary)'"
+        :font-family="'var(--font-family)'"
         font-size="11"
       >
         {{ axis }}
@@ -165,8 +165,8 @@ function hideTooltip() {
         :key="`lvl-label-${level}`"
         :x="center + 4"
         :y="center - (radius * level) / levels - 4"
-        class="text-[10px] fill-gray-400"
-        font-family="Inter, sans-serif"
+        :fill="'var(--color-text-muted)'"
+        :font-family="'var(--font-family)'"
         font-size="9"
       >
         {{ level }}
@@ -176,8 +176,13 @@ function hideTooltip() {
     <!-- Tooltip -->
     <div
       v-if="tooltip.visible"
-      class="absolute pointer-events-none bg-gray-900 text-white text-xs px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap z-10"
-      :style="{ left: `${tooltip.x}px`, top: `${tooltip.y}px`, transform: 'translate(-50%, -100%)' }"
+      class="absolute pointer-events-none text-white text-xs px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap z-10"
+      :style="{
+        left: `${tooltip.x}px`,
+        top: `${tooltip.y}px`,
+        transform: 'translate(-50%, -100%)',
+        backgroundColor: 'var(--color-text-primary)',
+      }"
     >
       {{ tooltip.text }}
     </div>

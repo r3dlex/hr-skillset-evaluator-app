@@ -24,25 +24,28 @@ function priorityColor(priority: string): string {
 
 <template>
   <div>
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+    <h3 class="text-lg font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
       Score Data
     </h3>
 
     <!-- Table header -->
-    <div class="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">
+    <div
+      class="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-medium uppercase tracking-wider"
+      :style="{ color: 'var(--color-text-secondary)' }"
+    >
       <div class="col-span-5">Skill</div>
       <div class="col-span-2">Priority</div>
       <div class="col-span-5">Score (0-5)</div>
     </div>
 
     <!-- Skill rows -->
-    <div class="divide-y divide-gray-100">
+    <div class="divide-y" :style="{ borderColor: 'var(--color-border)' }">
       <div
         v-for="skill in skills"
         :key="skill.id"
         class="grid grid-cols-12 gap-4 items-center px-4 py-3"
       >
-        <div class="col-span-5 text-sm font-medium text-gray-900">
+        <div class="col-span-5 text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
           {{ skill.name }}
         </div>
         <div class="col-span-2">
@@ -63,7 +66,7 @@ function priorityColor(priority: string): string {
       </div>
     </div>
 
-    <p v-if="skills.length === 0" class="text-center py-8 text-gray-400">
+    <p v-if="skills.length === 0" class="text-center py-8" :style="{ color: 'var(--color-text-muted)' }">
       No skills to display
     </p>
   </div>

@@ -82,3 +82,6 @@ export interface TourStep {
   content: string
   position: 'top' | 'bottom' | 'left' | 'right'
 }
+
+export type ThemeName = 'default' | 'rib'
+export type ColorMode = 'light' | 'dark' | 'system'

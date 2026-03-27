@@ -17,10 +17,10 @@ const emit = defineEmits<{
       v-for="skillset in skillsets"
       :key="skillset.id"
       class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors shrink-0"
-      :class="
+      :style="
         activeId === skillset.id
-          ? 'bg-primary text-white shadow-sm'
-          : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+          ? { backgroundColor: 'var(--color-primary)', color: '#ffffff', boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' }
+          : { backgroundColor: 'var(--color-surface)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }
       "
       @click="emit('select', skillset.id)"
     >
@@ -34,7 +34,8 @@ const emit = defineEmits<{
     </button>
     <p
       v-if="skillsets.length === 0"
-      class="text-sm text-gray-400 py-2"
+      class="text-sm py-2"
+      :style="{ color: 'var(--color-text-muted)' }"
     >
       No skillsets available
     </p>

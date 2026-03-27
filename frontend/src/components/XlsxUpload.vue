@@ -61,17 +61,17 @@ function reset() {
 
 <template>
   <div class="card p-6">
-    <h3 class="text-lg font-semibold text-gray-900 mb-4">
+    <h3 class="text-lg font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
       Import XLSX
     </h3>
 
     <!-- Period selector -->
     <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 mb-1.5">Period</label>
+      <label class="block text-sm font-medium mb-1.5" :style="{ color: 'var(--color-text-secondary)' }">Period</label>
       <input
         v-model="period"
         type="text"
-        class="w-48 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
+        class="input-field w-48"
         placeholder="e.g., 2026-Q1"
       />
     </div>
@@ -79,7 +79,10 @@ function reset() {
     <!-- Drop zone -->
     <div
       class="border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer"
-      :class="dragOver ? 'border-primary bg-primary-light/30' : 'border-gray-300 hover:border-gray-400'"
+      :style="{
+        borderColor: dragOver ? 'var(--color-primary)' : 'var(--color-border)',
+        backgroundColor: dragOver ? 'var(--color-primary-light)' : 'transparent',
+      }"
       @dragover.prevent="dragOver = true"
       @dragleave.prevent="dragOver = false"
       @drop.prevent="handleDrop"
@@ -92,14 +95,14 @@ function reset() {
         class="hidden"
         @change="handleFileInput"
       />
-      <svg class="w-10 h-10 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-10 h-10 mx-auto mb-3" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
       </svg>
-      <p v-if="file" class="text-sm font-medium text-gray-900">
+      <p v-if="file" class="text-sm font-medium" :style="{ color: 'var(--color-text-primary)' }">
         {{ file.name }}
       </p>
-      <p v-else class="text-sm text-gray-500">
-        Drop an .xlsx file here, or <span class="text-primary font-medium">browse</span>
+      <p v-else class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
+        Drop an .xlsx file here, or <span :style="{ color: 'var(--color-primary)' }" class="font-medium">browse</span>
       </p>
     </div>
 
@@ -107,14 +110,15 @@ function reset() {
     <div class="mt-4 flex items-center gap-3">
       <button
         :disabled="!file || !period || uploading"
-        class="bg-primary hover:bg-primary-dark text-white font-medium py-2.5 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+        class="btn-primary"
         @click="handleUpload"
       >
         {{ uploading ? 'Uploading...' : 'Upload & Import' }}
       </button>
       <button
         v-if="file"
-        class="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+        class="text-sm transition-colors"
+        :style="{ color: 'var(--color-text-secondary)' }"
         @click="reset"
       >
         Clear

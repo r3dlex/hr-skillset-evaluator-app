@@ -85,16 +85,16 @@ function priorityColor(priority: string): string {
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">
+          <h1 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
             Self Evaluation
           </h1>
-          <p class="text-gray-500 mt-1">
+          <p class="mt-1" :style="{ color: 'var(--color-text-secondary)' }">
             {{ skillsStore.currentSkillset?.name }} - {{ currentPeriod }}
           </p>
         </div>
         <button
           :disabled="saving"
-          class="bg-primary hover:bg-primary-dark text-white font-medium py-2.5 px-6 rounded-lg transition-colors disabled:opacity-50 text-sm"
+          class="btn-primary"
           @click="handleSave"
         >
           {{ saving ? 'Saving...' : 'Save Scores' }}
@@ -116,7 +116,7 @@ function priorityColor(priority: string): string {
         :key="group.id"
         class="mb-8"
       >
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+        <h2 class="text-lg font-semibold mb-4" :style="{ color: 'var(--color-text-primary)' }">
           {{ group.name }}
         </h2>
 
@@ -125,12 +125,12 @@ function priorityColor(priority: string): string {
             v-for="(skill, index) in group.skills"
             :key="skill.id"
             class="flex items-center gap-6 px-6 py-4"
-            :class="index < group.skills.length - 1 ? 'border-b border-gray-100' : ''"
+            :style="index < group.skills.length - 1 ? { borderBottom: '1px solid var(--color-border)' } : {}"
           >
             <!-- Skill Info -->
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="font-medium text-gray-900 text-sm">{{ skill.name }}</span>
+                <span class="font-medium text-sm" :style="{ color: 'var(--color-text-primary)' }">{{ skill.name }}</span>
                 <span
                   class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                   :class="priorityColor(skill.priority)"
@@ -138,7 +138,7 @@ function priorityColor(priority: string): string {
                   {{ skill.priority }}
                 </span>
               </div>
-              <div v-if="managerScoreMap[skill.id] !== undefined" class="mt-1 text-xs text-gray-400">
+              <div v-if="managerScoreMap[skill.id] !== undefined" class="mt-1 text-xs" :style="{ color: 'var(--color-text-muted)' }">
                 Manager score: {{ managerScoreMap[skill.id] ?? 'Not rated' }}
               </div>
             </div>
@@ -160,15 +160,18 @@ function priorityColor(priority: string): string {
         v-if="!skillsStore.currentSkillset?.skill_groups?.length && !skillsStore.loading"
         class="card p-10 text-center max-w-md mx-auto"
       >
-        <div class="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gray-100 flex items-center justify-center">
-          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+          class="w-16 h-16 mx-auto mb-5 rounded-2xl flex items-center justify-center"
+          :style="{ backgroundColor: 'var(--color-border)' }"
+        >
+          <svg class="w-8 h-8" :style="{ color: 'var(--color-text-muted)' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
           </svg>
         </div>
-        <h3 class="text-base font-semibold text-gray-900 mb-2">
+        <h3 class="text-base font-semibold mb-2" :style="{ color: 'var(--color-text-primary)' }">
           No skills defined yet
         </h3>
-        <p class="text-sm text-gray-500">
+        <p class="text-sm" :style="{ color: 'var(--color-text-secondary)' }">
           This skillset has no skills defined yet. Your manager can add skills by importing data.
         </p>
       </div>
