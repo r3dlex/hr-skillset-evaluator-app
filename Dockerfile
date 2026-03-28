@@ -14,6 +14,20 @@ COPY frontend/ ./
 RUN npx vite build --outDir /app/frontend/dist
 
 # =============================================================================
+# Stage 1b: Build documentation (VitePress)
+# =============================================================================
+FROM node:20-alpine AS docs-build
+
+WORKDIR /app/docs
+
+COPY docs/package.json ./
+COPY docs/package-lock.json* ./
+RUN if [ -f package-lock.json ]; then npm ci --prefer-offline --no-audit; else npm install --no-audit; fi
+
+COPY docs/ ./
+RUN npx vitepress build
+
+# =============================================================================
 # Stage 2: Build Elixir release
 # =============================================================================
 FROM hexpm/elixir:1.16.2-erlang-26.2.2-alpine-3.19.1 AS backend-build
@@ -39,6 +53,9 @@ COPY backend/ ./
 
 # Copy frontend build into priv/static
 COPY --from=frontend-build /app/frontend/dist ./priv/static
+
+# Copy docs build into priv/static/docs
+COPY --from=docs-build /app/docs/.vitepress/dist ./priv/static/docs
 
 # Compile application, digest static assets, and build release
 RUN mix compile && \

@@ -28,6 +28,11 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
+# Docs (VitePress)
+docs/node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+
 # Python
 tools/pipeline_runner/.venv/
 tools/pipeline_runner/__pycache__/

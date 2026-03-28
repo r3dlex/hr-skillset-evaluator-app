@@ -120,12 +120,21 @@ function navigateToStep(route?: string) {
 
       <!-- Actions -->
       <div class="px-4 py-2.5 flex items-center justify-between border-t border-white/5">
-        <button
-          class="text-xs font-medium text-primary border border-primary/30 hover:bg-primary/10 px-3 py-1 rounded-md transition-colors"
-          @click="emit('start-tour')"
-        >
-          Take a tour
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            class="text-xs font-medium text-primary border border-primary/30 hover:bg-primary/10 px-3 py-1 rounded-md transition-colors"
+            @click="emit('start-tour')"
+          >
+            Take a tour
+          </button>
+          <a
+            href="/docs/getting-started/"
+            target="_blank"
+            class="text-xs font-medium text-white/40 hover:text-white/60 transition-colors"
+          >
+            Docs
+          </a>
+        </div>
         <button
           class="text-xs text-white/30 hover:text-white/50 transition-colors"
           @click="onboardingStore.dismiss()"

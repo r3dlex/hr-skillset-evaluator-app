@@ -37,6 +37,7 @@ provide('startTour', startTour)
     <!-- Chat FAB (bottom-right) -->
     <button
       v-if="!chatStore.isPanelOpen"
+      data-tour="chat-fab"
       class="fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-105 z-40"
       :style="{ backgroundColor: 'var(--color-primary)', color: '#ffffff' }"
       title="AI Assistant"

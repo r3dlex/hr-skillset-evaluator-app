@@ -39,20 +39,26 @@ onMounted(() => {
 })
 
 function handleStartTour() {
-  const tourSteps: TourStep[] = authStore.isManager
-    ? [
-        { target: '[data-tour="dashboard-link"]', title: 'Dashboard', content: 'Your main hub for team overview and stats.', position: 'right' },
-        { target: '[data-tour="settings-link"]', title: 'Settings', content: 'Manage skillsets, import xlsx files, and configure skill groups.', position: 'right' },
-        { target: '[data-tour="skillsets-section"]', title: 'Skillsets', content: 'Quick links to each skillset for evaluating team members.', position: 'right' },
-        { target: '[data-tour="user-info"]', title: 'Your Profile', content: 'View your account info and sign out from here.', position: 'top' },
-      ]
-    : [
-        { target: '[data-tour="dashboard-link"]', title: 'Your Dashboard', content: 'See your evaluation scores, radar chart, and self-evaluation links.', position: 'right' },
-        { target: '[data-tour="skillsets-section"]', title: 'Skillsets', content: 'Navigate to each skillset to view your evaluations and radar charts.', position: 'right' },
-        { target: '[data-tour="user-info"]', title: 'Your Profile', content: 'View your account info and sign out from here.', position: 'top' },
-      ]
-  startTour?.(tourSteps)
+  const managerTour: TourStep[] = [
+    { target: '[data-tour="dashboard-link"]', title: 'Dashboard', content: 'Your main hub: team overview, stats, and assessment filtering. Select a team, role, or assessment to drill down.', position: 'right' },
+    { target: '[data-tour="settings-link"]', title: 'Settings & Import', content: 'Manage skillsets, import xlsx skill matrices, and configure skill groups for your teams.', position: 'right' },
+    { target: '[data-tour="skillsets-section"]', title: 'Skillsets', content: 'Click any skillset to view radar charts, evaluate team members, and analyze skill gaps.', position: 'right' },
+    { target: '[data-tour="help-link"]', title: 'Help & Docs', content: 'Access the full documentation, restart this tour, or learn about all features.', position: 'right' },
+    { target: '[data-tour="chat-fab"]', title: 'AI Assistant', content: 'Open the AI chat panel for context-aware help. It understands what you\'re viewing and can guide you.', position: 'left' },
+    { target: '[data-tour="user-info"]', title: 'Your Profile', content: 'View your account info and sign out from here.', position: 'top' },
+  ]
+
+  const userTour: TourStep[] = [
+    { target: '[data-tour="dashboard-link"]', title: 'Your Dashboard', content: 'See your evaluation scores, radar charts, and quick links to self-evaluation.', position: 'right' },
+    { target: '[data-tour="skillsets-section"]', title: 'Skillsets', content: 'Navigate to each skillset to view your evaluations, radar charts, and gap analysis.', position: 'right' },
+    { target: '[data-tour="help-link"]', title: 'Help & Docs', content: 'Access the full documentation, restart this tour, or learn about all features.', position: 'right' },
+    { target: '[data-tour="chat-fab"]', title: 'AI Assistant', content: 'Get help with self-evaluations. The AI can guide you through scoring yourself on each skill.', position: 'left' },
+    { target: '[data-tour="user-info"]', title: 'Your Profile', content: 'View your account info and sign out from here.', position: 'top' },
+  ]
+
+  startTour?.(authStore.isManager ? managerTour : userTour)
 }
+
 
 async function handleLogout() {
   await authStore.logout()
@@ -123,6 +129,26 @@ async function handleLogout() {
           Settings
         </div>
       </RouterLink>
+      <!-- Help / Docs -->
+      <a
+        href="/docs/"
+        target="_blank"
+        data-tour="help-link"
+        class="flex items-center gap-3 rounded-lg text-sm font-medium transition-colors hover:bg-white/10 relative group"
+        :class="themeStore.sidebarCollapsed ? 'px-0 py-2.5 justify-center' : 'px-3 py-2.5'"
+        :style="{ color: 'var(--color-sidebar-text)' }"
+      >
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span v-if="!themeStore.sidebarCollapsed" class="truncate">Help</span>
+        <div
+          v-if="themeStore.sidebarCollapsed"
+          class="absolute left-full ml-2 px-2.5 py-1.5 bg-gray-900 text-white text-xs rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50"
+        >
+          Help & Docs
+        </div>
+      </a>
     </nav>
 
     <!-- Onboarding Checklist -->
