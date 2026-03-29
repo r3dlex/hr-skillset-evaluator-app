@@ -1,6 +1,6 @@
 # Manager Workflow
 
-A complete guide to evaluating your team using the HR Skillset Evaluator.
+A complete guide to evaluating your team using the SkillForge.
 
 ## Step 1: Import or Create Skillsets
 

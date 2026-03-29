@@ -2,7 +2,7 @@
 
 ## Overview
 
-Domain-specific AI chat agent for the HR Skillset Evaluator. Provides skill evaluation guidance, AEC (Architecture/Engineering/Construction) terminology help, and data-driven insights scoped to the user's role. Supports three languages: English, German, and Chinese (EN/DE/ZH).
+Domain-specific AI chat agent for the SkillForge. Provides skill evaluation guidance, AEC (Architecture/Engineering/Construction) terminology help, and data-driven insights scoped to the user's role. Supports three languages: English, German, and Chinese (EN/DE/ZH).
 
 The chat is optional -- it requires an `ANTHROPIC_API_KEY` environment variable. Without it, the chat FAB appears but shows a "not configured" message.
 
@@ -84,7 +84,7 @@ The context builder constructs a 4-layer system prompt:
 ### Layer 1: Identity
 
 ```
-You are an AI assistant for the HR Skillset Evaluator at RIB Software.
+You are an AI assistant for the SkillForge at RIB Software.
 You help with skill evaluation guidance, AEC terminology, and team
 development insights. You respond in the user's language (EN/DE/ZH).
 ```

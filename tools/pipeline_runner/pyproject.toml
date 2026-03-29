@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "pipeline-runner"
 version = "0.1.0"
-description = "CI/CD pipeline runner for the HR Skillset Evaluator app"
-authors = ["HR Skillset Evaluator Team"]
+description = "CI/CD pipeline runner for SkillForge"
+authors = ["SkillForge Team"]
 packages = [{include = "pipeline_runner"}]
 
 [tool.poetry.dependencies]

@@ -1,6 +1,6 @@
 # User Workflow
 
-A guide for team members being evaluated in the HR Skillset Evaluator.
+A guide for team members being evaluated in the SkillForge.
 
 ## Step 1: View Your Scores
 

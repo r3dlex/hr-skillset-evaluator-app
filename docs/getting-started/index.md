@@ -1,6 +1,6 @@
 # Quick Start
 
-Get the HR Skillset Evaluator running locally in under five minutes using Docker.
+Get the SkillForge running locally in under five minutes using Docker.
 
 ## Prerequisites
 

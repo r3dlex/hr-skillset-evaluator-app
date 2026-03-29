@@ -1,6 +1,6 @@
 # App Tour
 
-The HR Skillset Evaluator includes a built-in interactive tour that walks you through the main areas of the application. This is the fastest way to learn where everything is.
+The SkillForge includes a built-in interactive tour that walks you through the main areas of the application. This is the fastest way to learn where everything is.
 
 ## Starting the Tour
 

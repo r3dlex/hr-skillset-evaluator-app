@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: HR Skillset Evaluator
+  name: SkillForge
   text: Team skill management made simple
   tagline: Evaluate, track, and grow your team's competencies with structured assessments, radar charts, gap analysis, and AI-powered insights.
   actions:

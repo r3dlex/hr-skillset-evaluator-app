@@ -1,4 +1,4 @@
-# HR Skillset Evaluator — Application Handout
+# SkillForge — Application Handout
 
 > Version 1.0 · March 2026 · Internal Reference Document
 
@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-The HR Skillset Evaluator is an interactive web application that enables engineering organizations to track, visualize, and analyze team skill proficiency across multiple skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Managers evaluate team members on a structured 0–5 proficiency scale, while employees complete self-assessments — both perspectives are surfaced together as an interactive radar/spider chart for immediate visual insight. The application replaces fragmented spreadsheet-based skill tracking by providing a single source of truth with bidirectional xlsx sync, role-based access control, and guided onboarding so teams are productive from day one.
+The SkillForge is an interactive web application that enables engineering organizations to track, visualize, and analyze team skill proficiency across multiple skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Managers evaluate team members on a structured 0–5 proficiency scale, while employees complete self-assessments — both perspectives are surfaced together as an interactive radar/spider chart for immediate visual insight. The application replaces fragmented spreadsheet-based skill tracking by providing a single source of truth with bidirectional xlsx sync, role-based access control, and guided onboarding so teams are productive from day one.
 
 **Target audience:** HR managers and team leads in engineering organizations who need to understand skill coverage, identify development gaps, and produce standardized skill snapshots for performance reviews.
 
@@ -604,4 +604,4 @@ ADRs are enforced automatically by `archgate/cli` on every CI run.
 
 ---
 
-*HR Skillset Evaluator · One container, one port, one DB file · Built with Elixir + Phoenix + Vue 3*
+*SkillForge · One container, one port, one DB file · Built with Elixir + Phoenix + Vue 3*

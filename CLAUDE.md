@@ -1,4 +1,4 @@
-# HR Skillset Evaluator App
+# SkillForge
 
 All agent instructions and behavioral guidelines are defined in [AGENTS.md](./AGENTS.md).
 

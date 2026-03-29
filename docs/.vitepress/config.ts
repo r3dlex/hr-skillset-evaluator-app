@@ -1,8 +1,8 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
-  title: 'HR Skillset Evaluator',
-  description: 'Comprehensive docs for the HR Skillset Evaluator',
+  title: 'SkillForge',
+  description: 'Comprehensive docs for SkillForge',
   base: '/docs/',
   ignoreDeadLinks: true,
 
@@ -12,7 +12,7 @@ export default defineConfig({
 
   themeConfig: {
     logo: undefined,
-    siteTitle: 'HR Skillset Evaluator',
+    siteTitle: 'SkillForge',
 
     nav: [
       { text: 'Home', link: '/' },
@@ -72,7 +72,7 @@ export default defineConfig({
     },
 
     footer: {
-      message: 'HR Skillset Evaluator Documentation',
+      message: 'SkillForge Documentation',
     },
   },
 })

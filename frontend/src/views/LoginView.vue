@@ -38,7 +38,7 @@ async function handleSubmit() {
         </svg>
       </div>
       <h2 class="text-2xl font-bold" :style="{ color: 'var(--color-text-primary)' }">
-        HR Skillset Evaluator
+        SkillForge
       </h2>
       <p class="text-sm mt-1" :style="{ color: 'var(--color-text-secondary)' }">
         Sign in to your account

@@ -1,6 +1,6 @@
 # Glossary
 
-Key terms used throughout the HR Skillset Evaluator.
+Key terms used throughout the SkillForge.
 
 ## Assessment
 An evaluation cycle or time period (e.g., "2026-Q1", "Annual Review 2026"). Each set of evaluations belongs to an assessment.

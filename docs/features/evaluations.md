@@ -1,6 +1,6 @@
 # Evaluations
 
-Evaluations are the core activity in the HR Skillset Evaluator. Managers rate team members on each skill, and employees can submit self-evaluations for comparison.
+Evaluations are the core activity in the SkillForge. Managers rate team members on each skill, and employees can submit self-evaluations for comparison.
 
 ## Types of Evaluations
 

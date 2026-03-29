@@ -1,4 +1,4 @@
-# HR Skillset Evaluator
+# SkillForge
 
 Interactive radar chart application for evaluating team members across multiple skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Managers evaluate their teams; users submit self-assessments. Gap analysis highlights alignment between manager scores, self scores, team averages, and role averages.
 

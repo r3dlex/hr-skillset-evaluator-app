@@ -110,6 +110,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          tags: hr-skillset-evaluator:${{ github.sha }}
+          tags: skillforge:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

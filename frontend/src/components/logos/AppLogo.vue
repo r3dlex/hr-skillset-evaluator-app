@@ -43,14 +43,14 @@ const logoColor = computed(() => {
           backgroundColor: 'var(--color-primary)',
         }"
       >
-        SE
+        SF
       </div>
       <span
         v-if="!collapsed"
         class="font-semibold truncate"
         :style="{ color: 'var(--color-sidebar-active)', fontSize: `${size * 0.45}px` }"
       >
-        HR Skillset Evaluator
+        SkillForge
       </span>
     </template>
   </div>

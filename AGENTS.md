@@ -1,4 +1,4 @@
-# Agent Guidelines -- HR Skillset Evaluator
+# Agent Guidelines -- SkillForge
 
 ## Project Overview
 
