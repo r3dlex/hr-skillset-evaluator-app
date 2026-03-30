@@ -25,24 +25,32 @@ defmodule SkillsetEvaluatorWeb.EvaluationController do
 
   def update_manager_scores(conn, %{"user_id" => user_id, "period" => period, "scores" => scores}) do
     evaluator = conn.assigns.current_user
+    target_user_id = if is_binary(user_id), do: String.to_integer(user_id), else: user_id
 
-    scores_list =
-      Enum.map(scores, fn s ->
-        %{
-          skill_id: s["skill_id"],
-          score: s["score"],
-          notes: s["notes"]
-        }
-      end)
+    # Validate the manager can evaluate this user
+    if SkillsetEvaluator.Teams.user_in_scope?(evaluator, target_user_id) do
+      scores_list =
+        Enum.map(scores, fn s ->
+          %{
+            skill_id: s["skill_id"],
+            score: s["score"],
+            notes: s["notes"]
+          }
+        end)
 
-    case Evaluations.upsert_manager_scores(evaluator, user_id, period, scores_list) do
-      {:ok, evaluations} ->
-        render(conn, :index, evaluations: evaluations)
+      case Evaluations.upsert_manager_scores(evaluator, target_user_id, period, scores_list) do
+        {:ok, evaluations} ->
+          render(conn, :index, evaluations: evaluations)
 
-      {:error, reason} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error: inspect(reason)})
+        {:error, reason} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> json(%{error: inspect(reason)})
+      end
+    else
+      conn
+      |> put_status(:forbidden)
+      |> json(%{error: "You do not have permission to evaluate this user."})
     end
   end
 

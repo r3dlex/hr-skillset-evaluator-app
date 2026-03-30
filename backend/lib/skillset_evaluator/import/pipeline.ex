@@ -271,6 +271,7 @@ defmodule SkillsetEvaluator.Import.Pipeline do
   defp ensure_user(row, team_id) do
     role = normalize_role(row.role)
     job_title = normalize_job_title(row.role)
+    manager_scope = manager_scope_for_role(job_title)
 
     email =
       row.email ||
@@ -285,17 +286,28 @@ defmodule SkillsetEvaluator.Import.Pipeline do
           team_id: team_id,
           location: row.location,
           active: row.active,
-          job_title: job_title
+          job_title: job_title,
+          manager_scope: manager_scope
         })
 
       user ->
-        # Always sync active, location, team, and job_title from the spreadsheet
-        Accounts.update_user(user, %{
+        # Always sync active, location, team, job_title, and manager_scope
+        attrs = %{
           active: row.active,
           location: row.location,
           team_id: team_id,
           job_title: job_title
-        })
+        }
+
+        # Only set manager_scope if user is a manager and doesn't already have a custom scope
+        attrs =
+          if role == "manager" and (user.manager_scope == nil or user.manager_scope == "") do
+            Map.put(attrs, :manager_scope, manager_scope)
+          else
+            attrs
+          end
+
+        Accounts.update_user(user, attrs)
     end
   end
 
@@ -454,4 +466,8 @@ defmodule SkillsetEvaluator.Import.Pipeline do
       _ -> "user"
     end
   end
+
+  # Default manager_scope based on job_title. Leads get team_only; others nil (full access).
+  defp manager_scope_for_role("Lead"), do: Jason.encode!(%{team_only: true})
+  defp manager_scope_for_role(_), do: nil
 end

@@ -13,6 +13,7 @@ export interface User {
   team: Team | null
   location: string
   active: boolean
+  manager_scope?: string | null
   onboarding?: {
     completed_steps: string[]
     dismissed: boolean

@@ -15,6 +15,7 @@ defmodule SkillsetEvaluator.Accounts.User do
     field :confirmed_at, :utc_datetime
     field :onboarding_completed_steps, :string, default: "[]"
     field :onboarding_dismissed, :boolean, default: false
+    field :manager_scope, :string
 
     belongs_to :team, SkillsetEvaluator.Teams.Team
 
@@ -37,7 +38,8 @@ defmodule SkillsetEvaluator.Accounts.User do
       :active,
       :job_title,
       :confirmed_at,
-      :team_id
+      :team_id,
+      :manager_scope
     ])
     |> validate_required([:email])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
@@ -58,6 +60,30 @@ defmodule SkillsetEvaluator.Accounts.User do
   def onboarding_changeset(user, attrs) do
     cast(user, attrs, [:onboarding_completed_steps, :onboarding_dismissed])
   end
+
+  @doc """
+  Parses manager_scope JSON into a map. Returns nil when no scope (admin/full access).
+  Example: %{"roles" => ["Dev", "QE"], "locations" => ["CN"], "team_only" => false}
+  """
+  def parsed_scope(%__MODULE__{manager_scope: nil}), do: nil
+  def parsed_scope(%__MODULE__{manager_scope: ""}), do: nil
+
+  def parsed_scope(%__MODULE__{manager_scope: scope}) when is_binary(scope) do
+    case Jason.decode(scope) do
+      {:ok, map} when is_map(map) -> map
+      _ -> nil
+    end
+  end
+
+  def parsed_scope(_), do: nil
+
+  @doc """
+  Returns true if the user has no manager_scope restriction (admin or unscoped manager).
+  """
+  def has_full_access?(%__MODULE__{role: "admin"}), do: true
+  def has_full_access?(%__MODULE__{manager_scope: nil}), do: true
+  def has_full_access?(%__MODULE__{manager_scope: ""}), do: true
+  def has_full_access?(_), do: false
 
   @doc """
   Parses the JSON string of completed onboarding steps into a list of strings.
