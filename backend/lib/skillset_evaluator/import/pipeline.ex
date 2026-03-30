@@ -23,7 +23,7 @@ defmodule SkillsetEvaluator.Import.Pipeline do
 
   alias SkillsetEvaluator.Import.XlsxParser
   alias SkillsetEvaluator.Import.XlsxParser.PersonRow
-  alias SkillsetEvaluator.{Repo, Accounts, Teams, Skills}
+  alias SkillsetEvaluator.{Repo, Accounts, Teams, Skills, Assessments}
   alias SkillsetEvaluator.Evaluations.Evaluation
 
   import Ecto.Query
@@ -202,6 +202,9 @@ defmodule SkillsetEvaluator.Import.Pipeline do
   end
 
   defp upsert_evaluations(user_id, scores, period, evaluator_id, skillset) do
+    # Ensure an assessment exists for this period
+    {:ok, assessment} = Assessments.find_or_create_assessment(period)
+
     results =
       Enum.map(scores, fn score_entry ->
         skill = find_skill_by_name_in_skillset(score_entry.skill_name, skillset.id)
@@ -211,6 +214,7 @@ defmodule SkillsetEvaluator.Import.Pipeline do
             user_id: user_id,
             skill_id: skill.id,
             period: period,
+            assessment_id: assessment.id,
             manager_score: score_entry.value,
             evaluated_by_id: evaluator_id
           }

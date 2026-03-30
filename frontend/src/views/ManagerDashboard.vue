@@ -16,6 +16,10 @@ const selectedTeamId = ref<number | 'all' | null>(null)
 const selectedRole = ref<string>('')  // '' = All
 const selectedAssessment = ref<string>('')  // '' = All
 const allAssessments = ref<Assessment[]>([])
+const showNewAssessmentForm = ref(false)
+const newAssessmentName = ref('')
+const newAssessmentDescription = ref('')
+const creatingAssessment = ref(false)
 
 const stats = ref({
   total_skills: 0,
@@ -72,6 +76,27 @@ async function fetchAllAssessments() {
     allAssessments.value = await assessmentsApi.list()
   } catch {
     // keep empty
+  }
+}
+
+async function createAssessment() {
+  if (!newAssessmentName.value.trim()) return
+  creatingAssessment.value = true
+  try {
+    const assessment = await assessmentsApi.create(
+      newAssessmentName.value.trim(),
+      newAssessmentDescription.value.trim() || undefined,
+    )
+    allAssessments.value.unshift(assessment)
+    selectedAssessment.value = assessment.name
+    showNewAssessmentForm.value = false
+    newAssessmentName.value = ''
+    newAssessmentDescription.value = ''
+    fetchStats()
+  } catch {
+    await fetchAllAssessments()
+  } finally {
+    creatingAssessment.value = false
   }
 }
 
@@ -160,12 +185,71 @@ function getMemberInitial(member: User): string {
             <option v-for="role in availableRoles" :key="role" :value="role">{{ role }}</option>
           </select>
         </div>
-        <div v-if="allAssessments.length > 0">
+        <div>
           <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Assessment</label>
-          <select v-model="selectedAssessment" class="input-field w-52" @change="fetchStats()">
-            <option value="">All</option>
-            <option v-for="a in allAssessments" :key="a.id" :value="a.name">{{ a.name }}</option>
-          </select>
+          <div class="flex items-center gap-2">
+            <select v-model="selectedAssessment" class="input-field w-52" @change="fetchStats()">
+              <option value="">All</option>
+              <option v-for="a in allAssessments" :key="a.id" :value="a.name">{{ a.name }}</option>
+            </select>
+            <button
+              class="inline-flex items-center justify-center w-8 h-8 rounded-lg transition-colors shrink-0"
+              :style="{
+                backgroundColor: showNewAssessmentForm
+                  ? 'color-mix(in srgb, var(--color-primary) 15%, transparent)'
+                  : 'transparent',
+                color: 'var(--color-primary)',
+                border: '1px solid var(--color-border)',
+              }"
+              title="Create new assessment"
+              @click="showNewAssessmentForm = !showNewAssessmentForm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Assessment Form -->
+      <div
+        v-if="showNewAssessmentForm"
+        class="mb-6 card p-4"
+      >
+        <h3 class="text-sm font-semibold mb-3" :style="{ color: 'var(--color-text-primary)' }">Create New Assessment</h3>
+        <div class="flex items-end gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Name</label>
+            <input
+              v-model="newAssessmentName"
+              class="input-field w-full"
+              placeholder="e.g. 2026-Q1, Annual Review 2026"
+              @keyup.enter="createAssessment"
+            />
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs font-medium mb-1" :style="{ color: 'var(--color-text-secondary)' }">Description (optional)</label>
+            <input
+              v-model="newAssessmentDescription"
+              class="input-field w-full"
+              placeholder="Brief description"
+              @keyup.enter="createAssessment"
+            />
+          </div>
+          <button
+            class="btn-primary text-sm"
+            :disabled="!newAssessmentName.trim() || creatingAssessment"
+            @click="createAssessment"
+          >
+            {{ creatingAssessment ? 'Creating...' : 'Create' }}
+          </button>
+          <button
+            class="btn-secondary text-sm"
+            @click="showNewAssessmentForm = false"
+          >
+            Cancel
+          </button>
         </div>
       </div>
 

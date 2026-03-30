@@ -55,9 +55,17 @@ defmodule SkillsetEvaluator.Assessments do
         attrs = %{name: name}
         attrs = if created_by, do: Map.put(attrs, :created_by_id, created_by.id), else: attrs
 
-        %Assessment{}
-        |> Assessment.changeset(attrs)
-        |> Repo.insert()
+        case %Assessment{} |> Assessment.changeset(attrs) |> Repo.insert() do
+          {:ok, assessment} ->
+            {:ok, assessment}
+
+          {:error, _changeset} ->
+            # Handle race condition: another process inserted the assessment
+            case get_assessment_by_name(name) do
+              %Assessment{} = a -> {:ok, a}
+              nil -> {:error, "Failed to find or create assessment: #{name}"}
+            end
+        end
     end
   end
 
