@@ -21,7 +21,7 @@ export const auth = {
     return { user: resp.data }
   },
   logout() {
-    return apiPost<void>('/auth/logout')
+    return apiDelete('/auth/logout')
   },
   async fetchMe(): Promise<{ user: User }> {
     const resp = await apiGet<DataWrapper<User>>('/me')

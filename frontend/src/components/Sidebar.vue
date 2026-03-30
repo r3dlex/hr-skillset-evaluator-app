@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, inject, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSkillsStore } from '@/stores/skills'
 import { useOnboardingStore } from '@/stores/onboarding'
@@ -9,7 +8,6 @@ import OnboardingChecklist from '@/components/OnboardingChecklist.vue'
 import AppLogo from '@/components/logos/AppLogo.vue'
 import type { TourStep } from '@/types'
 
-const router = useRouter()
 const authStore = useAuthStore()
 const skillsStore = useSkillsStore()
 const onboardingStore = useOnboardingStore()
@@ -62,7 +60,8 @@ function handleStartTour() {
 
 async function handleLogout() {
   await authStore.logout()
-  router.push('/login')
+  // Full page reload to ensure session cookie is cleared and all state is reset
+  window.location.href = '/login'
 }
 </script>
 

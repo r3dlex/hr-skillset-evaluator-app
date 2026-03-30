@@ -12,7 +12,10 @@ class ApiError extends Error {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (response.status === 401) {
-    window.location.href = '/login'
+    // Only redirect if not already on the login page (avoid redirect loops)
+    if (!window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login'
+    }
     throw new ApiError(401, 'Unauthorized')
   }
 

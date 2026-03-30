@@ -30,6 +30,7 @@ defmodule SkillsetEvaluatorWeb.AuthController do
 
     conn
     |> clear_session()
+    |> configure_session(drop: true)
     |> put_status(:ok)
     |> json(%{message: "Logged out successfully."})
   end
