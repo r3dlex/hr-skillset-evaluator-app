@@ -22,6 +22,7 @@ const isRib = computed(() => themeStore.themeName === 'rib')
     <SkillForgeLogo
       :size="size"
       :show-text="!collapsed"
+      text-color-var="--color-sidebar-active"
     />
 
     <!-- When RIB theme is active, show small company badge -->

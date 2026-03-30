@@ -6,10 +6,13 @@ const props = withDefaults(defineProps<{
   size?: number
   showText?: boolean
   variant?: 'auto' | 'light' | 'dark'
+  /** Use a CSS variable for the text color (e.g. in the sidebar) */
+  textColorVar?: string
 }>(), {
   size: 32,
   showText: true,
   variant: 'auto',
+  textColorVar: '',
 })
 
 const themeStore = useThemeStore()
@@ -20,7 +23,10 @@ const isDark = computed(() => {
   return themeStore.isDark
 })
 
-const textColor = computed(() => isDark.value ? '#f1f5f9' : '#0f172a')
+const textColor = computed(() => {
+  if (props.textColorVar) return `var(${props.textColorVar})`
+  return isDark.value ? '#f1f5f9' : '#0f172a'
+})
 </script>
 
 <template>

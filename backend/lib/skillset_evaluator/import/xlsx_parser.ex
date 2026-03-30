@@ -60,8 +60,10 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
 
   @spec parse(String.t(), String.t()) :: {:ok, [PersonRow.t()]} | {:error, String.t()}
   def parse(file_path, period) do
+    require Logger
     result = Xlsxir.multi_extract(file_path)
     table_ids = extract_table_ids(result)
+    Logger.info("Xlsx: extracted #{length(table_ids)} sheets")
 
     if table_ids == [] do
       {:error, "Failed to parse xlsx: no sheets found"}
@@ -75,7 +77,9 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
             if sheet_name in @skip_sheets do
               []
             else
-              parse_skill_sheet(table_id, sheet_name, period)
+              parsed = parse_skill_sheet(table_id, sheet_name, period)
+              Logger.info("Sheet '#{sheet_name}': #{length(parsed)} rows parsed")
+              parsed
             end
 
           Xlsxir.close(table_id)
@@ -156,12 +160,17 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
   end
 
   defp parse_skill_sheet(table_id, sheet_name, period) do
+    require Logger
     rows = Xlsxir.get_list(table_id)
 
     case rows do
       [group_row, priority_row, header_row | data_rows] ->
         skill_groups = extract_skill_groups(group_row)
         skills = extract_skills(header_row, priority_row, skill_groups)
+
+        Logger.info(
+          "Sheet '#{sheet_name}': #{length(skill_groups)} groups, #{length(skills)} skills, #{length(data_rows)} data rows"
+        )
 
         data_rows
         |> Enum.reject(&empty_row?/1)
@@ -179,26 +188,43 @@ defmodule SkillsetEvaluator.Import.XlsxParser do
         |> Enum.reject(fn pr -> pr.name == nil or pr.name == "" end)
 
       _ ->
+        Logger.warning("Sheet '#{sheet_name}': fewer than 3 rows (got #{length(rows)}), skipping")
         []
     end
   end
 
   defp extract_skill_groups(group_row) do
-    group_row
-    |> Enum.with_index()
-    |> Enum.filter(fn {val, idx} -> idx >= @skill_start_col and val != nil and val != "" end)
-    |> Enum.map(fn {name, col} -> %{name: safe_string(name), start_col: col} end)
-    |> Enum.with_index()
-    |> Enum.map(fn {group, _idx} ->
-      next_group =
-        Enum.at(
-          group_row
-          |> Enum.with_index()
-          |> Enum.filter(fn {val, c} -> c > group.start_col and val != nil and val != "" end),
-          0
-        )
+    # Collect all non-nil cells from skill columns, then deduplicate consecutive same-named groups
+    # This handles both merged-cell files (only first cell has value) and
+    # unmerged files (every cell in the range has the group name)
+    cells =
+      group_row
+      |> Enum.with_index()
+      |> Enum.filter(fn {val, idx} -> idx >= @skill_start_col and val != nil and val != "" end)
 
-      end_col = if next_group, do: elem(next_group, 1) - 1, else: length(group_row) - 1
+    # Deduplicate: only keep entries where the name changes from the previous
+    unique_groups =
+      cells
+      |> Enum.reduce([], fn {name, col}, acc ->
+        str_name = safe_string(name)
+
+        case acc do
+          [%{name: ^str_name} | _] -> acc
+          _ -> [%{name: str_name, start_col: col} | acc]
+        end
+      end)
+      |> Enum.reverse()
+
+    # Compute end_col for each group
+    unique_groups
+    |> Enum.with_index()
+    |> Enum.map(fn {group, idx} ->
+      end_col =
+        case Enum.at(unique_groups, idx + 1) do
+          nil -> length(group_row) - 1
+          next -> next.start_col - 1
+        end
+
       Map.put(group, :end_col, end_col)
     end)
   end

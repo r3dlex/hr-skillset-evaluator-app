@@ -40,8 +40,11 @@ defmodule SkillsetEvaluator.Import.Pipeline do
     ensure_all_skill_structures(file_path)
 
     # Step 2: Parse skill sheets into PersonRow messages
+    Logger.info("Parsing xlsx file: #{file_path}")
+
     case XlsxParser.parse(file_path, period) do
       {:ok, person_rows} when person_rows != [] ->
+        Logger.info("Parsed #{length(person_rows)} person rows")
         # Step 3: Process each row — ensure skills exist, upsert evaluations
         results = process_rows_sync(person_rows, evaluator_id)
 
@@ -55,9 +58,11 @@ defmodule SkillsetEvaluator.Import.Pipeline do
          }}
 
       {:ok, []} ->
+        Logger.warning("Xlsx parse returned 0 person rows for #{file_path}")
         {:ok, %{rows_processed: 0, evaluations_created: 0, evaluations_updated: 0, errors: []}}
 
       {:error, reason} ->
+        Logger.error("Xlsx parse error for #{file_path}: #{reason}")
         {:error, reason}
     end
   end
