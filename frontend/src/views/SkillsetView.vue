@@ -43,17 +43,15 @@ const currentAssessment = computed(() =>
 const currentPeriod = computed(() => currentAssessment.value?.name || '')
 
 async function fetchAssessments() {
-  const userIds = selectedUserId.value
-    ? [selectedUserId.value]
-    : authStore.isManager
-      ? teamStore.members.map((m) => m.id)
-      : authStore.user ? [authStore.user.id] : []
-
-  if (userIds.length === 0 || !skillsetId.value) return
+  if (!skillsetId.value) return
 
   assessmentsLoading.value = true
   try {
-    const list = await assessmentsApi.list(skillsetId.value, userIds)
+    // Always fetch all assessments so the dropdown is never empty
+    let list = await assessmentsApi.list()
+
+    // If a specific user is selected, also check which assessments have data for them
+    // (but still show all assessments in the dropdown so managers can evaluate new ones)
     availableAssessments.value = list
     // Keep current selection if still valid, otherwise default to the most recent
     if (list.length > 0 && !list.find(a => a.id === selectedAssessmentId.value)) {
@@ -215,6 +213,9 @@ onMounted(async () => {
 })
 
 watch(skillsetId, async () => {
+  // Reset to Radar Chart tab when navigating between skillsets
+  activeTab.value = 'chart'
+  selectedGroupId.value = null
   await skillsStore.fetchSkillset(skillsetId.value)
   await fetchAssessments()
   loadData()

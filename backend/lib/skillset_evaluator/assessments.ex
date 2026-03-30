@@ -20,12 +20,20 @@ defmodule SkillsetEvaluator.Assessments do
       when is_list(user_ids) and length(user_ids) > 0 do
     skill_ids = skill_ids_for_skillset(skillset_id)
 
+    # Use a subquery to find assessment_ids that have evaluation data,
+    # then fetch matching assessments (SQLite-compatible, no DISTINCT ON)
+    assessment_ids =
+      SkillsetEvaluator.Evaluations.Evaluation
+      |> where(
+        [e],
+        e.user_id in ^user_ids and e.skill_id in ^skill_ids and not is_nil(e.assessment_id)
+      )
+      |> select([e], e.assessment_id)
+      |> distinct(true)
+      |> Repo.all()
+
     Assessment
-    |> join(:inner, [a], e in SkillsetEvaluator.Evaluations.Evaluation,
-      on: e.assessment_id == a.id
-    )
-    |> where([a, e], e.user_id in ^user_ids and e.skill_id in ^skill_ids)
-    |> distinct([a], a.id)
+    |> where([a], a.id in ^assessment_ids)
     |> order_by([a], desc: a.inserted_at)
     |> Repo.all()
   end
