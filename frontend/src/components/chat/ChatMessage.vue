@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { marked } from 'marked'
 import type { ChatMessage } from '@/types'
 
 const props = defineProps<{
@@ -7,23 +8,17 @@ const props = defineProps<{
   isStreaming?: boolean
 }>()
 
+// Configure marked for safe, clean HTML output
+marked.setOptions({
+  breaks: true,
+  gfm: true,
+})
+
 const formattedContent = computed(() => {
-  let text = props.message.content
-  // Simple markdown-like formatting
-  // Bold: **text**
-  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  // Italic: *text*
-  text = text.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em>$1</em>')
-  // Unordered lists: - item
-  text = text.replace(/^- (.+)$/gm, '<li>$1</li>')
-  text = text.replace(/(<li>.*<\/li>\n?)+/g, '<ul class="list-disc ml-4 my-1">$&</ul>')
-  // Ordered lists: 1. item
-  text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>')
-  // Code inline: `code`
-  text = text.replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded text-xs" style="background: var(--color-border)">$1</code>')
-  // Line breaks
-  text = text.replace(/\n/g, '<br>')
-  return text
+  const raw = props.message.content || ''
+  // marked.parse can return string or Promise; we use the sync form
+  const html = marked.parse(raw) as string
+  return html
 })
 
 const isUser = computed(() => props.message.role === 'user')
@@ -40,7 +35,7 @@ const isSystem = computed(() => props.message.role === 'system')
     }"
   >
     <div
-      class="max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed"
+      class="max-w-[80%] rounded-xl px-4 py-2.5 text-sm leading-relaxed chat-message-content"
       :style="
         isUser
           ? { backgroundColor: 'var(--color-primary)', color: '#ffffff' }
@@ -59,3 +54,96 @@ const isSystem = computed(() => props.message.role === 'system')
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Markdown content styling for chat messages */
+.chat-message-content :deep(h1),
+.chat-message-content :deep(h2),
+.chat-message-content :deep(h3) {
+  font-weight: 600;
+  margin: 0.5em 0 0.25em;
+}
+.chat-message-content :deep(h1) { font-size: 1.15em; }
+.chat-message-content :deep(h2) { font-size: 1.05em; }
+.chat-message-content :deep(h3) { font-size: 1em; }
+
+.chat-message-content :deep(p) {
+  margin: 0.25em 0;
+}
+
+.chat-message-content :deep(ul),
+.chat-message-content :deep(ol) {
+  margin: 0.25em 0;
+  padding-left: 1.25em;
+}
+.chat-message-content :deep(ul) { list-style-type: disc; }
+.chat-message-content :deep(ol) { list-style-type: decimal; }
+
+.chat-message-content :deep(li) {
+  margin: 0.1em 0;
+}
+
+.chat-message-content :deep(code) {
+  background: var(--color-border);
+  padding: 0.1em 0.35em;
+  border-radius: 0.25em;
+  font-size: 0.85em;
+}
+
+.chat-message-content :deep(pre) {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5em;
+  padding: 0.75em;
+  overflow-x: auto;
+  margin: 0.5em 0;
+  font-size: 0.85em;
+}
+
+.chat-message-content :deep(pre code) {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.chat-message-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  font-size: 0.85em;
+}
+
+.chat-message-content :deep(th),
+.chat-message-content :deep(td) {
+  border: 1px solid var(--color-border);
+  padding: 0.35em 0.6em;
+  text-align: left;
+}
+
+.chat-message-content :deep(th) {
+  background: var(--color-bg);
+  font-weight: 600;
+}
+
+.chat-message-content :deep(blockquote) {
+  border-left: 3px solid var(--color-primary);
+  margin: 0.5em 0;
+  padding: 0.25em 0.75em;
+  color: var(--color-text-secondary);
+}
+
+.chat-message-content :deep(a) {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.chat-message-content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 0.5em 0;
+}
+
+.chat-message-content :deep(strong) {
+  font-weight: 600;
+}
+</style>
