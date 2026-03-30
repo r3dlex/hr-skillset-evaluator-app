@@ -27,7 +27,7 @@ An individual competency that can be scored (e.g., "REST API Design", "Unit Test
 A category grouping related skills (e.g., "Backend", "Frontend", "Soft Skills"). Skill groups belong to a skillset.
 
 ## Skillset
-A top-level collection of skill groups and skills (e.g., "Fullstack / Backend", "Domain Skills"). Skillsets can be filtered by applicable roles.
+A top-level collection of skill groups and skills (e.g., "Application Development", "Domain"). Skillsets can be filtered by applicable roles.
 
 ## Priority
 Skill importance level: **Critical**, **High**, **Medium**, or **Low**. Shown as colored badges in the evaluation table.

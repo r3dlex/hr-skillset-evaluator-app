@@ -6,7 +6,7 @@
 
 ## 1. Executive Summary
 
-The SkillForge is an interactive web application that enables engineering organizations to track, visualize, and analyze team skill proficiency across multiple skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Managers evaluate team members on a structured 0–5 proficiency scale, while employees complete self-assessments — both perspectives are surfaced together as an interactive radar/spider chart for immediate visual insight. The application replaces fragmented spreadsheet-based skill tracking by providing a single source of truth with bidirectional xlsx sync, role-based access control, and guided onboarding so teams are productive from day one.
+The SkillForge is an interactive web application that enables engineering organizations to track, visualize, and analyze team skill proficiency across multiple skillsets (Domain, Application Development, Soft Skills, Product, UX, AI, QE). Managers evaluate team members on a structured 0–5 proficiency scale, while employees complete self-assessments — both perspectives are surfaced together as an interactive radar/spider chart for immediate visual insight. The application replaces fragmented spreadsheet-based skill tracking by providing a single source of truth with bidirectional xlsx sync, role-based access control, and guided onboarding so teams are productive from day one.
 
 **Target audience:** HR managers and team leads in engineering organizations who need to understand skill coverage, identify development gaps, and produce standardized skill snapshots for performance reviews.
 
@@ -130,14 +130,15 @@ Users see only the skillsets applicable to their `job_title`:
 
 | Skillset | Applicable Roles |
 |----------|-----------------|
-| Softskills | All roles |
+| Soft Skills | All roles |
 | Domain | All roles |
-| Fullstack | Dev, QE, DevOps, Lead |
+| Application Development | Dev, QE, DevOps, Lead |
 | Product | UX, PM, PO, Lead |
 | AI | AI |
 | UX | UX |
+| QE | QE |
 
-Lead has the union of Dev + PO scopes (sees Fullstack and Product).
+Lead has the union of Dev + PO scopes (sees Application Development and Product).
 
 ### Key Schema Details
 
@@ -289,7 +290,7 @@ Row 3: [Team,  Loc,   Role,  Name,  Skill1,  Skill2, Skill3, Skill4]  ← Column
 Row 4+:[BIM,   DE,    Lead,  Florian Haag, 4, 3, 5, 2]               ← Person data + scores
 ```
 
-Each skill sheet corresponds to one skillset (Domain, Fullstack, UX, etc.). A "Teams" sheet provides the master roster with email addresses and roles.
+Each skill sheet corresponds to one skillset (Domain, Application Development, Soft Skills, etc.). A "Teams" sheet provides the master roster with email addresses and roles.
 
 ### Broadway Import Pipeline
 
@@ -554,7 +555,7 @@ cd frontend && npx vitest run --coverage
 | Teams | 23 |
 | Skills (total across all skillsets) | 115 |
 | Evaluations | 18,462 |
-| Skillsets (Domain, Fullstack) | 2 (expandable to 6+) |
+| Skillsets (Domain, Application Development, etc.) | 7 |
 
 ### Codebase
 

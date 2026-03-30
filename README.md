@@ -6,7 +6,7 @@
   <strong>Interactive radar chart application</strong>
 </p>
 
-Interactive radar chart application for evaluating team members across multiple skillsets (Domain, Fullstack, UX, Product, AI, Softskills). Managers evaluate their teams; users submit self-assessments. Gap analysis highlights alignment between manager scores, self scores, team averages, and role averages.
+Interactive radar chart application for evaluating team members across multiple skillsets (Domain, Application Development, Soft Skills, Product, UX, AI, QE). Managers evaluate their teams; users submit self-assessments. Gap analysis highlights alignment between manager scores, self scores, team averages, and role averages.
 
 ## Quick Start
 
@@ -92,12 +92,13 @@ Users see only the skillsets applicable to their role:
 
 | Skillset | Applicable Roles |
 |----------|-----------------|
-| Softskills | All roles |
+| Soft Skills | All roles |
 | Domain | All roles |
-| Fullstack | Dev, QE, DevOps, Lead |
+| Application Development | Dev, QE, DevOps, Lead |
 | Product | UX, PM, PO, Lead |
 | AI | AI |
 | UX | UX |
+| QE | QE |
 
 Lead role has the union of Dev and PO scopes.
 

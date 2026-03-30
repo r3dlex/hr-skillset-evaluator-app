@@ -1,6 +1,9 @@
 alias SkillsetEvaluator.Repo
 alias SkillsetEvaluator.Accounts.User
 
+# Ensure Xlsxir is started for xlsx import
+Application.ensure_all_started(:xlsxir)
+
 admin_email = System.get_env("ADMIN_EMAIL") || "admin@example.com"
 admin_password = System.get_env("ADMIN_PASSWORD") || "admin123456"
 
@@ -38,15 +41,24 @@ admin =
   end
 
 # 2. Auto-import xlsx if present and no skillsets exist yet
-xlsx_path = "/app/data/SkillMatrix.xlsx"
+# Prefer v2, fall back to v1
+xlsx_path =
+  cond do
+    File.exists?("/app/data/SkillMatrix_v2.xlsx") -> "/app/data/SkillMatrix_v2.xlsx"
+    File.exists?("/app/data/SkillMatrix.xlsx") -> "/app/data/SkillMatrix.xlsx"
+    true -> "/app/data/SkillMatrix.xlsx"
+  end
 
 if File.exists?(xlsx_path) do
   skillset_count = Repo.aggregate(SkillsetEvaluator.Skills.Skillset, :count, :id)
+  # Always re-import when v2 is available (idempotent), or seed if < 3 skillsets
+  should_import =
+    skillset_count < 3 or String.contains?(xlsx_path, "_v2")
 
-  if skillset_count < 3 do
+  if should_import do
     IO.puts("Importing xlsx from #{xlsx_path}...")
 
-    case SkillsetEvaluator.Import.Pipeline.run_import(xlsx_path, "2025-Q1", admin.id) do
+    case SkillsetEvaluator.Import.Pipeline.run_import(xlsx_path, "2026-Q1", admin.id) do
       {:ok, summary} ->
         IO.puts(
           "Import complete: #{summary.rows_processed} rows, #{summary.evaluations_created} created, #{summary.evaluations_updated} updated"

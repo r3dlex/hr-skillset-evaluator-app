@@ -352,15 +352,34 @@ defmodule SkillsetEvaluator.Import.Pipeline do
 
     cond do
       # All roles
-      String.contains?(downcased, "soft") -> []
+      String.contains?(downcased, "soft") ->
+        []
+
       # All roles
-      String.contains?(downcased, "domain") -> []
-      String.contains?(downcased, "fullstack") -> ["Dev", "QE", "DevOps", "Lead"]
-      String.contains?(downcased, "product") -> ["UX", "PM", "PO", "Lead"]
-      downcased == "ai" or String.contains?(downcased, "ai") -> ["AI"]
-      downcased == "ux" -> ["UX"]
-      downcased == "qe" or String.contains?(downcased, "quality") -> ["QE"]
-      true -> []
+      String.contains?(downcased, "domain") ->
+        []
+
+      # "Application Development" (v2) or "Fullstack" (v1)
+      String.contains?(downcased, "application development") ->
+        ["Dev", "QE", "DevOps", "Lead"]
+
+      String.contains?(downcased, "fullstack") ->
+        ["Dev", "QE", "DevOps", "Lead"]
+
+      String.contains?(downcased, "product") ->
+        ["UX", "PM", "PO", "Lead"]
+
+      downcased == "ai" or String.contains?(downcased, "ai") ->
+        ["AI"]
+
+      downcased == "ux" ->
+        ["UX"]
+
+      downcased == "qe" or String.contains?(downcased, "quality") ->
+        ["QE"]
+
+      true ->
+        []
     end
   end
 
