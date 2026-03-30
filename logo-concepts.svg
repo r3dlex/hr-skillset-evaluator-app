@@ -1,0 +1,223 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 960" width="960" height="960">
+  <defs>
+    <style>
+      .bg { fill: #f8fafc; }
+      .card { fill: #ffffff; rx: 16; stroke: #e2e8f0; stroke-width: 1; }
+      .label { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; font-size: 13px; fill: #64748b; text-anchor: middle; }
+      .name { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; font-size: 18px; font-weight: 700; text-anchor: middle; }
+    </style>
+    <!-- Gradient definitions -->
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4f46e5"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9"/>
+      <stop offset="100%" style="stop-color:#6366f1"/>
+    </linearGradient>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#ef4444"/>
+    </linearGradient>
+    <linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#0ea5e9"/>
+    </linearGradient>
+    <linearGradient id="grad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <linearGradient id="grad6" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b"/>
+      <stop offset="100%" style="stop-color:#475569"/>
+    </linearGradient>
+    <linearGradient id="grad7" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669"/>
+      <stop offset="100%" style="stop-color:#34d399"/>
+    </linearGradient>
+    <linearGradient id="grad8" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#1d4ed8"/>
+    </linearGradient>
+    <linearGradient id="grad9" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316"/>
+      <stop offset="100%" style="stop-color:#eab308"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="960" class="bg"/>
+
+  <!-- Title -->
+  <text x="480" y="36" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="700" fill="#1e293b" text-anchor="middle">SkillForge — Logo Concepts</text>
+
+  <!-- Row 1 -->
+
+  <!-- 1. Anvil + Spark (classic forge) -->
+  <g transform="translate(20, 52)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad1)"/>
+      <!-- Anvil shape -->
+      <path d="M-18 8 L-22 18 L22 18 L18 8 Z" fill="white" opacity="0.95"/>
+      <rect x="-14" y="-2" width="28" height="12" rx="2" fill="white" opacity="0.95"/>
+      <!-- Spark -->
+      <path d="M8 -18 L10 -10 L16 -14 L12 -6 L20 -4 L12 0 Z" fill="#fbbf24" opacity="0.9"/>
+      <circle cx="6" cy="-20" r="2" fill="#fbbf24" opacity="0.7"/>
+      <circle cx="18" cy="-10" r="1.5" fill="#fbbf24" opacity="0.5"/>
+    </g>
+    <text x="146" y="190" class="name" fill="#4f46e5">SkillForge</text>
+    <text x="146" y="210" class="label">Anvil + Spark</text>
+    <text x="146" y="226" class="label">Classic forge metaphor</text>
+  </g>
+
+  <!-- 2. Hexagon Radar -->
+  <g transform="translate(333, 52)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad2)"/>
+      <!-- Hexagon outline -->
+      <polygon points="0,-24 21,-12 21,12 0,24 -21,12 -21,-12" fill="none" stroke="white" stroke-width="2" opacity="0.4"/>
+      <polygon points="0,-16 14,-8 14,8 0,16 -14,8 -14,-8" fill="none" stroke="white" stroke-width="1.5" opacity="0.6"/>
+      <!-- Radar fill -->
+      <polygon points="0,-14 10,-4 8,10 -4,12 -12,2 -6,-10" fill="white" opacity="0.3"/>
+      <!-- Center dot -->
+      <circle cx="0" cy="0" r="2.5" fill="white"/>
+      <!-- Axis lines -->
+      <line x1="0" y1="0" x2="0" y2="-24" stroke="white" stroke-width="0.8" opacity="0.3"/>
+      <line x1="0" y1="0" x2="21" y2="-12" stroke="white" stroke-width="0.8" opacity="0.3"/>
+      <line x1="0" y1="0" x2="21" y2="12" stroke="white" stroke-width="0.8" opacity="0.3"/>
+      <line x1="0" y1="0" x2="0" y2="24" stroke="white" stroke-width="0.8" opacity="0.3"/>
+      <line x1="0" y1="0" x2="-21" y2="12" stroke="white" stroke-width="0.8" opacity="0.3"/>
+      <line x1="0" y1="0" x2="-21" y2="-12" stroke="white" stroke-width="0.8" opacity="0.3"/>
+    </g>
+    <text x="146" y="190" class="name" fill="#0ea5e9">SkillForge</text>
+    <text x="146" y="210" class="label">Hexagon Radar</text>
+    <text x="146" y="226" class="label">Data visualization focus</text>
+  </g>
+
+  <!-- 3. Flame + S -->
+  <g transform="translate(646, 52)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad3)"/>
+      <!-- Flame shape with embedded S -->
+      <path d="M0 -26 C8 -20, 16 -12, 16 -2 C16 6, 10 14, 4 18 C2 19, -2 19, -4 18 C-10 14, -16 6, -16 -2 C-16 -12, -8 -20, 0 -26Z" fill="white" opacity="0.25"/>
+      <path d="M0 -20 C6 -16, 12 -10, 12 -2 C12 4, 8 10, 2 14 C0 15, -2 14, -2 14 C-8 10, -12 4, -12 -2 C-12 -10, -6 -16, 0 -20Z" fill="white" opacity="0.3"/>
+      <!-- S letter -->
+      <text x="0" y="6" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" fill="white" text-anchor="middle" opacity="0.95">S</text>
+    </g>
+    <text x="146" y="190" class="name" fill="#ef4444">SkillForge</text>
+    <text x="146" y="210" class="label">Flame + S</text>
+    <text x="146" y="226" class="label">Energy and growth</text>
+  </g>
+
+  <!-- Row 2 -->
+
+  <!-- 4. Rising bars -->
+  <g transform="translate(20, 342)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad4)"/>
+      <!-- Rising skill bars -->
+      <rect x="-22" y="8" width="8" height="14" rx="1.5" fill="white" opacity="0.6"/>
+      <rect x="-11" y="-2" width="8" height="24" rx="1.5" fill="white" opacity="0.75"/>
+      <rect x="0" y="-10" width="8" height="32" rx="1.5" fill="white" opacity="0.85"/>
+      <rect x="11" y="-18" width="8" height="40" rx="1.5" fill="white" opacity="0.95"/>
+      <!-- Upward arrow -->
+      <path d="M22 -22 L26 -16 L23 -16 L23 -8 L21 -8 L21 -16 L18 -16 Z" fill="white"/>
+    </g>
+    <text x="146" y="190" class="name" fill="#10b981">SkillForge</text>
+    <text x="146" y="210" class="label">Rising Bars</text>
+    <text x="146" y="226" class="label">Growth and progress</text>
+  </g>
+
+  <!-- 5. Diamond + Hammer -->
+  <g transform="translate(333, 342)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad5)"/>
+      <!-- Diamond/gem shape -->
+      <polygon points="0,-22 18,-6 0,22 -18,-6" fill="none" stroke="white" stroke-width="2.5" opacity="0.9"/>
+      <!-- Facets -->
+      <line x1="-18" y1="-6" x2="18" y2="-6" stroke="white" stroke-width="1.2" opacity="0.5"/>
+      <line x1="0" y1="-22" x2="-6" y2="-6" stroke="white" stroke-width="1" opacity="0.4"/>
+      <line x1="0" y1="-22" x2="6" y2="-6" stroke="white" stroke-width="1" opacity="0.4"/>
+      <line x1="-6" y1="-6" x2="0" y2="22" stroke="white" stroke-width="1" opacity="0.4"/>
+      <line x1="6" y1="-6" x2="0" y2="22" stroke="white" stroke-width="1" opacity="0.4"/>
+    </g>
+    <text x="146" y="190" class="name" fill="#8b5cf6">SkillForge</text>
+    <text x="146" y="210" class="label">Forged Diamond</text>
+    <text x="146" y="226" class="label">Refined excellence</text>
+  </g>
+
+  <!-- 6. Monogram SF -->
+  <g transform="translate(646, 342)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad6)"/>
+      <!-- SF monogram -->
+      <text x="-2" y="10" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="800" fill="white" text-anchor="middle" letter-spacing="-3">SF</text>
+    </g>
+    <text x="146" y="190" class="name" fill="#1e293b">SkillForge</text>
+    <text x="146" y="210" class="label">SF Monogram</text>
+    <text x="146" y="226" class="label">Clean and professional</text>
+  </g>
+
+  <!-- Row 3 -->
+
+  <!-- 7. Network/nodes -->
+  <g transform="translate(20, 632)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad7)"/>
+      <!-- Connected nodes -->
+      <line x1="0" y1="-16" x2="-16" y2="4" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      <line x1="0" y1="-16" x2="16" y2="0" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      <line x1="-16" y1="4" x2="4" y2="16" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      <line x1="16" y1="0" x2="4" y2="16" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      <line x1="-16" y1="4" x2="16" y2="0" stroke="white" stroke-width="1.5" opacity="0.5"/>
+      <!-- Nodes -->
+      <circle cx="0" cy="-16" r="5" fill="white" opacity="0.95"/>
+      <circle cx="-16" cy="4" r="4" fill="white" opacity="0.85"/>
+      <circle cx="16" cy="0" r="4.5" fill="white" opacity="0.9"/>
+      <circle cx="4" cy="16" r="5.5" fill="white" opacity="0.95"/>
+    </g>
+    <text x="146" y="190" class="name" fill="#059669">SkillForge</text>
+    <text x="146" y="210" class="label">Skill Network</text>
+    <text x="146" y="226" class="label">Connected competencies</text>
+  </g>
+
+  <!-- 8. Shield + Check -->
+  <g transform="translate(333, 632)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad8)"/>
+      <!-- Shield outline -->
+      <path d="M0 -24 L20 -14 L20 4 C20 14, 10 22, 0 26 C-10 22, -20 14, -20 4 L-20 -14 Z" fill="none" stroke="white" stroke-width="2.5" opacity="0.9"/>
+      <!-- Checkmark -->
+      <path d="M-8 2 L-2 8 L10 -6" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <text x="146" y="190" class="name" fill="#3b82f6">SkillForge</text>
+    <text x="146" y="210" class="label">Verified Shield</text>
+    <text x="146" y="226" class="label">Trust and validation</text>
+  </g>
+
+  <!-- 9. Hammer + Star -->
+  <g transform="translate(646, 632)">
+    <rect x="0" y="0" width="293" height="270" class="card" rx="16"/>
+    <g transform="translate(146, 100)">
+      <rect x="-36" y="-36" width="72" height="72" rx="14" fill="url(#grad9)"/>
+      <!-- Hammer -->
+      <rect x="-4" y="-4" width="8" height="28" rx="2" fill="white" opacity="0.9" transform="rotate(-30, 0, 10)"/>
+      <rect x="-14" y="-16" width="22" height="12" rx="3" fill="white" opacity="0.95" transform="rotate(-30, -3, -10)"/>
+      <!-- Star sparks -->
+      <path d="M14 -16 L16 -12 L20 -12 L17 -9 L18 -5 L14 -8 L10 -5 L11 -9 L8 -12 L12 -12 Z" fill="white" opacity="0.9"/>
+      <circle cx="22" cy="-18" r="1.5" fill="white" opacity="0.6"/>
+      <circle cx="10" cy="-20" r="1" fill="white" opacity="0.5"/>
+    </g>
+    <text x="146" y="190" class="name" fill="#f97316">SkillForge</text>
+    <text x="146" y="210" class="label">Hammer + Star</text>
+    <text x="146" y="226" class="label">Craftsmanship</text>
+  </g>
+</svg>

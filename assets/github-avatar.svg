@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="url(#g)"/>
+  <!-- Outer hexagon -->
+  <polygon points="128,40 205,83.5 205,170.5 128,214 51,170.5 51,83.5" fill="none" stroke="#fff" stroke-width="5" opacity=".4"/>
+  <!-- Inner hexagon -->
+  <polygon points="128,65 185,98 185,162 128,195 71,162 71,98" fill="none" stroke="#fff" stroke-width="3.5" opacity=".6"/>
+  <!-- Radar fill -->
+  <polygon points="128,72 168,105 162,162 116,172 82,142 96,90" fill="#fff" opacity=".3"/>
+  <!-- Axis lines -->
+  <line x1="128" y1="128" x2="128" y2="40" stroke="#fff" stroke-width="2" opacity=".3"/>
+  <line x1="128" y1="128" x2="205" y2="83.5" stroke="#fff" stroke-width="2" opacity=".3"/>
+  <line x1="128" y1="128" x2="205" y2="170.5" stroke="#fff" stroke-width="2" opacity=".3"/>
+  <line x1="128" y1="128" x2="128" y2="214" stroke="#fff" stroke-width="2" opacity=".3"/>
+  <line x1="128" y1="128" x2="51" y2="170.5" stroke="#fff" stroke-width="2" opacity=".3"/>
+  <line x1="128" y1="128" x2="51" y2="83.5" stroke="#fff" stroke-width="2" opacity=".3"/>
+  <!-- Center dot -->
+  <circle cx="128" cy="128" r="8" fill="#fff"/>
+</svg>

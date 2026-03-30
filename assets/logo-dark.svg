@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 56" width="240" height="56">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <rect x="4" y="4" width="48" height="48" rx="10" fill="url(#g)"/>
+  <polygon points="28,14 42,21 42,35 28,42 14,35 14,21" fill="none" stroke="#fff" stroke-width="1.5" opacity=".4"/>
+  <polygon points="28,18 38,24 38,33 28,39 18,33 18,24" fill="none" stroke="#fff" stroke-width="1" opacity=".6"/>
+  <polygon points="28,19 35,25 34,33 26,35 20,30 23,22" fill="#fff" opacity=".3"/>
+  <line x1="28" y1="28" x2="28" y2="14" stroke="#fff" stroke-width=".6" opacity=".3"/>
+  <line x1="28" y1="28" x2="42" y2="21" stroke="#fff" stroke-width=".6" opacity=".3"/>
+  <line x1="28" y1="28" x2="42" y2="35" stroke="#fff" stroke-width=".6" opacity=".3"/>
+  <line x1="28" y1="28" x2="28" y2="42" stroke="#fff" stroke-width=".6" opacity=".3"/>
+  <line x1="28" y1="28" x2="14" y2="35" stroke="#fff" stroke-width=".6" opacity=".3"/>
+  <line x1="28" y1="28" x2="14" y2="21" stroke="#fff" stroke-width=".6" opacity=".3"/>
+  <circle cx="28" cy="28" r="2" fill="#fff"/>
+  <!-- Text -->
+  <text x="64" y="37" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="600" fill="#f1f5f9">SkillForge</text>
+</svg>

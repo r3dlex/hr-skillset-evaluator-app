@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useThemeStore } from '@/stores/theme'
-import RibLogo from './RibLogo.vue'
+import SkillForgeLogo from './SkillForgeLogo.vue'
 
 withDefaults(defineProps<{
   size?: number
@@ -14,44 +14,26 @@ withDefaults(defineProps<{
 const themeStore = useThemeStore()
 
 const isRib = computed(() => themeStore.themeName === 'rib')
-
-const logoColor = computed(() => {
-  if (isRib.value) {
-    return '#ffffff'
-  }
-  return 'var(--color-primary)'
-})
 </script>
 
 <template>
   <div class="flex items-center gap-2 min-w-0">
-    <template v-if="isRib">
-      <RibLogo
-        :color="logoColor"
-        :size="size"
-        :show-text="!collapsed"
-      />
-    </template>
-    <template v-else>
-      <!-- Default theme: "SE" text mark -->
-      <div
-        class="flex items-center justify-center rounded-lg font-bold text-white shrink-0"
-        :style="{
-          width: `${size}px`,
-          height: `${size}px`,
-          fontSize: `${size * 0.4}px`,
-          backgroundColor: 'var(--color-primary)',
-        }"
-      >
-        SF
-      </div>
-      <span
-        v-if="!collapsed"
-        class="font-semibold truncate"
-        :style="{ color: 'var(--color-sidebar-active)', fontSize: `${size * 0.45}px` }"
-      >
-        SkillForge
-      </span>
-    </template>
+    <!-- SkillForge is always the app logo -->
+    <SkillForgeLogo
+      :size="size"
+      :show-text="!collapsed"
+    />
+
+    <!-- When RIB theme is active, show small company badge -->
+    <span
+      v-if="isRib && !collapsed"
+      class="text-xs font-medium px-1.5 py-0.5 rounded opacity-60 shrink-0"
+      :style="{
+        color: 'var(--color-sidebar-active)',
+        border: '1px solid currentColor',
+      }"
+    >
+      by RIB
+    </span>
   </div>
 </template>

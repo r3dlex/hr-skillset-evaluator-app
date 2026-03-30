@@ -11,7 +11,7 @@ export default defineConfig({
   ],
 
   themeConfig: {
-    logo: undefined,
+    logo: '/logo.svg',
     siteTitle: 'SkillForge',
 
     nav: [
