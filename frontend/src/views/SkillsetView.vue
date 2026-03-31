@@ -197,6 +197,8 @@ const effectiveUserId = computed(() => {
 async function switchTeam(teamId: number) {
   selectedTeamId.value = teamId
   selectedUserId.value = null
+  teamStore.setSelectedTeamId(teamId)
+  teamStore.setSelectedUserId(null)
   await teamStore.fetchMembers(teamId)
   await fetchAssessments()
   loadData()
@@ -207,12 +209,18 @@ onMounted(async () => {
   if (authStore.isManager) {
     await teamStore.fetchTeams()
     if (teamStore.teams.length > 0) {
-      // Prefer persisted team from Dashboard, then user's own team, then first
+      // Restore persisted team, then user's own team, then first
       const persisted = teamStore.selectedTeamId
       const validPersisted = persisted && teamStore.teams.some(t => t.id === persisted)
       const teamId = validPersisted ? persisted : (authStore.user?.team?.id || teamStore.teams[0].id)
       selectedTeamId.value = teamId
       await teamStore.fetchMembers(teamId)
+
+      // Restore persisted user selection if valid for this team
+      const persistedUser = teamStore.selectedUserId
+      if (persistedUser && teamStore.members.some(m => m.id === persistedUser)) {
+        selectedUserId.value = persistedUser
+      }
     }
   }
   // Default selectedGroupId to first group
@@ -233,7 +241,8 @@ watch(skillsetId, async () => {
   loadData()
 })
 
-watch(selectedUserId, async () => {
+watch(selectedUserId, async (id) => {
+  teamStore.setSelectedUserId(id)
   await fetchAssessments()
   loadData()
 })
@@ -301,6 +310,11 @@ function updateScreenContext() {
 }
 
 watch([activeTab, selectedGroupId, selectedUserId, selectedAssessmentId, selectedTeamId], () => {
+  // Persist assessment selection when it changes
+  const name = currentAssessment.value?.name || ''
+  if (name !== teamStore.selectedAssessmentName) {
+    teamStore.setSelectedAssessment(name)
+  }
   updateScreenContext()
 })
 
@@ -359,7 +373,7 @@ function handleDiscard() {
             v-model="selectedAssessmentId"
             class="input-field w-auto"
             :disabled="assessmentsLoading || availableAssessments.length === 0"
-            @change="teamStore.setSelectedAssessment(currentAssessment?.name || ''); loadData()"
+            @change="loadData()"
           >
             <option v-if="availableAssessments.length === 0" :value="null">No assessments</option>
             <option v-for="a in availableAssessments" :key="a.id" :value="a.id">{{ a.name }}</option>

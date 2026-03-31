@@ -26,6 +26,23 @@ export const useTeamStore = defineStore('team', () => {
     } catch { /* SSR/test */ }
   }
 
+  // Shared user (member) selection — persisted in localStorage
+  // null means "All members"
+  let storedUserId: string | null = null
+  try { storedUserId = localStorage.getItem('selected-user-id') } catch { /* SSR/test */ }
+  const selectedUserId = ref<number | null>(storedUserId ? Number(storedUserId) : null)
+
+  function setSelectedUserId(id: number | null) {
+    selectedUserId.value = id
+    try {
+      if (id !== null) {
+        localStorage.setItem('selected-user-id', String(id))
+      } else {
+        localStorage.removeItem('selected-user-id')
+      }
+    } catch { /* SSR/test */ }
+  }
+
   // Shared assessment selection — persisted in localStorage
   // '' means "All", otherwise holds the assessment name
   let storedAssessment: string | null = null
@@ -81,6 +98,7 @@ export const useTeamStore = defineStore('team', () => {
     members,
     selectedMemberIds,
     selectedTeamId,
+    selectedUserId,
     selectedAssessmentName,
     loading,
     error,
@@ -88,6 +106,7 @@ export const useTeamStore = defineStore('team', () => {
     fetchMembers,
     toggleMember,
     setSelectedTeamId,
+    setSelectedUserId,
     setSelectedAssessment,
   }
 })
