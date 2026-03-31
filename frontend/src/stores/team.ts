@@ -26,6 +26,19 @@ export const useTeamStore = defineStore('team', () => {
     } catch { /* SSR/test */ }
   }
 
+  // Shared assessment selection — persisted in localStorage
+  // '' means "All", otherwise holds the assessment name
+  let storedAssessment: string | null = null
+  try { storedAssessment = localStorage.getItem('selected-assessment') } catch { /* SSR/test */ }
+  const selectedAssessmentName = ref<string>(storedAssessment ?? '')
+
+  function setSelectedAssessment(name: string) {
+    selectedAssessmentName.value = name
+    try {
+      localStorage.setItem('selected-assessment', name)
+    } catch { /* SSR/test */ }
+  }
+
   async function fetchTeams() {
     loading.value = true
     error.value = null
@@ -68,11 +81,13 @@ export const useTeamStore = defineStore('team', () => {
     members,
     selectedMemberIds,
     selectedTeamId,
+    selectedAssessmentName,
     loading,
     error,
     fetchTeams,
     fetchMembers,
     toggleMember,
     setSelectedTeamId,
+    setSelectedAssessment,
   }
 })

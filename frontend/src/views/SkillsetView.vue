@@ -53,9 +53,18 @@ async function fetchAssessments() {
     // If a specific user is selected, also check which assessments have data for them
     // (but still show all assessments in the dropdown so managers can evaluate new ones)
     availableAssessments.value = list
-    // Keep current selection if still valid, otherwise default to the most recent
-    if (list.length > 0 && !list.find(a => a.id === selectedAssessmentId.value)) {
-      selectedAssessmentId.value = list[0].id
+    if (list.length > 0) {
+      // Try to restore persisted assessment from store (by name)
+      const persistedName = teamStore.selectedAssessmentName
+      const persistedMatch = persistedName ? list.find(a => a.name === persistedName) : null
+      // Keep current selection if valid, or use persisted, or default to first
+      if (list.find(a => a.id === selectedAssessmentId.value)) {
+        // current selection still valid
+      } else if (persistedMatch) {
+        selectedAssessmentId.value = persistedMatch.id
+      } else {
+        selectedAssessmentId.value = list[0].id
+      }
     }
   } finally {
     assessmentsLoading.value = false
@@ -350,7 +359,7 @@ function handleDiscard() {
             v-model="selectedAssessmentId"
             class="input-field w-auto"
             :disabled="assessmentsLoading || availableAssessments.length === 0"
-            @change="loadData()"
+            @change="teamStore.setSelectedAssessment(currentAssessment?.name || ''); loadData()"
           >
             <option v-if="availableAssessments.length === 0" :value="null">No assessments</option>
             <option v-for="a in availableAssessments" :key="a.id" :value="a.id">{{ a.name }}</option>

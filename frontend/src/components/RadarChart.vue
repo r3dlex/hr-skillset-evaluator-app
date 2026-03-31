@@ -22,7 +22,7 @@ const viewBoxSize = computed(() => props.size + padding * 2)
 const center = computed(() => viewBoxSize.value / 2)
 const radius = computed(() => props.size * 0.35)
 const levels = 5
-const labelOffset = 24
+const labelOffset = 28
 
 onMounted(() => {
   requestAnimationFrame(() => {
@@ -157,7 +157,8 @@ function hideTooltip() {
         dominant-baseline="middle"
         :fill="'var(--color-text-secondary)'"
         :font-family="'var(--font-family)'"
-        font-size="11"
+        font-size="13"
+        font-weight="500"
       >
         {{ axis }}
       </text>

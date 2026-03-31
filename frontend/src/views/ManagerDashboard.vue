@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import AppLayout from '@/layouts/AppLayout.vue'
 import Overview from '@/components/Overview.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -8,13 +9,14 @@ import { useSkillsStore } from '@/stores/skills'
 import { dashboard as dashboardApi, teams as teamsApi, assessments as assessmentsApi } from '@/api'
 import type { User, Assessment } from '@/types'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const teamStore = useTeamStore()
 const skillsStore = useSkillsStore()
 
 const selectedTeamId = ref<number | 'all' | null>(null)
 const selectedRole = ref<string>('')  // '' = All
-const selectedAssessment = ref<string>('')  // '' = All
+const selectedAssessment = ref<string>(teamStore.selectedAssessmentName)  // '' = All
 const allAssessments = ref<Assessment[]>([])
 const showNewAssessmentForm = ref(false)
 const newAssessmentName = ref('')
@@ -145,6 +147,14 @@ watch(selectedTeamId, async (id) => {
 function getMemberInitial(member: User): string {
   return member.name.charAt(0).toUpperCase()
 }
+
+function navigateToMember(member: User) {
+  // Navigate to the first applicable skillset for this member
+  const skillsets = memberSkillsets(member)
+  if (skillsets.length > 0) {
+    router.push(`/skillsets/${skillsets[0].id}`)
+  }
+}
 </script>
 
 <template>
@@ -195,7 +205,7 @@ function getMemberInitial(member: User): string {
         <div>
           <label class="block text-sm font-medium mb-2" :style="{ color: 'var(--color-text-secondary)' }">Assessment</label>
           <div class="flex items-center gap-2">
-            <select v-model="selectedAssessment" class="input-field w-52" @change="fetchStats()">
+            <select v-model="selectedAssessment" class="input-field w-52" @change="teamStore.setSelectedAssessment(selectedAssessment); fetchStats()">
               <option value="">All</option>
               <option v-for="a in allAssessments" :key="a.id" :value="a.name">{{ a.name }}</option>
             </select>
@@ -266,6 +276,7 @@ function getMemberInitial(member: User): string {
           v-for="member in filteredMembers"
           :key="member.id"
           class="card-hover p-5 cursor-pointer"
+          @click="navigateToMember(member)"
         >
           <div class="flex items-center gap-4">
             <div
