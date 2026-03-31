@@ -130,8 +130,8 @@ function formatScore(score: number | null | undefined): string {
                     color: 'var(--color-info, #3b82f6)',
                   }
                 : {
-                    backgroundColor: 'var(--color-border)',
-                    color: 'var(--color-text-muted)',
+                    backgroundColor: 'color-mix(in srgb, var(--color-text-secondary) 12%, transparent)',
+                    color: 'var(--color-text-secondary)',
                     fontStyle: 'italic',
                   }
             "
@@ -150,7 +150,7 @@ function formatScore(score: number | null | undefined): string {
             step="1"
             :value="scores[skill.id] ?? 0"
             :disabled="readonly"
-            class="w-full h-2 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            class="w-full h-2 rounded-full appearance-none cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
             :style="{
               background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${((scores[skill.id] ?? 0) / 5) * 100}%, var(--color-border) ${((scores[skill.id] ?? 0) / 5) * 100}%, var(--color-border) 100%)`,
               accentColor: 'var(--color-primary)',
@@ -166,7 +166,7 @@ function formatScore(score: number | null | undefined): string {
             :style="
               (scores[skill.id] ?? 0) > 0
                 ? { backgroundColor: 'color-mix(in srgb, var(--color-primary) 10%, transparent)', color: 'var(--color-primary)' }
-                : { backgroundColor: 'var(--color-border)', color: 'var(--color-text-muted)' }
+                : { backgroundColor: 'color-mix(in srgb, var(--color-text-secondary) 12%, transparent)', color: 'var(--color-text-secondary)' }
             "
           >
             {{ scores[skill.id] ?? 0 }}
