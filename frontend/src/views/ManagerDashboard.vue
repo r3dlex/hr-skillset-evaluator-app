@@ -76,6 +76,10 @@ async function fetchStats() {
 async function fetchAllAssessments() {
   try {
     allAssessments.value = await assessmentsApi.list()
+    // Validate persisted assessment is still in the list
+    if (selectedAssessment.value && !allAssessments.value.some(a => a.name === selectedAssessment.value)) {
+      selectedAssessment.value = ''
+    }
   } catch {
     // keep empty
   }

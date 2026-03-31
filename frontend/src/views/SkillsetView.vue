@@ -230,6 +230,7 @@ onMounted(async () => {
   }
   await fetchAssessments()
   loadData()
+  initialized.value = true
 })
 
 watch(skillsetId, async () => {
@@ -241,8 +242,13 @@ watch(skillsetId, async () => {
   loadData()
 })
 
+// Track whether initial mount is complete to avoid persisting during init
+const initialized = ref(false)
+
 watch(selectedUserId, async (id) => {
-  teamStore.setSelectedUserId(id)
+  if (initialized.value) {
+    teamStore.setSelectedUserId(id)
+  }
   await fetchAssessments()
   loadData()
 })
@@ -310,10 +316,13 @@ function updateScreenContext() {
 }
 
 watch([activeTab, selectedGroupId, selectedUserId, selectedAssessmentId, selectedTeamId], () => {
-  // Persist assessment selection when it changes
-  const name = currentAssessment.value?.name || ''
-  if (name !== teamStore.selectedAssessmentName) {
-    teamStore.setSelectedAssessment(name)
+  // Persist assessment selection — only after assessments have been loaded
+  // to avoid overwriting the persisted value with '' during initialization
+  if (availableAssessments.value.length > 0 && selectedAssessmentId.value !== null) {
+    const name = currentAssessment.value?.name || ''
+    if (name !== teamStore.selectedAssessmentName) {
+      teamStore.setSelectedAssessment(name)
+    }
   }
   updateScreenContext()
 })
