@@ -1,0 +1,7 @@
+{
+  "minimum_coverage": 25,
+  "skip_files": [
+    "test/",
+    "lib/skillset_evaluator_web/endpoint.ex"
+  ]
+}

@@ -57,7 +57,7 @@ jobs:
         working-directory: ./backend
         env:
           MIX_ENV: test
-        run: mix coveralls --minimum-coverage 25
+        run: mix test --cover
 
   frontend-test:
     name: Frontend Tests
