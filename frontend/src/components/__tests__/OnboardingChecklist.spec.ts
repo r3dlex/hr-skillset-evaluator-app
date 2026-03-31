@@ -1,6 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
+
+// Mock localStorage for test environment
+const localStorageMock = (() => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value }),
+    removeItem: vi.fn((key: string) => { delete store[key] }),
+    clear: vi.fn(() => { store = {} }),
+    get length() { return Object.keys(store).length },
+    key: vi.fn((i: number) => Object.keys(store)[i] ?? null),
+  }
+})()
+Object.defineProperty(globalThis, 'localStorage', { value: localStorageMock })
+
 import OnboardingChecklist from '../OnboardingChecklist.vue'
 import { useOnboardingStore } from '@/stores/onboarding'
 import { useAuthStore } from '@/stores/auth'
@@ -40,6 +55,7 @@ function mountChecklist() {
 
 describe('OnboardingChecklist', () => {
   beforeEach(() => {
+    localStorageMock.clear()
     setActivePinia(createPinia())
     vi.clearAllMocks()
   })

@@ -8,10 +8,12 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   const authStore = useAuthStore()
 
   const completedSteps = ref<string[]>([])
-  const dismissed = ref(false)
+  const locallyDismissed = localStorage.getItem('onboarding-dismissed') === 'true'
+  const dismissed = ref(locallyDismissed)
 
-  // Sync from user data
+  // Sync from user data — but respect local dismissal to prevent stale server data override
   function syncFromUser() {
+    if (dismissed.value) return
     const user = authStore.user
     if (user?.onboarding) {
       completedSteps.value = user.onboarding.completed_steps || []
@@ -60,11 +62,13 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   }
 
   async function dismiss() {
+    // Persist locally immediately so it survives page refresh even if API fails
+    dismissed.value = true
+    localStorage.setItem('onboarding-dismissed', 'true')
     try {
       await onboardingApi.dismiss()
-      dismissed.value = true
     } catch {
-      dismissed.value = true
+      // Already dismissed locally
     }
   }
 

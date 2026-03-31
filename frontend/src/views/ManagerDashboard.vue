@@ -119,7 +119,12 @@ onMounted(async () => {
   await teamStore.fetchTeams()
   await Promise.all([skillsStore.fetchSkillsets(), fetchAllAssessments()])
   if (teamStore.teams.length > 0) {
-    selectedTeamId.value = teamStore.teams[0].id
+    // Restore persisted team selection if valid, otherwise default to first team
+    const persisted = teamStore.selectedTeamId
+    const validTeam = persisted && teamStore.teams.some(t => t.id === persisted)
+    const initialId = validTeam ? persisted : teamStore.teams[0].id
+    selectedTeamId.value = initialId
+    teamStore.setSelectedTeamId(initialId)
   }
 })
 
@@ -129,6 +134,8 @@ watch(selectedTeamId, async (id) => {
     selectedRole.value = ''
     await fetchStats()
   } else if (id) {
+    // Persist numeric team selection for cross-view sharing
+    teamStore.setSelectedTeamId(id as number)
     await teamStore.fetchMembers(id as number)
     selectedRole.value = ''
     await fetchStats()

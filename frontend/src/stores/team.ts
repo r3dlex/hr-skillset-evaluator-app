@@ -10,6 +10,22 @@ export const useTeamStore = defineStore('team', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
+  // Shared team selection — persisted in localStorage
+  let storedId: string | null = null
+  try { storedId = localStorage.getItem('selected-team-id') } catch { /* SSR/test */ }
+  const selectedTeamId = ref<number | null>(storedId ? Number(storedId) : null)
+
+  function setSelectedTeamId(id: number | null) {
+    selectedTeamId.value = id
+    try {
+      if (id !== null) {
+        localStorage.setItem('selected-team-id', String(id))
+      } else {
+        localStorage.removeItem('selected-team-id')
+      }
+    } catch { /* SSR/test */ }
+  }
+
   async function fetchTeams() {
     loading.value = true
     error.value = null
@@ -51,10 +67,12 @@ export const useTeamStore = defineStore('team', () => {
     teams,
     members,
     selectedMemberIds,
+    selectedTeamId,
     loading,
     error,
     fetchTeams,
     fetchMembers,
     toggleMember,
+    setSelectedTeamId,
   }
 })

@@ -14,6 +14,10 @@ vi.mock('@/api', () => ({
   gapAnalysis: {
     getGapAnalysis: vi.fn(),
   },
+  teams: {
+    listTeams: vi.fn().mockResolvedValue({ teams: [] }),
+    getTeamMembers: vi.fn().mockResolvedValue({ team: {}, members: [] }),
+  },
 }))
 
 import { evaluations as evalApi, radar as radarApi, gapAnalysis as gapApi } from '@/api'

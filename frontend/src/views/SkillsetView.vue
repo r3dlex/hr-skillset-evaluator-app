@@ -198,7 +198,10 @@ onMounted(async () => {
   if (authStore.isManager) {
     await teamStore.fetchTeams()
     if (teamStore.teams.length > 0) {
-      const teamId = authStore.user?.team?.id || teamStore.teams[0].id
+      // Prefer persisted team from Dashboard, then user's own team, then first
+      const persisted = teamStore.selectedTeamId
+      const validPersisted = persisted && teamStore.teams.some(t => t.id === persisted)
+      const teamId = validPersisted ? persisted : (authStore.user?.team?.id || teamStore.teams[0].id)
       selectedTeamId.value = teamId
       await teamStore.fetchMembers(teamId)
     }
