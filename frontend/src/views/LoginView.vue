@@ -87,6 +87,7 @@ async function handleSubmit() {
         {{ submitting ? 'Signing in...' : 'Sign in' }}
       </button>
 
+      <!-- Microsoft SSO (disabled until Azure Entra ID app is registered)
       <div class="relative my-4">
         <div class="absolute inset-0 flex items-center">
           <div class="w-full" :style="{ borderTop: '1px solid var(--color-border)' }" />
@@ -113,6 +114,7 @@ async function handleSubmit() {
         </svg>
         Sign in with Microsoft
       </a>
+      -->
     </form>
   </AuthLayout>
 </template>
