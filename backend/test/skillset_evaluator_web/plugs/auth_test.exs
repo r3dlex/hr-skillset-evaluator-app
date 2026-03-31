@@ -4,6 +4,21 @@ defmodule SkillsetEvaluatorWeb.Plugs.AuthTest do
   alias SkillsetEvaluatorWeb.Plugs.Auth
   alias SkillsetEvaluator.Accounts
 
+  describe "init/1" do
+    test "returns :fetch_current_user unchanged" do
+      assert Auth.init(:fetch_current_user) == :fetch_current_user
+    end
+
+    test "returns :require_authenticated_user unchanged" do
+      assert Auth.init(:require_authenticated_user) == :require_authenticated_user
+    end
+
+    test "returns {:require_role, role} tuple unchanged" do
+      assert Auth.init({:require_role, "manager"}) == {:require_role, "manager"}
+      assert Auth.init({:require_role, "admin"}) == {:require_role, "admin"}
+    end
+  end
+
   describe "fetch_current_user" do
     test "assigns current_user when valid session token exists", %{conn: conn} do
       user = user_fixture()

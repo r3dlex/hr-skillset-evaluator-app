@@ -44,12 +44,17 @@ defmodule SkillsetEvaluatorWeb.AuthControllerTest do
   end
 
   describe "DELETE /api/auth/logout" do
-    test "returns 200 and clears session", %{conn: conn} do
+    test "returns 200 and clears session when logged in", %{conn: conn} do
       user = user_fixture()
       conn = log_in_user(conn, user)
 
       conn = delete(conn, "/api/auth/logout")
 
+      assert %{"message" => "Logged out successfully."} = json_response(conn, 200)
+    end
+
+    test "returns 200 even when not logged in (no token in session)", %{conn: conn} do
+      conn = delete(conn, "/api/auth/logout")
       assert %{"message" => "Logged out successfully."} = json_response(conn, 200)
     end
   end

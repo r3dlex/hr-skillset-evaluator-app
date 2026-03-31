@@ -17,6 +17,17 @@ defmodule SkillsetEvaluator.SkillsTest do
     test "returns empty list when no skillsets exist" do
       assert Skills.list_skillsets() == []
     end
+
+    test "includes skill_count for each skillset" do
+      skillset = skillset_fixture(%{name: "With Skills", position: 1})
+      group = skill_group_fixture(%{skillset_id: skillset.id})
+      skill_fixture(%{skill_group_id: group.id})
+      skill_fixture(%{skill_group_id: group.id})
+
+      skillsets = Skills.list_skillsets()
+      found = Enum.find(skillsets, fn s -> s.id == skillset.id end)
+      assert found.skill_count == 2
+    end
   end
 
   describe "get_skillset/1" do
@@ -41,6 +52,18 @@ defmodule SkillsetEvaluator.SkillsTest do
     end
   end
 
+  describe "get_skillset!/1" do
+    test "returns the skillset" do
+      skillset = skillset_fixture()
+      result = Skills.get_skillset!(skillset.id)
+      assert result.id == skillset.id
+    end
+
+    test "raises for non-existent id" do
+      assert_raise Ecto.NoResultsError, fn -> Skills.get_skillset!(0) end
+    end
+  end
+
   describe "create_skillset/1" do
     test "creates a skillset with valid attributes" do
       attrs = %{name: "Backend Skills", description: "Server stuff", position: 1}
@@ -55,6 +78,28 @@ defmodule SkillsetEvaluator.SkillsTest do
     end
   end
 
+  describe "update_skillset/2" do
+    test "updates name and description" do
+      skillset = skillset_fixture(%{name: "Old Name"})
+      assert {:ok, updated} = Skills.update_skillset(skillset, %{name: "New Name"})
+      assert updated.name == "New Name"
+    end
+
+    test "returns error changeset with blank name" do
+      skillset = skillset_fixture()
+      assert {:error, changeset} = Skills.update_skillset(skillset, %{name: ""})
+      assert %{name: _} = errors_on(changeset)
+    end
+  end
+
+  describe "delete_skillset/1" do
+    test "deletes the skillset" do
+      skillset = skillset_fixture()
+      assert {:ok, _} = Skills.delete_skillset(skillset)
+      assert is_nil(Skills.get_skillset(skillset.id))
+    end
+  end
+
   describe "create_skill_group/1" do
     test "creates a skill group linked to a skillset" do
       skillset = skillset_fixture()
@@ -63,6 +108,51 @@ defmodule SkillsetEvaluator.SkillsTest do
       assert {:ok, group} = Skills.create_skill_group(attrs)
       assert group.name == "Communication"
       assert group.skillset_id == skillset.id
+    end
+
+    test "returns error with missing name" do
+      skillset = skillset_fixture()
+      assert {:error, changeset} = Skills.create_skill_group(%{skillset_id: skillset.id})
+      assert %{name: _} = errors_on(changeset)
+    end
+  end
+
+  describe "update_skill_group/2" do
+    test "updates the skill group name" do
+      group = skill_group_fixture(%{name: "Old Group"})
+      assert {:ok, updated} = Skills.update_skill_group(group, %{name: "New Group"})
+      assert updated.name == "New Group"
+    end
+
+    test "returns error changeset with blank name" do
+      group = skill_group_fixture()
+      assert {:error, changeset} = Skills.update_skill_group(group, %{name: ""})
+      assert %{name: _} = errors_on(changeset)
+    end
+  end
+
+  describe "get_skill/1" do
+    test "returns the skill when it exists" do
+      skill = skill_fixture(%{name: "Kubernetes"})
+      result = Skills.get_skill(skill.id)
+      assert result.id == skill.id
+      assert result.name == "Kubernetes"
+    end
+
+    test "returns nil for non-existent id" do
+      assert is_nil(Skills.get_skill(0))
+    end
+  end
+
+  describe "get_skill!/1" do
+    test "returns the skill" do
+      skill = skill_fixture()
+      result = Skills.get_skill!(skill.id)
+      assert result.id == skill.id
+    end
+
+    test "raises for non-existent id" do
+      assert_raise Ecto.NoResultsError, fn -> Skills.get_skill!(0) end
     end
   end
 
@@ -75,6 +165,48 @@ defmodule SkillsetEvaluator.SkillsTest do
       assert skill.name == "Active Listening"
       assert skill.priority == "high"
       assert skill.skill_group_id == group.id
+    end
+
+    test "returns error with missing name" do
+      group = skill_group_fixture()
+      assert {:error, changeset} = Skills.create_skill(%{skill_group_id: group.id})
+      assert %{name: _} = errors_on(changeset)
+    end
+  end
+
+  describe "update_skill/2" do
+    test "updates skill name and priority" do
+      skill = skill_fixture(%{name: "Old Skill", priority: "low"})
+      assert {:ok, updated} = Skills.update_skill(skill, %{name: "New Skill", priority: "high"})
+      assert updated.name == "New Skill"
+      assert updated.priority == "high"
+    end
+
+    test "returns error changeset with blank name" do
+      skill = skill_fixture()
+      assert {:error, changeset} = Skills.update_skill(skill, %{name: ""})
+      assert %{name: _} = errors_on(changeset)
+    end
+  end
+
+  describe "list_skills_for_skillset/1" do
+    test "returns skills across all groups ordered by group + skill position" do
+      skillset = skillset_fixture()
+      g1 = skill_group_fixture(%{skillset_id: skillset.id, position: 1})
+      g2 = skill_group_fixture(%{skillset_id: skillset.id, position: 2})
+      s1 = skill_fixture(%{skill_group_id: g1.id, name: "A", position: 1})
+      s2 = skill_fixture(%{skill_group_id: g2.id, name: "B", position: 1})
+
+      skills = Skills.list_skills_for_skillset(skillset.id)
+      ids = Enum.map(skills, & &1.id)
+
+      assert s1.id in ids
+      assert s2.id in ids
+    end
+
+    test "returns empty list for skillset with no groups" do
+      skillset = skillset_fixture()
+      assert Skills.list_skills_for_skillset(skillset.id) == []
     end
   end
 end

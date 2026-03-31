@@ -19,3 +19,5 @@ config :ueberauth, Ueberauth.Strategy.Microsoft.OAuth,
   client_id: "test_client_id",
   client_secret: "test_client_secret",
   tenant_id: "test_tenant"
+
+config :skillset_evaluator, :llm_provider, "test"

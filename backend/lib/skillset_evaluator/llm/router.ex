@@ -12,6 +12,7 @@ defmodule SkillsetEvaluator.LLM.Router do
     case provider_setting() do
       "anthropic" -> Anthropic
       "minimax" -> MiniMax
+      "test" -> SkillsetEvaluator.LLM.TestProvider
       "auto" -> if locale == "zh" && minimax_configured?(), do: MiniMax, else: Anthropic
       _ -> Anthropic
     end
