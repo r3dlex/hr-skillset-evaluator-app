@@ -96,9 +96,9 @@ async function handleSubmit() {
         </div>
       </div>
 
-      <button
-        type="button"
-        class="w-full flex items-center justify-center gap-3 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm"
+      <a
+        href="/api/auth/microsoft"
+        class="w-full flex items-center justify-center gap-3 font-medium py-2.5 px-4 rounded-lg transition-colors text-sm no-underline"
         :style="{
           backgroundColor: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
@@ -112,7 +112,7 @@ async function handleSubmit() {
           <path d="M21 11H11V21H21V11Z" fill="#FFB900" />
         </svg>
         Sign in with Microsoft
-      </button>
+      </a>
     </form>
   </AuthLayout>
 </template>

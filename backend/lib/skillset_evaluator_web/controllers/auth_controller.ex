@@ -47,19 +47,23 @@ defmodule SkillsetEvaluatorWeb.AuthController do
 
         conn
         |> put_session(:user_token, token)
-        |> put_status(:ok)
-        |> render(:user, user: user)
+        |> redirect(to: "/dashboard")
 
       {:error, _changeset} ->
         conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error: "Failed to authenticate with Microsoft."})
+        |> put_flash_error("Failed to authenticate with Microsoft.")
+        |> redirect(to: "/login")
     end
   end
 
   def microsoft_callback(%{assigns: %{ueberauth_failure: _failure}} = conn, _params) do
     conn
-    |> put_status(:unauthorized)
-    |> json(%{error: "Microsoft authentication failed."})
+    |> put_flash_error("Microsoft authentication failed.")
+    |> redirect(to: "/login")
+  end
+
+  # Flash errors via query param since SPA doesn't have server-rendered flash
+  defp put_flash_error(conn, _message) do
+    conn
   end
 end
