@@ -453,4 +453,46 @@ defmodule SkillsetEvaluatorWeb.ChatController do
   end
 
   defp extract_api_error(status, _body), do: "API returned status #{status}"
+
+  @doc """
+  POST /api/chat/conversations/:id/upload — upload xlsx file for AI-triggered import.
+  Manager/Admin only (enforced by router scope).
+  Returns a file_ref that the AI import_xlsx tool can use.
+  """
+  def upload(conn, %{"id" => conversation_id, "file" => %Plug.Upload{} = upload}) do
+    user = conn.assigns.current_user
+
+    # Verify conversation exists and belongs to user
+    case Chat.get_conversation(conversation_id) do
+      nil ->
+        conn |> put_status(:not_found) |> json(%{error: "Conversation not found"})
+
+      conversation when conversation.user_id != user.id ->
+        conn |> put_status(:not_found) |> json(%{error: "Conversation not found"})
+
+      _conversation ->
+        # Validate file extension
+        if String.ends_with?(upload.filename, ".xlsx") do
+          file_ref = Ecto.UUID.generate()
+          dest = Path.join(System.tmp_dir!(), "chat_upload_#{file_ref}.xlsx")
+          File.cp!(upload.path, dest)
+
+          conn
+          |> put_status(:ok)
+          |> json(%{
+            data: %{
+              file_ref: file_ref,
+              filename: upload.filename,
+              size: File.stat!(dest).size
+            }
+          })
+        else
+          conn |> put_status(:bad_request) |> json(%{error: "Only .xlsx files are supported"})
+        end
+    end
+  end
+
+  def upload(conn, _params) do
+    conn |> put_status(:bad_request) |> json(%{error: "Missing file upload"})
+  end
 end

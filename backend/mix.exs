@@ -42,6 +42,7 @@ defmodule SkillsetEvaluator.MixProject do
       {:ueberauth, "~> 0.10"},
       {:ueberauth_microsoft, "~> 0.23"},
       {:xlsxir, "~> 1.6"},
+      {:elixlsx, "~> 0.6"},
       {:broadway, "~> 1.0"},
       {:bcrypt_elixir, "~> 3.0"},
       {:req, "~> 0.4"},

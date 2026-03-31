@@ -67,6 +67,7 @@ defmodule SkillsetEvaluatorWeb.Router do
     put "/evaluations/manager", EvaluationController, :update_manager_scores
     post "/import", ImportController, :create
     get "/export", ExportController, :show
+    post "/chat/conversations/:id/upload", ChatController, :upload
   end
 
   # SPA catch-all: serve index.html for all non-API routes

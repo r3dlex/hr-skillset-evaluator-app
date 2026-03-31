@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts,.vue --fix",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "marked": "^17.0.5",
@@ -19,6 +20,7 @@
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^20.11.24",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
