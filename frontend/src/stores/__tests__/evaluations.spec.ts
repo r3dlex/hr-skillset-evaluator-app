@@ -111,4 +111,121 @@ describe('useEvaluationsStore', () => {
     expect(store.radarData).toBeNull()
     expect(store.loading).toBe(false)
   })
+
+  // --- updateManagerScores ---
+
+  it('updateManagerScores merges returned evaluations into existing list', async () => {
+    const updatedEvals = [
+      { skill_id: 1, skill_name: 'JavaScript', manager_score: 5, self_score: 3 },
+    ]
+    vi.mocked(evalApi.updateManagerScores).mockResolvedValue({ evaluations: updatedEvals })
+
+    const store = useEvaluationsStore()
+    store.evaluations = [...mockEvaluations]
+
+    await store.updateManagerScores(1, '2024-Q1', [{ skill_id: 1, score: 5 }])
+
+    expect(store.evaluations[0].manager_score).toBe(5)
+    expect(store.evaluations).toHaveLength(2)
+    expect(store.loading).toBe(false)
+    expect(store.error).toBeNull()
+    expect(evalApi.updateManagerScores).toHaveBeenCalledWith(1, '2024-Q1', [{ skill_id: 1, score: 5 }])
+  })
+
+  it('updateManagerScores appends new evaluations not in existing list', async () => {
+    const newEval = { skill_id: 3, skill_name: 'Go', manager_score: 4, self_score: null }
+    vi.mocked(evalApi.updateManagerScores).mockResolvedValue({ evaluations: [newEval] })
+
+    const store = useEvaluationsStore()
+    store.evaluations = [...mockEvaluations]
+
+    await store.updateManagerScores(1, '2024-Q1', [{ skill_id: 3, score: 4 }])
+
+    expect(store.evaluations).toHaveLength(3)
+    expect(store.evaluations[2].skill_id).toBe(3)
+  })
+
+  it('updateManagerScores sets error and rethrows on failure', async () => {
+    vi.mocked(evalApi.updateManagerScores).mockRejectedValue(new Error('Forbidden'))
+
+    const store = useEvaluationsStore()
+
+    await expect(
+      store.updateManagerScores(1, '2024-Q1', [{ skill_id: 1, score: 5 }]),
+    ).rejects.toThrow('Forbidden')
+    expect(store.error).toBe('Forbidden')
+    expect(store.loading).toBe(false)
+  })
+
+  // --- updateSelfScores ---
+
+  it('updateSelfScores merges returned evaluations into existing list', async () => {
+    const updatedEvals = [
+      { skill_id: 2, skill_name: 'Python', manager_score: 3, self_score: 5 },
+    ]
+    vi.mocked(evalApi.updateSelfScores).mockResolvedValue({ evaluations: updatedEvals })
+
+    const store = useEvaluationsStore()
+    store.evaluations = [...mockEvaluations]
+
+    await store.updateSelfScores('2024-Q1', [{ skill_id: 2, score: 5 }])
+
+    expect(store.evaluations[1].self_score).toBe(5)
+    expect(store.evaluations).toHaveLength(2)
+    expect(store.loading).toBe(false)
+    expect(store.error).toBeNull()
+    expect(evalApi.updateSelfScores).toHaveBeenCalledWith('2024-Q1', [{ skill_id: 2, score: 5 }])
+  })
+
+  it('updateSelfScores appends new evaluations not in existing list', async () => {
+    const newEval = { skill_id: 4, skill_name: 'Rust', manager_score: null, self_score: 3 }
+    vi.mocked(evalApi.updateSelfScores).mockResolvedValue({ evaluations: [newEval] })
+
+    const store = useEvaluationsStore()
+    store.evaluations = [...mockEvaluations]
+
+    await store.updateSelfScores('2024-Q1', [{ skill_id: 4, score: 3 }])
+
+    expect(store.evaluations).toHaveLength(3)
+    expect(store.evaluations[2].skill_id).toBe(4)
+  })
+
+  it('updateSelfScores sets error and rethrows on failure', async () => {
+    vi.mocked(evalApi.updateSelfScores).mockRejectedValue(new Error('Server error'))
+
+    const store = useEvaluationsStore()
+
+    await expect(
+      store.updateSelfScores('2024-Q1', [{ skill_id: 1, score: 3 }]),
+    ).rejects.toThrow('Server error')
+    expect(store.error).toBe('Server error')
+    expect(store.loading).toBe(false)
+  })
+
+  // --- fetchGapAnalysis ---
+
+  it('fetchGapAnalysis sets error on failure', async () => {
+    vi.mocked(gapApi.getGapAnalysis).mockRejectedValue(new Error('Gap failed'))
+
+    const store = useEvaluationsStore()
+    await store.fetchGapAnalysis(1, 1, '2024-Q1')
+
+    expect(store.error).toBe('Gap failed')
+    expect(store.gapAnalysis).toEqual([])
+    expect(store.loading).toBe(false)
+  })
+
+  it('fetchGapAnalysis passes optional skillGroupId and opts', async () => {
+    vi.mocked(gapApi.getGapAnalysis).mockResolvedValue({ items: mockGapItems })
+
+    const store = useEvaluationsStore()
+    await store.fetchGapAnalysis(1, 1, '2024-Q1', 5, { teamId: 2, location: 'Berlin' })
+
+    expect(gapApi.getGapAnalysis).toHaveBeenCalledWith(1, 1, '2024-Q1', {
+      teamId: 2,
+      location: 'Berlin',
+      skillGroupId: 5,
+    })
+    expect(store.gapAnalysis).toEqual(mockGapItems)
+  })
 })

@@ -28,6 +28,7 @@ backend/config/*.secret.exs
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+frontend/coverage/
 
 # Docs (VitePress)
 docs/node_modules/

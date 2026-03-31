@@ -93,4 +93,84 @@ describe('useSkillsStore', () => {
     expect(store.currentSkillset).toBeNull()
     expect(store.loading).toBe(false)
   })
+
+  // --- createSkillset ---
+
+  it('createSkillset adds to skillsets and returns new skillset', async () => {
+    const newSkillset = { id: 3, name: 'DevOps', description: 'DevOps skills', position: 3, skill_count: 0 }
+    vi.mocked(skillsetsApi.createSkillset).mockResolvedValue({ skillset: newSkillset })
+
+    const store = useSkillsStore()
+    store.skillsets = [...mockSkillsets]
+
+    const result = await store.createSkillset({ name: 'DevOps', description: 'DevOps skills' })
+
+    expect(result).toEqual(newSkillset)
+    expect(store.skillsets).toHaveLength(3)
+    expect(store.skillsets[2]).toEqual(newSkillset)
+    expect(store.loading).toBe(false)
+    expect(store.error).toBeNull()
+    expect(skillsetsApi.createSkillset).toHaveBeenCalledWith({ name: 'DevOps', description: 'DevOps skills' })
+  })
+
+  it('createSkillset sets error and rethrows on failure', async () => {
+    vi.mocked(skillsetsApi.createSkillset).mockRejectedValue(new Error('Validation failed'))
+
+    const store = useSkillsStore()
+
+    await expect(store.createSkillset({ name: '', description: '' })).rejects.toThrow('Validation failed')
+    expect(store.error).toBe('Validation failed')
+    expect(store.loading).toBe(false)
+  })
+
+  // --- deleteSkillset ---
+
+  it('deleteSkillset removes from skillsets list', async () => {
+    vi.mocked(skillsetsApi.deleteSkillset).mockResolvedValue(undefined as unknown as void)
+
+    const store = useSkillsStore()
+    store.skillsets = [...mockSkillsets]
+
+    await store.deleteSkillset(1)
+
+    expect(store.skillsets).toHaveLength(1)
+    expect(store.skillsets[0].id).toBe(2)
+    expect(store.loading).toBe(false)
+    expect(store.error).toBeNull()
+    expect(skillsetsApi.deleteSkillset).toHaveBeenCalledWith(1)
+  })
+
+  it('deleteSkillset clears currentSkillset if it matches deleted id', async () => {
+    vi.mocked(skillsetsApi.deleteSkillset).mockResolvedValue(undefined as unknown as void)
+
+    const store = useSkillsStore()
+    store.skillsets = [...mockSkillsets]
+    store.currentSkillset = mockSkillsetDetail as any
+
+    await store.deleteSkillset(1)
+
+    expect(store.currentSkillset).toBeNull()
+  })
+
+  it('deleteSkillset keeps currentSkillset if it does not match deleted id', async () => {
+    vi.mocked(skillsetsApi.deleteSkillset).mockResolvedValue(undefined as unknown as void)
+
+    const store = useSkillsStore()
+    store.skillsets = [...mockSkillsets]
+    store.currentSkillset = mockSkillsetDetail as any
+
+    await store.deleteSkillset(2)
+
+    expect(store.currentSkillset).toEqual(mockSkillsetDetail)
+  })
+
+  it('deleteSkillset sets error and rethrows on failure', async () => {
+    vi.mocked(skillsetsApi.deleteSkillset).mockRejectedValue(new Error('Forbidden'))
+
+    const store = useSkillsStore()
+
+    await expect(store.deleteSkillset(1)).rejects.toThrow('Forbidden')
+    expect(store.error).toBe('Forbidden')
+    expect(store.loading).toBe(false)
+  })
 })

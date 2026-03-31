@@ -91,7 +91,7 @@ defmodule SkillsetEvaluator.Export.XlsxWriter do
     # Data rows
     data_rows =
       Enum.map(users, fn user ->
-        team_name = user[:team_name] || ""
+        team_name = Map.get(user, :team_name, "")
         location = user.location || ""
         role = user.job_title || ""
         name = user.name || ""

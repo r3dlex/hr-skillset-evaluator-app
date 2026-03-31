@@ -53,11 +53,11 @@ jobs:
           MIX_ENV: test
         run: mix compile --warnings-as-errors
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: ./backend
         env:
           MIX_ENV: test
-        run: mix test
+        run: mix coveralls --minimum-coverage 25
 
   frontend-test:
     name: Frontend Tests
@@ -87,9 +87,9 @@ jobs:
         working-directory: ./frontend
         run: npx eslint src --ext .ts,.vue
 
-      - name: Run tests
+      - name: Run tests with coverage
         working-directory: ./frontend
-        run: npx vitest run
+        run: npx vitest run --coverage
 
   docker-build:
     name: Docker Build
