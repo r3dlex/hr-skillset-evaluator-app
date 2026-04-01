@@ -16,7 +16,7 @@ vi.mock('@/api', () => ({
   },
 }))
 vi.mock('@/composables/useScreenContext', () => ({
-  useScreenContext: vi.fn(() => ({})),
+  useScreenContext: vi.fn(() => ({ setScreenContext: vi.fn() })),
 }))
 
 import { useSkillsStore } from '@/stores/skills'
@@ -72,6 +72,7 @@ const mockTeamStore = {
   selectedTeamId: null,
   selectedUserId: null,
   selectedAssessmentName: null,
+  selectedMemberIds: new Set<number>(),
   loading: false,
   fetchTeams: vi.fn(),
   fetchMembers: vi.fn(),
