@@ -160,7 +160,7 @@ describe('useThemeStore', () => {
     store.setColorMode('system')
     store.initSystemListener()
     // Trigger the change handler
-    if (changeHandler) changeHandler()
+    if (changeHandler) (changeHandler as () => void)()
     // No errors expected
     expect(store.colorMode).toBe('system')
   })

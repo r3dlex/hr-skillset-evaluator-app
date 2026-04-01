@@ -46,8 +46,8 @@ describe('SettingsView', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    vi.mocked(useSkillsStore).mockReturnValue(mockSkillsStore as ReturnType<typeof useSkillsStore>)
-    vi.mocked(useThemeStore).mockReturnValue(mockThemeStore as ReturnType<typeof useThemeStore>)
+    vi.mocked(useSkillsStore).mockReturnValue(mockSkillsStore as unknown as ReturnType<typeof useSkillsStore>)
+    vi.mocked(useThemeStore).mockReturnValue(mockThemeStore as unknown as ReturnType<typeof useThemeStore>)
     mockSkillsStore.skillsets = [mockSkillset]
     mockSkillsStore.fetchSkillsets.mockResolvedValue(undefined)
     mockSkillsStore.createSkillset.mockResolvedValue(undefined)

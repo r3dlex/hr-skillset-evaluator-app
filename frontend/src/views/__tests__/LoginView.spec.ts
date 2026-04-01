@@ -29,7 +29,7 @@ describe('LoginView', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as ReturnType<typeof useAuthStore>)
+    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as unknown as ReturnType<typeof useAuthStore>)
   })
 
   function mountComponent() {
@@ -125,7 +125,7 @@ describe('LoginView', () => {
 
   it('shows Signing in... text while submitting', async () => {
     let resolveLogin!: () => void
-    mockAuthStore.login.mockReturnValue(new Promise(resolve => { resolveLogin = resolve }))
+    mockAuthStore.login.mockReturnValue(new Promise<void>(resolve => { resolveLogin = resolve }))
     const wrapper = mountComponent()
 
     await wrapper.find('input#email').setValue('alice@example.com')

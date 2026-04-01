@@ -58,10 +58,10 @@ describe('Sidebar', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as ReturnType<typeof useAuthStore>)
-    vi.mocked(useSkillsStore).mockReturnValue(mockSkillsStore as ReturnType<typeof useSkillsStore>)
-    vi.mocked(useOnboardingStore).mockReturnValue(mockOnboardingStore as ReturnType<typeof useOnboardingStore>)
-    vi.mocked(useThemeStore).mockReturnValue(mockThemeStore as ReturnType<typeof useThemeStore>)
+    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as unknown as ReturnType<typeof useAuthStore>)
+    vi.mocked(useSkillsStore).mockReturnValue(mockSkillsStore as unknown as ReturnType<typeof useSkillsStore>)
+    vi.mocked(useOnboardingStore).mockReturnValue(mockOnboardingStore as unknown as ReturnType<typeof useOnboardingStore>)
+    vi.mocked(useThemeStore).mockReturnValue(mockThemeStore as unknown as ReturnType<typeof useThemeStore>)
     mockThemeStore.sidebarCollapsed = false
     mockAuthStore.isManager = true
     mockAuthStore.user = mockUser
@@ -187,7 +187,7 @@ describe('Sidebar', () => {
 
   it('uses visibleSkillsets filtering for non-managers', () => {
     mockAuthStore.isManager = false
-    mockAuthStore.user = { ...mockUser, role: 'user' as const }
+    mockAuthStore.user = { ...mockUser, role: 'user' } as unknown as typeof mockUser
     // All skillsets with no applicable_roles should be visible
     const wrapper = mountComponent()
     expect(wrapper.text()).toContain('Frontend')
@@ -195,11 +195,11 @@ describe('Sidebar', () => {
 
   it('handles skillsets with applicable_roles filtering', () => {
     mockAuthStore.isManager = false
-    mockAuthStore.user = { ...mockUser, role: 'user' as const, job_title: 'Engineer' } as typeof mockUser
+    mockAuthStore.user = { ...mockUser, role: 'user', job_title: 'Engineer' } as unknown as typeof mockUser
     mockSkillsStore.skillsets = [
       { id: 1, name: 'Frontend', description: '', skill_groups: [], applicable_roles: ['Engineer'] },
       { id: 2, name: 'Management', description: '', skill_groups: [], applicable_roles: ['Manager'] },
-    ] as typeof mockSkillsets
+    ] as unknown as typeof mockSkillsets
     const wrapper = mountComponent()
     expect(wrapper.text()).toContain('Frontend')
     expect(wrapper.text()).not.toContain('Management')

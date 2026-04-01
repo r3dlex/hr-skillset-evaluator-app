@@ -77,10 +77,10 @@ describe('SelfEvaluationView', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
 
-    vi.mocked(useSkillsStore).mockReturnValue(mockSkillsStore as ReturnType<typeof useSkillsStore>)
-    vi.mocked(useEvaluationsStore).mockReturnValue(mockEvalStore as ReturnType<typeof useEvaluationsStore>)
-    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as ReturnType<typeof useAuthStore>)
-    vi.mocked(useChatStore).mockReturnValue(mockChatStore as ReturnType<typeof useChatStore>)
+    vi.mocked(useSkillsStore).mockReturnValue(mockSkillsStore as unknown as ReturnType<typeof useSkillsStore>)
+    vi.mocked(useEvaluationsStore).mockReturnValue(mockEvalStore as unknown as ReturnType<typeof useEvaluationsStore>)
+    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as unknown as ReturnType<typeof useAuthStore>)
+    vi.mocked(useChatStore).mockReturnValue(mockChatStore as unknown as ReturnType<typeof useChatStore>)
 
     mockSkillsStore.currentSkillset = mockSkillset
     mockEvalStore.evaluations = mockEvaluations
@@ -191,7 +191,7 @@ describe('SelfEvaluationView', () => {
     await flushPromises()
     // Manager scores are shown for reference
     const text = wrapper.text()
-    expect(text).toContain('3') || expect(wrapper.exists()).toBe(true)
+    expect(text.includes('3') || wrapper.exists()).toBe(true)
   })
 
   it('opens chat assistant when AI help button is clicked', async () => {

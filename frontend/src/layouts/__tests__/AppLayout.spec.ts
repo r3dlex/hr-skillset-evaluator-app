@@ -48,8 +48,8 @@ describe('AppLayout', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     vi.mocked(useThemeStore).mockReturnValue(mockThemeStore as ReturnType<typeof useThemeStore>)
-    vi.mocked(useChatStore).mockReturnValue(mockChatStore as ReturnType<typeof useChatStore>)
-    vi.mocked(useTour).mockReturnValue(mockTour as ReturnType<typeof useTour>)
+    vi.mocked(useChatStore).mockReturnValue(mockChatStore as unknown as ReturnType<typeof useChatStore>)
+    vi.mocked(useTour).mockReturnValue(mockTour as unknown as ReturnType<typeof useTour>)
   })
 
   function mountComponent() {

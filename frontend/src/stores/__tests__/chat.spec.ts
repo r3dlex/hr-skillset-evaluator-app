@@ -22,6 +22,8 @@ import { chatApi } from '@/api/chat'
 const mockConversation = {
   id: 1,
   title: 'Test Conversation',
+  locale: 'en',
+  message_count: 0,
   inserted_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
 }

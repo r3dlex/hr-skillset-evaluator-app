@@ -22,7 +22,7 @@ describe('ChatInput', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    vi.mocked(useChatStore).mockReturnValue(mockChatStore as ReturnType<typeof useChatStore>)
+    vi.mocked(useChatStore).mockReturnValue(mockChatStore as unknown as ReturnType<typeof useChatStore>)
     vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as ReturnType<typeof useAuthStore>)
     mockChatStore.isStreaming = false
   })

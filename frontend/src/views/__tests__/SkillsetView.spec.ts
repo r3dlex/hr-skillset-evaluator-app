@@ -104,12 +104,12 @@ describe('SkillsetView', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
 
-    vi.mocked(useSkillsStore).mockReturnValue(mockSkillsStore as ReturnType<typeof useSkillsStore>)
-    vi.mocked(useEvaluationsStore).mockReturnValue(mockEvalStore as ReturnType<typeof useEvaluationsStore>)
-    vi.mocked(useTeamStore).mockReturnValue(mockTeamStore as ReturnType<typeof useTeamStore>)
-    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as ReturnType<typeof useAuthStore>)
-    vi.mocked(assessmentsApi.list).mockResolvedValue(mockAssessments)
-    vi.mocked(assessmentsApi.create).mockResolvedValue(mockAssessments[0])
+    vi.mocked(useSkillsStore).mockReturnValue(mockSkillsStore as unknown as ReturnType<typeof useSkillsStore>)
+    vi.mocked(useEvaluationsStore).mockReturnValue(mockEvalStore as unknown as ReturnType<typeof useEvaluationsStore>)
+    vi.mocked(useTeamStore).mockReturnValue(mockTeamStore as unknown as ReturnType<typeof useTeamStore>)
+    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as unknown as ReturnType<typeof useAuthStore>)
+    vi.mocked(assessmentsApi.list).mockResolvedValue(mockAssessments as any)
+    vi.mocked(assessmentsApi.create).mockResolvedValue(mockAssessments[0] as any)
 
     mockSkillsStore.currentSkillset = mockSkillset
     mockTeamStore.teams = []
@@ -204,7 +204,7 @@ describe('SkillsetView', () => {
 
   it('calls fetchTeams for manager', async () => {
     mockAuthStore.isManager = true
-    mockAuthStore.user = { ...mockUser, role: 'manager' as const }
+    mockAuthStore.user = { ...mockUser, role: 'manager' as const } as unknown as typeof mockUser
     await mountComponent()
     await flushPromises()
     expect(mockTeamStore.fetchTeams).toHaveBeenCalled()
@@ -214,7 +214,7 @@ describe('SkillsetView', () => {
     const wrapper = await mountComponent()
     await flushPromises()
     const text = wrapper.text()
-    expect(text).toContain('Programming') || expect(text).toContain('All')
+    expect(text.includes('Programming') || text.includes('All')).toBe(true)
   })
 
   it('shows "All" group option on Table tab when multiple groups exist', async () => {
@@ -261,11 +261,11 @@ describe('SkillsetView', () => {
 
   it('shows manager controls when isManager is true', async () => {
     mockAuthStore.isManager = true
-    mockAuthStore.user = { ...mockUser, role: 'manager' as const }
-    mockTeamStore.teams = [{ id: 1, name: 'Engineering', description: '' }]
+    mockAuthStore.user = { ...mockUser, role: 'manager' as const } as unknown as typeof mockUser
+    mockTeamStore.teams = [{ id: 1, name: 'Engineering', description: '' }] as any
     mockTeamStore.members = [
       { id: 2, name: 'Bob', email: 'bob@example.com', role: 'user' as const, active: true },
-    ]
+    ] as any
     mockTeamStore.fetchTeams.mockResolvedValue(undefined)
     mockTeamStore.fetchMembers.mockResolvedValue(undefined)
 
@@ -291,7 +291,7 @@ describe('SkillsetView', () => {
     const wrapper = await mountComponent()
     await flushPromises()
     // Chart tab is active by default, and without radarData we see an empty state
-    expect(wrapper.text()).toContain('Radar Chart') || expect(wrapper.exists()).toBe(true)
+    expect(wrapper.text().includes('Radar Chart') || wrapper.exists()).toBe(true)
   })
 
   it('switches to table tab when Table button is clicked', async () => {

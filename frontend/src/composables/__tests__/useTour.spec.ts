@@ -2,9 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useTour } from '../useTour'
 
 const mockSteps = [
-  { target: '.step-1', title: 'Step 1', content: 'First step' },
-  { target: '.step-2', title: 'Step 2', content: 'Second step' },
-  { target: '.step-3', title: 'Step 3', content: 'Third step' },
+  { target: '.step-1', title: 'Step 1', content: 'First step', position: 'top' as const },
+  { target: '.step-2', title: 'Step 2', content: 'Second step', position: 'top' as const },
+  { target: '.step-3', title: 'Step 3', content: 'Third step', position: 'top' as const },
 ]
 
 describe('useTour', () => {
@@ -142,7 +142,7 @@ describe('useTour', () => {
   it('updateTargetRect handles missing element gracefully', async () => {
     vi.spyOn(document, 'querySelector').mockReturnValue(null)
     const tour = useTour()
-    const stepsWithMissing = [{ target: '.nonexistent', title: 'Missing', content: 'No element' }]
+    const stepsWithMissing = [{ target: '.nonexistent', title: 'Missing', content: 'No element', position: 'top' as const }]
     tour.start(stepsWithMissing)
     // Wait for nextTick
     await new Promise(resolve => setTimeout(resolve, 0))

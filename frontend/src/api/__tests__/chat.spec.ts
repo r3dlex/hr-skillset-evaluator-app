@@ -142,7 +142,6 @@ describe('chatApi', () => {
 
   it('abort cancels the request', () => {
     const mockAbort = vi.fn()
-    const OriginalAbortController = globalThis.AbortController
     vi.spyOn(globalThis, 'AbortController').mockImplementation(() => ({
       abort: mockAbort,
       signal: {} as AbortSignal,

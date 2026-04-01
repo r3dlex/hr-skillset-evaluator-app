@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createRouter, createWebHistory } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 
 vi.mock('@/stores/auth', () => ({ useAuthStore: vi.fn() }))
@@ -27,7 +26,7 @@ describe('Router guard logic', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as ReturnType<typeof useAuthStore>)
+    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as unknown as ReturnType<typeof useAuthStore>)
     mockAuthStore.isAuthenticated = false
     mockAuthStore.isManager = false
     mockAuthStore.fetchMe.mockResolvedValue(undefined)
@@ -197,7 +196,7 @@ describe('Navigation guard integration (actual router)', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
-    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as ReturnType<typeof useAuthStore>)
+    vi.mocked(useAuthStore).mockReturnValue(mockAuthStore as unknown as ReturnType<typeof useAuthStore>)
     mockAuthStore.isAuthenticated = false
     mockAuthStore.isManager = false
     mockAuthStore.fetchMe.mockResolvedValue(undefined)

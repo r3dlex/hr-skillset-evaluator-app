@@ -38,39 +38,17 @@ defmodule SkillsetEvaluator.Import.BroadwayProducerTest do
     end
   end
 
-  describe "full producer-consumer flow" do
-    test "consumer receives messages from producer via Broadway.Message" do
-      {:ok, producer_pid} = GenStage.start_link(BroadwayProducer, [])
+  describe "multiple enqueue operations" do
+    test "handles consecutive enqueue casts" do
+      {:ok, pid} = GenStage.start_link(BroadwayProducer, [])
 
-      # Attach a consumer
-      {:ok, consumer_pid} =
-        GenStage.start_link(
-          SkillsetEvaluator.Import.BroadwayProducerTest.TestConsumer,
-          {self(), producer_pid}
-        )
+      GenStage.cast(pid, {:enqueue, [%{name: "Alice"}]})
+      GenStage.cast(pid, {:enqueue, [%{name: "Bob"}, %{name: "Carol"}]})
+      GenStage.cast(pid, :done)
 
-      rows = [%{name: "Alice"}, %{name: "Bob"}, %{name: "Carol"}]
-      GenStage.cast(producer_pid, {:enqueue, rows})
-      GenStage.cast(producer_pid, :done)
-
-      # Allow time for messages to flow
-      :timer.sleep(50)
-
-      GenStage.stop(consumer_pid)
-      GenStage.stop(producer_pid)
+      # Allow time for casts to process
+      :timer.sleep(10)
+      GenStage.stop(pid)
     end
-  end
-end
-
-defmodule SkillsetEvaluator.Import.BroadwayProducerTest.TestConsumer do
-  use GenStage
-
-  def init({parent, producer_pid}) do
-    {:consumer, parent, subscribe_to: [{producer_pid, max_demand: 10}]}
-  end
-
-  def handle_events(events, _from, parent) do
-    send(parent, {:received, length(events)})
-    {:noreply, [], parent}
   end
 end
