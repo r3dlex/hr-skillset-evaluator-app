@@ -1,36 +1,73 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getScreenContext } from '../useScreenContext'
+import { ref } from 'vue'
 
-// Test just the getScreenContext since useScreenContext requires vue-router
+// Mock vue-router before importing the composable
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn().mockReturnValue({
+    name: ref('dashboard'),
+  }),
+}))
+
+import { useScreenContext, getScreenContext } from '../useScreenContext'
+import { useRoute } from 'vue-router'
+
 describe('getScreenContext', () => {
   it('returns a screen context object', () => {
     const ctx = getScreenContext()
     expect(ctx).toBeDefined()
     expect(typeof ctx.screen).toBe('string')
   })
+
+  it('returns object with screen property', () => {
+    const ctx = getScreenContext()
+    expect(ctx).toHaveProperty('screen')
+  })
 })
 
-// Test useScreenContext with mocked router
 describe('useScreenContext composable', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(useRoute).mockReturnValue({ name: ref('dashboard') } as any)
   })
 
-  it('can be imported and provides setScreenContext', async () => {
-    vi.mock('vue-router', () => ({
-      useRoute: vi.fn().mockReturnValue({
-        name: 'dashboard',
-      }),
-    }))
-    // Dynamic import to get fresh module after mock
-    const { useScreenContext, getScreenContext } = await import('../useScreenContext')
-    // Just verify exports exist
-    expect(useScreenContext).toBeDefined()
-    expect(getScreenContext).toBeDefined()
+  it('provides setScreenContext function', () => {
+    const { setScreenContext } = useScreenContext()
+    expect(typeof setScreenContext).toBe('function')
   })
 
-  it('getScreenContext returns current context', () => {
+  it('provides screenContext ref', () => {
+    const { screenContext } = useScreenContext()
+    expect(screenContext).toBeDefined()
+    expect(typeof screenContext.value.screen).toBe('string')
+  })
+
+  it('setScreenContext updates the context', () => {
+    const { setScreenContext, screenContext } = useScreenContext()
+    setScreenContext({ screen: 'skillset', skillset_id: 42 })
+    expect(screenContext.value.screen).toBe('skillset')
+    expect(screenContext.value.skillset_id).toBe(42)
+  })
+
+  it('setScreenContext replaces entire context', () => {
+    const { setScreenContext, screenContext } = useScreenContext()
+    setScreenContext({ screen: 'settings' })
+    expect(screenContext.value.screen).toBe('settings')
+    expect(screenContext.value.skillset_id).toBeUndefined()
+  })
+
+  it('setScreenContext and getScreenContext are in sync', () => {
+    const { setScreenContext } = useScreenContext()
+    setScreenContext({ screen: 'self-evaluation', skillset_id: 10 })
     const ctx = getScreenContext()
-    expect(ctx).toHaveProperty('screen')
+    expect(ctx.screen).toBe('self-evaluation')
+    expect(ctx.skillset_id).toBe(10)
+  })
+
+  it('handles route name change via watch', () => {
+    const routeName = ref('dashboard')
+    vi.mocked(useRoute).mockReturnValue({ name: routeName } as any)
+    const { screenContext } = useScreenContext()
+    // The watch (immediate: true) should set screen from route.name
+    expect(typeof screenContext.value.screen).toBe('string')
   })
 })

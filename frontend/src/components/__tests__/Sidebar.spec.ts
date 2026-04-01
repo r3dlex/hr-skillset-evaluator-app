@@ -204,4 +204,70 @@ describe('Sidebar', () => {
     expect(wrapper.text()).toContain('Frontend')
     expect(wrapper.text()).not.toContain('Management')
   })
+
+  it('shows tooltip divs when sidebar is collapsed', () => {
+    mockThemeStore.sidebarCollapsed = true
+    const wrapper = mountComponent()
+    // Collapsed sidebar shows tooltips for skillsets and user info
+    expect(wrapper.exists()).toBe(true)
+    // In collapsed mode the span with truncate is hidden, but tooltip div is rendered
+    const tooltips = wrapper.findAll('[class*="absolute left-full"]')
+    expect(tooltips.length).toBeGreaterThan(0)
+  })
+
+  it('collapsed sidebar shows icon-only layout', () => {
+    mockThemeStore.sidebarCollapsed = true
+    const wrapper = mountComponent()
+    // In collapsed mode, skill name span should not be visible (v-if="!sidebarCollapsed")
+    const spans = wrapper.findAll('span.truncate')
+    expect(spans.length).toBe(0)
+  })
+
+  it('handleStartTour calls startTour inject for manager', async () => {
+    const startTourFn = vi.fn()
+    mockAuthStore.isManager = true
+    mockOnboardingStore.isVisible = true
+    const wrapper = mount(Sidebar, {
+      global: {
+        plugins: [createPinia(), router],
+        stubs: {
+          OnboardingChecklist: {
+            template: '<div class="onboarding-checklist"><button class="start-tour-btn" @click="$emit(\'start-tour\')">Start</button></div>',
+            emits: ['start-tour'],
+          },
+          AppLogo: { template: '<span class="app-logo"/>' },
+        },
+        provide: { startTour: startTourFn },
+      },
+    })
+    await wrapper.find('.start-tour-btn').trigger('click')
+    expect(startTourFn).toHaveBeenCalled()
+    // Manager tour includes settings link step
+    const tourSteps = startTourFn.mock.calls[0][0]
+    expect(tourSteps.some((s: { target: string }) => s.target.includes('settings'))).toBe(true)
+  })
+
+  it('handleStartTour calls startTour inject for non-manager user', async () => {
+    const startTourFn = vi.fn()
+    mockAuthStore.isManager = false
+    mockOnboardingStore.isVisible = true
+    const wrapper = mount(Sidebar, {
+      global: {
+        plugins: [createPinia(), router],
+        stubs: {
+          OnboardingChecklist: {
+            template: '<div class="onboarding-checklist"><button class="start-tour-btn" @click="$emit(\'start-tour\')">Start</button></div>',
+            emits: ['start-tour'],
+          },
+          AppLogo: { template: '<span class="app-logo"/>' },
+        },
+        provide: { startTour: startTourFn },
+      },
+    })
+    await wrapper.find('.start-tour-btn').trigger('click')
+    expect(startTourFn).toHaveBeenCalled()
+    // User tour does NOT include settings link step
+    const tourSteps = startTourFn.mock.calls[0][0]
+    expect(tourSteps.some((s: { target: string }) => s.target.includes('settings'))).toBe(false)
+  })
 })

@@ -55,6 +55,29 @@ describe('Logo components', () => {
       expect(wrapper.text()).not.toContain('RIB')
     })
 
+    it('shows "by RIB" badge when rib theme is active', () => {
+      mockThemeStore.themeName = 'rib'
+      const wrapper = mount(AppLogo, {
+        global: {
+          plugins: [createPinia()],
+          stubs: { SkillForgeLogo: { template: '<span class="sf-logo"/>' } },
+        },
+      })
+      expect(wrapper.text()).toContain('by RIB')
+    })
+
+    it('hides "by RIB" badge when rib theme is active but collapsed=true', () => {
+      mockThemeStore.themeName = 'rib'
+      const wrapper = mount(AppLogo, {
+        props: { collapsed: true },
+        global: {
+          plugins: [createPinia()],
+          stubs: { SkillForgeLogo: { template: '<span class="sf-logo"/>' } },
+        },
+      })
+      expect(wrapper.text()).not.toContain('by RIB')
+    })
+
     it('accepts size prop', () => {
       const wrapper = mount(AppLogo, {
         props: { size: 48 },

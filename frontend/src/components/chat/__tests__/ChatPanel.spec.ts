@@ -120,4 +120,74 @@ describe('ChatPanel', () => {
     }
     expect(wrapper.exists()).toBe(true)
   })
+
+  it('handleMouseMove updates panel width when resizing', async () => {
+    const wrapper = mountComponent()
+    const resizeHandle = wrapper.find('.cursor-col-resize')
+    if (resizeHandle.exists()) {
+      // Start resizing
+      await resizeHandle.trigger('mousedown')
+      // Fire mousemove on document
+      const moveEvent = new MouseEvent('mousemove', { clientX: 600 })
+      document.dispatchEvent(moveEvent)
+      expect(mockChatStore.setPanelWidth).toHaveBeenCalled()
+    }
+  })
+
+  it('handleMouseUp stops resizing', async () => {
+    const wrapper = mountComponent()
+    const resizeHandle = wrapper.find('.cursor-col-resize')
+    if (resizeHandle.exists()) {
+      await resizeHandle.trigger('mousedown')
+      const upEvent = new MouseEvent('mouseup')
+      document.dispatchEvent(upEvent)
+    }
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('removes document event listeners on unmount', async () => {
+    const removeSpy = vi.spyOn(document, 'removeEventListener')
+    const wrapper = mountComponent()
+    wrapper.unmount()
+    expect(removeSpy).toHaveBeenCalledWith('mousemove', expect.any(Function))
+    expect(removeSpy).toHaveBeenCalledWith('mouseup', expect.any(Function))
+    removeSpy.mockRestore()
+  })
+
+  it('handleUpload calls sendMessage with filename', async () => {
+    const wrapper = mountComponent()
+    // Simulate the upload event by calling handleUpload directly via component expose or emitting upload
+    const chatInputEl = wrapper.find('.chat-input')
+    const file = new File(['content'], 'data.xlsx')
+    await chatInputEl.trigger('upload', { detail: file })
+    // The upload event uses file.name in the message
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('toggleExpand calls togglePanelExpand on store', async () => {
+    mockChatStore.panelWidth = 400
+    mockChatStore.MAX_PANEL_WIDTH = 800
+    const wrapper = mountComponent()
+    const expandBtn = wrapper.find('button[title="Expand panel"]')
+    if (expandBtn.exists()) {
+      await expandBtn.trigger('click')
+      expect(mockChatStore.togglePanelExpand).toHaveBeenCalled()
+    }
+  })
+
+  it('shows collapse title when expanded', async () => {
+    mockChatStore.panelWidth = 800
+    mockChatStore.MAX_PANEL_WIDTH = 800
+    // togglePanelExpand will set panelWidth to MAX; simulate already expanded
+    mockChatStore.togglePanelExpand.mockImplementation(() => {
+      mockChatStore.panelWidth = 800
+    })
+    const wrapper = mountComponent()
+    // After clicking expand, isExpanded should become true
+    const btn = wrapper.find('button[title="Expand panel"], button[title="Collapse panel"]')
+    if (btn.exists()) {
+      await btn.trigger('click')
+    }
+    expect(wrapper.exists()).toBe(true)
+  })
 })

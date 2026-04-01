@@ -99,5 +99,49 @@ defmodule SkillsetEvaluatorWeb.GapAnalysisControllerTest do
 
       assert json_response(conn, 401)
     end
+
+    test "returns gap analysis filtered by team_id", ctx do
+      team = team_fixture(%{name: "Gap Team"})
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.user)
+        |> get("/api/gap-analysis", %{
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "team_id" => to_string(team.id)
+        })
+
+      assert %{"data" => data} = json_response(conn, 200)
+      assert is_list(data)
+    end
+
+    test "returns gap analysis filtered by location", ctx do
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.user)
+        |> get("/api/gap-analysis", %{
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "location" => "DE"
+        })
+
+      assert %{"data" => data} = json_response(conn, 200)
+      assert is_list(data)
+    end
+
+    test "handles empty string team_id gracefully", ctx do
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.user)
+        |> get("/api/gap-analysis", %{
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "team_id" => ""
+        })
+
+      assert %{"data" => data} = json_response(conn, 200)
+      assert is_list(data)
+    end
   end
 end

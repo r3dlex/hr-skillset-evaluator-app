@@ -4,6 +4,20 @@ defmodule SkillsetEvaluatorWeb.MeControllerTest do
   alias SkillsetEvaluator.Accounts
 
   describe "GET /api/me" do
+    test "returns team data when user belongs to a team", %{conn: conn} do
+      team = team_fixture(%{name: "Test Team"})
+      user = user_fixture(%{name: "Teamed User", team_id: team.id})
+
+      conn =
+        conn
+        |> log_in_user(user)
+        |> get("/api/me")
+
+      assert %{"data" => data} = json_response(conn, 200)
+      assert data["team"]["name"] == "Test Team"
+      assert data["team"]["id"] == team.id
+    end
+
     test "returns 200 and current user data when authenticated", %{conn: conn} do
       user = user_fixture(%{name: "Me User", role: "user"})
 

@@ -262,6 +262,27 @@ defmodule SkillsetEvaluatorWeb.ChatControllerTest do
       assert json_response(conn, 401)
     end
 
+    test "returns 429 when user exceeds rate limit", ctx do
+      # Exhaust the rate limit (30 requests for "user" role)
+      # Create a user with "user" role for rate limit testing
+      user = user_fixture(%{role: "user"})
+      user_conv = {:ok, _} = Chat.create_conversation(user.id, %{locale: "en"})
+      {:ok, user_conv} = user_conv
+
+      for _ <- 1..30 do
+        SkillsetEvaluator.LLM.RateLimiter.check_rate(user.id, "user")
+      end
+
+      conn =
+        ctx.conn
+        |> log_in_user(user)
+        |> post("/api/chat/conversations/#{user_conv.id}/messages", %{
+          "content" => "What are my scores?"
+        })
+
+      assert %{"error" => _} = json_response(conn, 429)
+    end
+
     test "sends message and receives AI response via non-streaming fallback", ctx do
       {:ok, conv} = Chat.create_conversation(ctx.user.id, %{locale: "en"})
 

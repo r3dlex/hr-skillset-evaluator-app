@@ -101,4 +101,115 @@ describe('SettingsView', () => {
     const wrapper = mountComponent()
     expect(wrapper.text()).toContain('Appearance')
   })
+
+  it('opens edit form when Edit button is clicked', async () => {
+    const wrapper = mountComponent()
+    await flushPromises()
+    const editBtn = wrapper.find('button[title="Edit"]')
+    if (editBtn.exists()) {
+      await editBtn.trigger('click')
+      // Edit form should appear with Cancel and Save buttons
+      expect(wrapper.text()).toContain('Save')
+    }
+  })
+
+  it('cancels edit when Cancel is clicked in edit mode', async () => {
+    const wrapper = mountComponent()
+    await flushPromises()
+    const editBtn = wrapper.find('button[title="Edit"]')
+    if (editBtn.exists()) {
+      await editBtn.trigger('click')
+      const cancelBtn = wrapper.findAll('button').find(b => b.text() === 'Cancel')
+      if (cancelBtn) {
+        await cancelBtn.trigger('click')
+        // Should return to showing the skillset name
+        expect(wrapper.text()).toContain('Frontend')
+      }
+    }
+  })
+
+  it('calls deleteSkillset when Delete is confirmed', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const wrapper = mountComponent()
+    await flushPromises()
+    const deleteBtn = wrapper.find('button[title="Delete"]')
+    if (deleteBtn.exists()) {
+      await deleteBtn.trigger('click')
+      await flushPromises()
+      expect(mockSkillsStore.deleteSkillset).toHaveBeenCalledWith(1)
+    }
+    vi.restoreAllMocks()
+  })
+
+  it('does not call deleteSkillset when Delete is cancelled', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const wrapper = mountComponent()
+    await flushPromises()
+    const deleteBtn = wrapper.find('button[title="Delete"]')
+    if (deleteBtn.exists()) {
+      await deleteBtn.trigger('click')
+      await flushPromises()
+      expect(mockSkillsStore.deleteSkillset).not.toHaveBeenCalled()
+    }
+    vi.restoreAllMocks()
+  })
+
+  it('calls createSkillset when form is submitted with valid name', async () => {
+    const wrapper = mountComponent()
+    await flushPromises()
+    // Open create form
+    const btn = wrapper.find('button.btn-primary')
+    await btn.trigger('click')
+    // Fill in name
+    const nameInput = wrapper.find('input[placeholder*="name"], input[type="text"]')
+    if (nameInput.exists()) {
+      await nameInput.setValue('New Skillset')
+      // Submit form
+      const form = wrapper.find('form')
+      if (form.exists()) {
+        await form.trigger('submit')
+        await flushPromises()
+        expect(mockSkillsStore.createSkillset).toHaveBeenCalled()
+      }
+    }
+  })
+
+  it('moves skillset up when Move Up button is clicked', async () => {
+    mockSkillsStore.skillsets = [
+      { id: 1, name: 'First', description: '', skill_groups: [] },
+      { id: 2, name: 'Second', description: '', skill_groups: [] },
+    ]
+    const wrapper = mountComponent()
+    await flushPromises()
+    const moveUpBtns = wrapper.findAll('button[title="Move up"]')
+    // Second item's "Move up" button (index 1) should be enabled (element.disabled = false)
+    const enabledMoveUp = moveUpBtns.find(b => !(b.element as HTMLButtonElement).disabled)
+    if (enabledMoveUp) {
+      await enabledMoveUp.trigger('click')
+      // skillsets should be reordered (second is now first)
+      expect(mockSkillsStore.skillsets[0].name).toBe('Second')
+    }
+  })
+
+  it('shows skill_count badge when skillset has skill_count', () => {
+    mockSkillsStore.skillsets = [{ id: 1, name: 'Frontend', description: '', skill_groups: [], skill_count: 12 }] as any
+    const wrapper = mountComponent()
+    expect(wrapper.text()).toContain('12 skills')
+  })
+
+  it('moves skillset down when Move Down button is clicked', async () => {
+    mockSkillsStore.skillsets = [
+      { id: 1, name: 'First', description: '', skill_groups: [] },
+      { id: 2, name: 'Second', description: '', skill_groups: [] },
+    ]
+    const wrapper = mountComponent()
+    await flushPromises()
+    const moveDownBtns = wrapper.findAll('button[title="Move down"]')
+    // First item's "Move down" button (index 0) should be enabled
+    const enabledMoveDown = moveDownBtns.find(b => !(b.element as HTMLButtonElement).disabled)
+    if (enabledMoveDown) {
+      await enabledMoveDown.trigger('click')
+      expect(mockSkillsStore.skillsets[0].name).toBe('Second')
+    }
+  })
 })

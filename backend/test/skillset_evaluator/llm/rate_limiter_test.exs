@@ -114,5 +114,43 @@ defmodule SkillsetEvaluator.LLM.RateLimiterTest do
         assert Process.alive?(pid)
       end
     end
+
+    test "cleanup removes stale entries (older than 1 hour)" do
+      # Insert a stale entry directly into ETS
+      stale_key = {:rate, :stale_cleanup_test}
+      old_ts = System.system_time(:second) - 7200
+
+      # Ensure table exists first
+      RateLimiter.check_rate(:init_table_user, "user")
+
+      :ets.insert(:chat_rate_limits, {stale_key, [old_ts]})
+      assert :ets.lookup(:chat_rate_limits, stale_key) != []
+
+      pid = Process.whereis(RateLimiter)
+
+      if pid do
+        send(pid, :cleanup)
+        :timer.sleep(50)
+        # The stale entry should be deleted
+        assert :ets.lookup(:chat_rate_limits, stale_key) == []
+      end
+    end
+
+    test "cleanup retains recent entries" do
+      recent_key = {:rate, :recent_cleanup_test}
+      recent_ts = System.system_time(:second)
+
+      RateLimiter.check_rate(:init_table_user2, "user")
+      :ets.insert(:chat_rate_limits, {recent_key, [recent_ts]})
+
+      pid = Process.whereis(RateLimiter)
+
+      if pid do
+        send(pid, :cleanup)
+        :timer.sleep(50)
+        # The recent entry should remain
+        assert :ets.lookup(:chat_rate_limits, recent_key) != []
+      end
+    end
   end
 end
