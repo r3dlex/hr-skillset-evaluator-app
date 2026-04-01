@@ -5,8 +5,8 @@
 | Layer | Tests | Coverage | Status |
 |-------|-------|----------|--------|
 | Backend (ExUnit) | 461 tests | 80.8% | All passing |
-| Frontend (Vitest) | 423 tests | 97.1% | All passing |
-| **Total** | **884 tests** | — | **0 failures** |
+| Frontend (Vitest) | 445 tests | 98.3% | All passing |
+| **Total** | **906 tests** | — | **0 failures** |
 | E2E (Playwright) | Planned | — | Not yet implemented |
 
 ## Coverage Targets
@@ -14,7 +14,7 @@
 | Layer | Target | Actual | Tool |
 |-------|--------|--------|------|
 | Backend (line coverage) | 80% | **80.8%** ✅ | ExUnit + excoveralls |
-| Frontend (line coverage) | 90% | **97.1%** ✅ | Vitest + @vitest/coverage-v8 |
+| Frontend (line coverage) | 90% | **98.3%** ✅ | Vitest + @vitest/coverage-v8 |
 | E2E critical paths | 5 flows | Planned | Playwright |
 
 ## Backend Testing (ExUnit)

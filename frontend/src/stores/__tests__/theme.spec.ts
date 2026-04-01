@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { nextTick } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
 import { useThemeStore } from '../theme'
 
@@ -115,6 +116,16 @@ describe('useThemeStore', () => {
     expect(store.sidebarCollapsed).toBe(true)
     store.toggleSidebar()
     expect(store.sidebarCollapsed).toBe(false)
+  })
+
+  it('watch on sidebarCollapsed persists to localStorage', async () => {
+    const store = useThemeStore()
+    store.toggleSidebar() // sets to true
+    await nextTick()
+    expect(localStorageMock.getItem('sidebar-collapsed')).toBe('true')
+    store.toggleSidebar() // sets to false
+    await nextTick()
+    expect(localStorageMock.getItem('sidebar-collapsed')).toBe('false')
   })
 
   it('applyTheme modifies document.documentElement class list', () => {

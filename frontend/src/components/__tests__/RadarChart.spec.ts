@@ -73,6 +73,21 @@ describe('RadarChart', () => {
     expect(tooltip.text()).toContain('4')
   })
 
+  it('hides tooltip on mouseleave', async () => {
+    const radarData: RadarData = {
+      axes: ['JS', 'Python', 'Go'],
+      series: [{ user_id: 1, name: 'Alice', color: '#3b82f6', values: [4, 3, 5] }],
+    }
+    const wrapper = mount(RadarChart, { props: { radarData } })
+    const circles = wrapper.findAll('circle')
+    // First show the tooltip
+    await circles[0].trigger('mouseenter', { offsetX: 100, offsetY: 100 })
+    expect(wrapper.find('.absolute').exists()).toBe(true)
+    // Then hide it on mouseleave
+    await circles[0].trigger('mouseleave')
+    expect(wrapper.find('.absolute').exists()).toBe(false)
+  })
+
   it('handles empty data gracefully (no crash with empty axes/series)', () => {
     const radarData: RadarData = { axes: [], series: [] }
     const wrapper = mount(RadarChart, {

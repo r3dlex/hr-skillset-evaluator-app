@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
+import { inject, defineComponent, nextTick } from 'vue'
 import AppLayout from '../AppLayout.vue'
+import type { TourStep } from '@/types'
 
 vi.mock('@/stores/theme', () => ({
   useThemeStore: vi.fn(),
@@ -115,5 +117,33 @@ describe('AppLayout', () => {
     mockChatStore.isStreaming = false
     const wrapper = mountComponent()
     expect(wrapper.find('.animate-pulse').exists()).toBe(false)
+  })
+
+  it('startTour calls tour.start with provided steps', async () => {
+    let capturedStartTour: ((steps: TourStep[]) => void) | undefined
+    const ChildStub = defineComponent({
+      setup() {
+        capturedStartTour = inject<(steps: TourStep[]) => void>('startTour')
+        return {}
+      },
+      template: '<div class="child-stub"/>',
+    })
+
+    mount(AppLayout, {
+      global: {
+        plugins: [createPinia()],
+        stubs: {
+          Sidebar: { template: '<div class="sidebar"/>' },
+          TourTooltip: { template: '<div class="tour-tooltip"/>' },
+          ChatPanel: { template: '<div class="chat-panel"/>' },
+        },
+      },
+      slots: { default: ChildStub },
+    })
+
+    await nextTick()
+    const steps: TourStep[] = [{ target: '.test', title: 'Test', content: 'Test content', position: 'bottom' }]
+    capturedStartTour?.(steps)
+    expect(mockTour.start).toHaveBeenCalledWith(steps)
   })
 })

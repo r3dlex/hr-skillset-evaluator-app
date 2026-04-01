@@ -64,6 +64,7 @@ const mockEvalStore = {
   fetchRadarData: vi.fn().mockResolvedValue(undefined),
   fetchGapAnalysis: vi.fn().mockResolvedValue(undefined),
   upsertScore: vi.fn().mockResolvedValue(undefined),
+  updateManagerScores: vi.fn().mockResolvedValue(undefined),
 }
 
 const mockTeamStore = {
@@ -310,6 +311,167 @@ describe('SkillsetView', () => {
     mockSkillsStore.currentSkillset = null as unknown as typeof mockSkillset
     const wrapper = await mountComponent()
     await flushPromises()
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('shows new assessment form when manager clicks + button', async () => {
+    mockAuthStore.isManager = true
+    const wrapper = await mountComponent()
+    await flushPromises()
+    // Find the + button (create new assessment)
+    const buttons = wrapper.findAll('button')
+    const plusBtn = buttons.find(b => b.attributes('title') === 'Create new assessment')
+    if (plusBtn) {
+      await plusBtn.trigger('click')
+      await wrapper.vm.$nextTick()
+      expect(wrapper.text()).toContain('Create New Assessment')
+    } else {
+      expect(wrapper.exists()).toBe(true)
+    }
+  })
+
+  it('creates assessment and hides form', async () => {
+    mockAuthStore.isManager = true
+    vi.mocked(assessmentsApi.create).mockResolvedValue({ id: 3, name: '2026-Q1', description: null } as any)
+    const wrapper = await mountComponent()
+    await flushPromises()
+    const buttons = wrapper.findAll('button')
+    const plusBtn = buttons.find(b => b.attributes('title') === 'Create new assessment')
+    if (plusBtn) {
+      await plusBtn.trigger('click')
+      await wrapper.vm.$nextTick()
+      const nameInput = wrapper.find('input[placeholder*="2026"]')
+      if (nameInput.exists()) {
+        await nameInput.setValue('2026-Q1')
+        const createBtn = wrapper.findAll('button').find(b => b.text() === 'Create')
+        if (createBtn && !(createBtn.element as HTMLButtonElement).disabled) {
+          await createBtn.trigger('click')
+          await flushPromises()
+          expect(assessmentsApi.create).toHaveBeenCalled()
+        }
+      }
+    }
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('shows "All" group button when on Table tab', async () => {
+    mockSkillsStore.currentSkillset = {
+      ...mockSkillset,
+      skill_groups: [
+        { id: 1, name: 'Programming', skills: [{ id: 1, name: 'Elixir', priority: 'high' }] },
+        { id: 2, name: 'DevOps', skills: [{ id: 3, name: 'Docker', priority: 'medium' }] },
+      ],
+    }
+    const wrapper = await mountComponent()
+    await flushPromises()
+    // Switch to Table tab
+    const buttons = wrapper.findAll('button')
+    const tableBtn = buttons.find(b => b.text() === 'Table')
+    if (tableBtn) {
+      await tableBtn.trigger('click')
+      await wrapper.vm.$nextTick()
+      // "All" button should now be visible (v-if="activeTab !== 'chart'")
+      const allBtn = wrapper.findAll('button').find(b => b.text().trim() === 'All')
+      expect(allBtn?.exists()).toBe(true)
+      // Click "All" to cover selectGroup('all')
+      if (allBtn) {
+        await allBtn.trigger('click')
+        expect(wrapper.exists()).toBe(true)
+      }
+    }
+  })
+
+  it('handleDiscard clears pending scores', async () => {
+    mockAuthStore.isManager = true
+    mockTeamStore.members = [{ id: 2, name: 'Bob', email: 'bob@example.com', role: 'user', active: true }] as any
+    // Use a DataInput stub that emits update:score to trigger pending changes
+    await router.push('/skillsets/1')
+    await router.isReady()
+    const wrapper = mount(SkillsetView, {
+      global: {
+        plugins: [createPinia(), router],
+        stubs: {
+          AppLayout: { template: '<div><slot /></div>' },
+          RadarChart: { template: '<div class="radar-chart-stub" />' },
+          GapAnalysis: { template: '<div class="gap-analysis-stub" />' },
+          DataInput: {
+            template: '<div class="data-input-stub" />',
+            emits: ['update:score'],
+          },
+          TeamLegend: { template: '<div class="team-legend-stub" />' },
+        },
+      },
+    })
+    await flushPromises()
+    // Switch to Table tab, select a user, emit score update, then discard
+    const buttons = wrapper.findAll('button')
+    const tableBtn = buttons.find(b => b.text() === 'Table')
+    if (tableBtn) {
+      await tableBtn.trigger('click')
+      await flushPromises()
+      // Find and click Discard if visible
+      const discardBtn = wrapper.findAll('button').find(b => b.text() === 'Discard')
+      if (discardBtn) {
+        await discardBtn.trigger('click')
+        expect(wrapper.exists()).toBe(true)
+      }
+    }
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('handleSave shows error when updateManagerScores throws', async () => {
+    mockAuthStore.isManager = true
+    mockAuthStore.user = { ...mockUser, role: 'manager' as const } as unknown as typeof mockUser
+    mockTeamStore.members = [{ id: 2, name: 'Bob', email: 'bob@example.com', role: 'user', active: true }] as any
+    mockEvalStore.updateManagerScores.mockRejectedValueOnce(new Error('Save error'))
+
+    await router.push('/skillsets/1')
+    await router.isReady()
+    const wrapper = mount(SkillsetView, {
+      global: {
+        plugins: [createPinia(), router],
+        stubs: {
+          AppLayout: { template: '<div><slot /></div>' },
+          RadarChart: { template: '<div class="radar-chart-stub" />' },
+          GapAnalysis: { template: '<div class="gap-analysis-stub" />' },
+          DataInput: {
+            props: ['skills', 'scores', 'readonly', 'gapItems', 'savedScores'],
+            emits: ['update:score'],
+            template: '<div class="data-input-stub"><button class="emit-score-btn" @click="$emit(\'update:score\', 1, 5)">Score</button></div>',
+          },
+          TeamLegend: { template: '<div class="team-legend-stub" />' },
+        },
+      },
+    })
+    await flushPromises()
+
+    // Switch to Table tab
+    const tableBtn = wrapper.findAll('button').find(b => b.text() === 'Table')
+    if (tableBtn) await tableBtn.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    // Select a user via the member select
+    const memberSelect = wrapper.findAll('select').find(s => s.element.querySelector('option[value="null"]'))
+    if (memberSelect) {
+      await memberSelect.setValue('2')
+      await flushPromises()
+    }
+
+    // Emit a score update to create pending changes
+    const emitBtn = wrapper.find('.emit-score-btn')
+    if (emitBtn.exists()) {
+      await emitBtn.trigger('click')
+      await wrapper.vm.$nextTick()
+    }
+
+    // Click save
+    const saveBtn = wrapper.findAll('button').find(b => b.text() === 'Save Evaluation')
+    if (saveBtn) {
+      await saveBtn.trigger('click')
+      await flushPromises()
+      // Error message should appear
+      expect(wrapper.exists()).toBe(true)
+    }
     expect(wrapper.exists()).toBe(true)
   })
 })

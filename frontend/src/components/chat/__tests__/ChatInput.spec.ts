@@ -123,4 +123,25 @@ describe('ChatInput', () => {
     await wrapper.find('textarea').trigger('input')
     expect(wrapper.exists()).toBe(true)
   })
+
+  it('shows char count when input exceeds 1500 characters', async () => {
+    const wrapper = mountComponent()
+    const longText = 'a'.repeat(1600)
+    await wrapper.find('textarea').setValue(longText)
+    await wrapper.vm.$nextTick()
+    // Char count span appears when showCharCount is true (> 1500 chars)
+    const span = wrapper.find('span.absolute')
+    expect(span.exists()).toBe(true)
+    expect(span.text()).toContain('1600/2000')
+  })
+
+  it('shows char count in red when over limit', async () => {
+    const wrapper = mountComponent()
+    const overLimit = 'a'.repeat(2001)
+    await wrapper.find('textarea').setValue(overLimit)
+    await wrapper.vm.$nextTick()
+    const span = wrapper.find('span.absolute')
+    expect(span.exists()).toBe(true)
+    expect(span.classes()).toContain('text-red-500')
+  })
 })

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { useChatStore } from '../chat'
 
@@ -198,6 +199,32 @@ describe('useChatStore', () => {
     expect(store.isSearching).toBe(true)
   })
 
+  it('setSearchQuery resolves search results after timeout', async () => {
+    vi.useFakeTimers()
+    const mockResults = [{ id: 1, title: 'Result', inserted_at: '', updated_at: '', locale: 'en', message_count: 0, match_snippet: '', match_type: 'title' }]
+    vi.mocked(chatApi.searchConversations).mockResolvedValue(mockResults)
+    const store = useChatStore()
+    store.setSearchQuery('result')
+    expect(store.isSearching).toBe(true)
+    vi.advanceTimersByTime(300)
+    await flushPromises()
+    expect(store.searchResults).toEqual(mockResults)
+    expect(store.isSearching).toBe(false)
+    vi.useRealTimers()
+  })
+
+  it('setSearchQuery clears results on search failure', async () => {
+    vi.useFakeTimers()
+    vi.mocked(chatApi.searchConversations).mockRejectedValue(new Error('Search failed'))
+    const store = useChatStore()
+    store.setSearchQuery('failing')
+    vi.advanceTimersByTime(300)
+    await flushPromises()
+    expect(store.searchResults).toEqual([])
+    expect(store.isSearching).toBe(false)
+    vi.useRealTimers()
+  })
+
   it('clearSearch resets search state', () => {
     const store = useChatStore()
     store.clearSearch()
@@ -275,6 +302,88 @@ describe('useChatStore', () => {
     })
     await store.sendMessage('second message')
     expect(chatApi.createConversation).not.toHaveBeenCalled()
+  })
+
+  it('sendMessage handles SSE error event and sets retryable error', async () => {
+    vi.mocked(chatApi.createConversation).mockResolvedValue(mockConversation)
+    const encoder = new TextEncoder()
+    const streamData = encoder.encode(
+      'event: error\ndata: {"code":"rate_limited","message":"Too many requests","retryable":true}\n\n'
+    )
+    const readableStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(streamData)
+        controller.close()
+      }
+    })
+    vi.mocked(chatApi.sendMessage).mockReturnValue({
+      stream: Promise.resolve(readableStream),
+      abort: vi.fn(),
+    })
+    const store = useChatStore()
+    await store.sendMessage('hello')
+    expect(store.error?.code).toBe('rate_limited')
+    expect(store.error?.retryable).toBe(true)
+  })
+
+  it('sendMessage handles non-JSON SSE data gracefully', async () => {
+    vi.mocked(chatApi.createConversation).mockResolvedValue(mockConversation)
+    const encoder = new TextEncoder()
+    // Include a non-JSON data line followed by a valid done event
+    const streamData = encoder.encode(
+      'event: delta\ndata: not-valid-json\n\nevent: done\ndata: {"message_id":12,"token_usage":{"input":1,"output":1}}\n\n'
+    )
+    const readableStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(streamData)
+        controller.close()
+      }
+    })
+    vi.mocked(chatApi.sendMessage).mockReturnValue({
+      stream: Promise.resolve(readableStream),
+      abort: vi.fn(),
+    })
+    const store = useChatStore()
+    await store.sendMessage('hello')
+    // Should not throw, just ignores the bad JSON data
+    expect(store.isStreaming).toBe(false)
+    expect(store.error).toBeNull()
+  })
+
+  it('retryLastMessage removes last user message and retries when error is retryable', async () => {
+    vi.mocked(chatApi.createConversation).mockResolvedValue(mockConversation)
+    // First call fails with connection error
+    vi.mocked(chatApi.sendMessage).mockReturnValue({
+      stream: Promise.reject(new Error('Connection failed')),
+      abort: vi.fn(),
+    })
+    const store = useChatStore()
+    await store.createConversation()
+    await store.sendMessage('hello')
+
+    // Should have a retryable error and user message in messages
+    expect(store.error?.retryable).toBe(true)
+    expect(store.messages.some(m => m.role === 'user')).toBe(true)
+
+    // Set up a fresh mock for the retry attempt
+    const encoder = new TextEncoder()
+    const readableStream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(''))
+        controller.close()
+      }
+    })
+    vi.mocked(chatApi.sendMessage).mockReturnValue({
+      stream: Promise.resolve(readableStream),
+      abort: vi.fn(),
+    })
+
+    store.retryLastMessage()
+    // error should be cleared synchronously before the retry send
+    expect(store.error).toBeNull()
+    await flushPromises()
+    // chatApi.sendMessage should be called again for the retry
+    expect(chatApi.sendMessage).toHaveBeenCalled()
   })
 
   it('sendMessage sets conversation title from first message', async () => {

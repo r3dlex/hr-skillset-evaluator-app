@@ -85,6 +85,26 @@ describe('API client', () => {
     await expect(apiPost('/skillsets', { name: '' })).rejects.toThrow('Validation failed')
   })
 
+  it('handles non-2xx with body.message field', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: () => Promise.resolve({ message: 'Access denied' }),
+    } as Response)
+
+    await expect(apiGet('/restricted')).rejects.toThrow('Access denied')
+  })
+
+  it('handles non-2xx with body.errors field', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: () => Promise.resolve({ errors: { name: ['is required'] } }),
+    } as Response)
+
+    await expect(apiPost('/skillsets', {})).rejects.toThrow('{"name":["is required"]}')
+  })
+
   it('handles non-2xx with generic message when body has no error field', async () => {
     vi.mocked(globalThis.fetch).mockResolvedValue({
       ok: false,
