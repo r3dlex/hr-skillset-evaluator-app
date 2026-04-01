@@ -187,12 +187,14 @@ defmodule SkillsetEvaluator.LLM.GuardrailsTest do
 
   describe "validate_input/1 with PII" do
     test "accepts input with SSN-like pattern (warns but does not block)" do
-      content = "My number is 123-45-6789"
+      # 000-00-0000 matches the SSN regex but is an obviously invalid placeholder
+      content = "My number is 000-00-0000"
       assert :ok = Guardrails.validate_input(content)
     end
 
     test "accepts input with credit card-like pattern (warns but does not block)" do
-      content = "Card: 4111 1111 1111 1111"
+      # 0000 0000 0000 0000 matches the card regex but is clearly not a real card number
+      content = "Card: 0000 0000 0000 0000"
       assert :ok = Guardrails.validate_input(content)
     end
   end
