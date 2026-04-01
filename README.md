@@ -79,7 +79,7 @@ SkillForge ships with a built-in AI assistant powered by Claude — no configura
 | Streaming AI | SSE token streaming with error classification and retries |
 | Concurrent import | Broadway pipeline for parallel xlsx row processing |
 | ADR enforcement | archgate/cli validates architecture decisions in CI |
-| Test coverage | Backend 80.9% · Frontend 93.6% (892 tests, 0 failures) |
+| Test coverage | Backend 80.8% · Frontend 97.1% (884 tests, 0 failures) |
 
 ---
 
@@ -231,9 +231,9 @@ docker compose run --rm app mix test --cover
 docker compose run --rm frontend npx vitest run --coverage
 ```
 
-Current status: **454 backend tests · 390 frontend tests · 0 failures**
+Current status: **461 backend tests · 423 frontend tests · 0 failures**
 
-Coverage: **Backend 80.9% · Frontend 93.6%**
+Coverage: **Backend 80.8% · Frontend 97.1%**
 
 ## Environment Variables
 

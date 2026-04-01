@@ -4,17 +4,17 @@
 
 | Layer | Tests | Coverage | Status |
 |-------|-------|----------|--------|
-| Backend (ExUnit) | 454 tests | 80.9% | All passing |
-| Frontend (Vitest) | 390 tests | 93.6% | All passing |
-| **Total** | **844 tests** | — | **0 failures** |
+| Backend (ExUnit) | 461 tests | 80.8% | All passing |
+| Frontend (Vitest) | 423 tests | 97.1% | All passing |
+| **Total** | **884 tests** | — | **0 failures** |
 | E2E (Playwright) | Planned | — | Not yet implemented |
 
 ## Coverage Targets
 
 | Layer | Target | Actual | Tool |
 |-------|--------|--------|------|
-| Backend (line coverage) | 80% | **80.9%** ✅ | ExUnit + excoveralls |
-| Frontend (line coverage) | 90% | **93.6%** ✅ | Vitest + @vitest/coverage-v8 |
+| Backend (line coverage) | 80% | **80.8%** ✅ | ExUnit + excoveralls |
+| Frontend (line coverage) | 90% | **97.1%** ✅ | Vitest + @vitest/coverage-v8 |
 | E2E critical paths | 5 flows | Planned | Playwright |
 
 ## Backend Testing (ExUnit)
@@ -122,6 +122,7 @@ frontend/src/
     evaluations.spec.ts      # 14 tests: fetch, upsert, radar, gap, periods
     team.spec.ts             # 14 tests: fetchTeams, setSelectedTeam, members
     chat.spec.ts             # 26 tests: SSE streaming, conversations, messages
+    onboarding.spec.ts       # 14 tests: steps, completion, dismiss
     onboarding.spec.ts       # 14 tests: steps, completion, dismiss
     theme.spec.ts            # 13 tests: dark/light toggle, persistence
   views/__tests__/
