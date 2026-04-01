@@ -50,9 +50,7 @@ defmodule SkillsetEvaluatorWeb.PeriodsControllerTest do
       conn =
         ctx.conn
         |> log_in_user(ctx.manager)
-        |> get(
-          "/api/periods?skillset_id=#{ctx.skillset.id}&user_ids=#{ctx.user.id},#{other.id}"
-        )
+        |> get("/api/periods?skillset_id=#{ctx.skillset.id}&user_ids=#{ctx.user.id},#{other.id}")
 
       assert %{"data" => periods} = json_response(conn, 200)
       assert is_list(periods)

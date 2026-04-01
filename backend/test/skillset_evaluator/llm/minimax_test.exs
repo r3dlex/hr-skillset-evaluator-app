@@ -43,8 +43,10 @@ defmodule SkillsetEvaluator.LLM.MiniMaxTest do
       System.delete_env("MINIMAX_GROUP_ID")
 
       on_exit(fn ->
-        if original_key, do: System.put_env("MINIMAX_API_KEY", original_key),
+        if original_key,
+          do: System.put_env("MINIMAX_API_KEY", original_key),
           else: System.delete_env("MINIMAX_API_KEY")
+
         if original_group, do: System.put_env("MINIMAX_GROUP_ID", original_group)
       end)
 
@@ -62,7 +64,9 @@ defmodule SkillsetEvaluator.LLM.MiniMaxTest do
 
       on_exit(fn ->
         if original_key, do: System.put_env("MINIMAX_API_KEY", original_key)
-        if original_group, do: System.put_env("MINIMAX_GROUP_ID", original_group),
+
+        if original_group,
+          do: System.put_env("MINIMAX_GROUP_ID", original_group),
           else: System.delete_env("MINIMAX_GROUP_ID")
       end)
 

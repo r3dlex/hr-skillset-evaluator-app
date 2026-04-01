@@ -12,11 +12,28 @@ defmodule SkillsetEvaluator.Export.XlsxWriterTest do
 
     skillset = skillset_fixture(%{name: "Export Skillset", position: 1})
     group = skill_group_fixture(%{skillset_id: skillset.id, name: "Coding", position: 1})
-    skill1 = skill_fixture(%{skill_group_id: group.id, name: "Elixir", priority: "high", position: 1})
-    skill2 = skill_fixture(%{skill_group_id: group.id, name: "Python", priority: "medium", position: 2})
 
-    evaluation_fixture(%{user: user, skill: skill1, period: "2025-Q1", manager_score: 4, self_score: 3})
-    evaluation_fixture(%{user: user, skill: skill2, period: "2025-Q1", manager_score: 3, self_score: 4})
+    skill1 =
+      skill_fixture(%{skill_group_id: group.id, name: "Elixir", priority: "high", position: 1})
+
+    skill2 =
+      skill_fixture(%{skill_group_id: group.id, name: "Python", priority: "medium", position: 2})
+
+    evaluation_fixture(%{
+      user: user,
+      skill: skill1,
+      period: "2025-Q1",
+      manager_score: 4,
+      self_score: 3
+    })
+
+    evaluation_fixture(%{
+      user: user,
+      skill: skill2,
+      period: "2025-Q1",
+      manager_score: 3,
+      self_score: 4
+    })
 
     %{user: user, team: team, skillset: skillset, skill1: skill1, skill2: skill2}
   end

@@ -39,7 +39,13 @@ defmodule SkillsetEvaluator.AssessmentsTest do
       end
 
       assessment = assessment_fixture.("2025-Q1")
-      evaluation_fixture(%{user: user, skill: skill, period: "2025-Q1", assessment_id: assessment.id})
+
+      evaluation_fixture(%{
+        user: user,
+        skill: skill,
+        period: "2025-Q1",
+        assessment_id: assessment.id
+      })
 
       result = Assessments.list_assessments_with_data([user.id], skillset.id)
       assert Enum.any?(result, fn a -> a.id == assessment.id end)

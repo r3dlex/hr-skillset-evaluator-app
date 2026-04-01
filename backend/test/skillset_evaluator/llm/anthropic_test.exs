@@ -96,7 +96,9 @@ defmodule SkillsetEvaluator.LLM.AnthropicTest do
       System.delete_env("ANTHROPIC_API_KEY")
 
       on_exit(fn ->
-        if original_env, do: Application.put_env(:skillset_evaluator, :anthropic_api_key, original_env)
+        if original_env,
+          do: Application.put_env(:skillset_evaluator, :anthropic_api_key, original_env)
+
         if original_sys, do: System.put_env("ANTHROPIC_API_KEY", original_sys)
       end)
 
@@ -114,7 +116,9 @@ defmodule SkillsetEvaluator.LLM.AnthropicTest do
       System.delete_env("ANTHROPIC_API_KEY")
 
       on_exit(fn ->
-        if original_env, do: Application.put_env(:skillset_evaluator, :anthropic_api_key, original_env)
+        if original_env,
+          do: Application.put_env(:skillset_evaluator, :anthropic_api_key, original_env)
+
         if original_sys, do: System.put_env("ANTHROPIC_API_KEY", original_sys)
       end)
 

@@ -29,7 +29,10 @@ defmodule SkillsetEvaluator.LLM.Tools.ImportXlsxTest do
 
     test "returns error when file_ref does not point to an existing file", ctx do
       result =
-        ImportXlsx.execute(%{"file_ref" => "nonexistent_ref_xyz", "period" => "2025-Q1"}, ctx.manager)
+        ImportXlsx.execute(
+          %{"file_ref" => "nonexistent_ref_xyz", "period" => "2025-Q1"},
+          ctx.manager
+        )
 
       assert {:error, msg} = result
       assert String.contains?(msg, "File not found")

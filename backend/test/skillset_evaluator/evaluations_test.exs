@@ -195,7 +195,9 @@ defmodule SkillsetEvaluator.EvaluationsTest do
           %{skill_id: skill1.id, score: 4}
         ])
 
-      gaps = Evaluations.get_gap_analysis(user.id, skillset.id, "2025-Q1", skill_group_id: group.id)
+      gaps =
+        Evaluations.get_gap_analysis(user.id, skillset.id, "2025-Q1", skill_group_id: group.id)
+
       assert is_list(gaps)
     end
 
@@ -207,8 +209,12 @@ defmodule SkillsetEvaluator.EvaluationsTest do
           %{skill_id: skill1.id, score: 4}
         ])
 
-      gaps = Evaluations.get_gap_analysis(user.id, skillset.id, "2025-Q1",
-        team_id: 999_999, location: "DE")
+      gaps =
+        Evaluations.get_gap_analysis(user.id, skillset.id, "2025-Q1",
+          team_id: 999_999,
+          location: "DE"
+        )
+
       assert is_list(gaps)
     end
 

@@ -2,7 +2,7 @@ defmodule SkillsetEvaluatorWeb.ImportControllerTest do
   use SkillsetEvaluatorWeb.ConnCase
 
   @fixture_xlsx Path.join([__DIR__, "../../../..", "data", "SkillMatrix.xlsx"])
-               |> Path.expand()
+                |> Path.expand()
 
   setup do
     manager = manager_fixture(%{name: "Import Manager"})
