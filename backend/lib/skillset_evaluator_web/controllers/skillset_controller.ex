@@ -34,6 +34,42 @@ defmodule SkillsetEvaluatorWeb.SkillsetController do
     end
   end
 
+  def update(conn, %{"id" => id, "skillset" => skillset_params}) do
+    case Skills.get_skillset(id) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Skillset not found."})
+
+      skillset ->
+        case Skills.update_skillset(skillset, skillset_params) do
+          {:ok, updated} ->
+            render(conn, :show, skillset: updated)
+
+          {:error, changeset} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{errors: format_errors(changeset)})
+        end
+    end
+  end
+
+  def create_skill_group(conn, %{"id" => skillset_id, "skill_group" => params}) do
+    attrs = Map.put(params, "skillset_id", skillset_id)
+
+    case Skills.create_skill_group(attrs) do
+      {:ok, skill_group} ->
+        conn
+        |> put_status(:created)
+        |> json(%{data: %{id: skill_group.id, name: skill_group.name, position: skill_group.position, skillset_id: skill_group.skillset_id}})
+
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{errors: format_errors(changeset)})
+    end
+  end
+
   defp format_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Regex.replace(~r"%{(\w+)}", msg, fn _, key ->

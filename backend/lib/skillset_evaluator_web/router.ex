@@ -62,7 +62,9 @@ defmodule SkillsetEvaluatorWeb.Router do
   scope "/api", SkillsetEvaluatorWeb do
     pipe_through [:api, :require_manager]
 
-    resources "/skillsets", SkillsetController, only: [:create]
+    resources "/skillsets", SkillsetController, only: [:create, :update]
+    post "/skillsets/:id/skill_groups", SkillsetController, :create_skill_group
+    post "/skill_groups/:id/skills", SkillGroupController, :create_skill
     resources "/assessments", AssessmentController, only: [:create]
     put "/evaluations/manager", EvaluationController, :update_manager_scores
     post "/import", ImportController, :create

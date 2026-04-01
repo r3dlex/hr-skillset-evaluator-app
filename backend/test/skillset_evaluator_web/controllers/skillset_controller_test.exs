@@ -105,4 +105,90 @@ defmodule SkillsetEvaluatorWeb.SkillsetControllerTest do
       assert is_map(errors)
     end
   end
+
+  describe "PUT /api/skillsets/:id" do
+    test "returns 200 and updated skillset for manager", %{conn: conn} do
+      manager = manager_fixture()
+      skillset = skillset_fixture(%{name: "Original", position: 1})
+
+      conn =
+        conn
+        |> log_in_user(manager)
+        |> put("/api/skillsets/#{skillset.id}", %{
+          "skillset" => %{"name" => "Updated Name"}
+        })
+
+      assert %{"data" => data} = json_response(conn, 200)
+      assert data["name"] == "Updated Name"
+    end
+
+    test "returns 404 for non-existent skillset", %{conn: conn} do
+      manager = manager_fixture()
+
+      conn =
+        conn
+        |> log_in_user(manager)
+        |> put("/api/skillsets/0", %{"skillset" => %{"name" => "X"}})
+
+      assert json_response(conn, 404)
+    end
+
+    test "returns 403 when user is not a manager", %{conn: conn} do
+      user = user_fixture(%{role: "user"})
+      skillset = skillset_fixture(%{name: "Original", position: 1})
+
+      conn =
+        conn
+        |> log_in_user(user)
+        |> put("/api/skillsets/#{skillset.id}", %{"skillset" => %{"name" => "Hacked"}})
+
+      assert json_response(conn, 403)
+    end
+  end
+
+  describe "POST /api/skillsets/:id/skill_groups" do
+    test "returns 201 and creates a skill group for manager", %{conn: conn} do
+      manager = manager_fixture()
+      skillset = skillset_fixture(%{name: "Target", position: 1})
+
+      conn =
+        conn
+        |> log_in_user(manager)
+        |> post("/api/skillsets/#{skillset.id}/skill_groups", %{
+          "skill_group" => %{"name" => "New Group", "position" => 1}
+        })
+
+      assert %{"data" => data} = json_response(conn, 201)
+      assert data["name"] == "New Group"
+      assert data["skillset_id"] == skillset.id
+    end
+
+    test "returns 403 when user is not a manager", %{conn: conn} do
+      user = user_fixture(%{role: "user"})
+      skillset = skillset_fixture(%{name: "Target", position: 1})
+
+      conn =
+        conn
+        |> log_in_user(user)
+        |> post("/api/skillsets/#{skillset.id}/skill_groups", %{
+          "skill_group" => %{"name" => "Group"}
+        })
+
+      assert json_response(conn, 403)
+    end
+
+    test "returns 422 when skill_group params are invalid", %{conn: conn} do
+      manager = manager_fixture()
+      skillset = skillset_fixture(%{name: "Target", position: 1})
+
+      conn =
+        conn
+        |> log_in_user(manager)
+        |> post("/api/skillsets/#{skillset.id}/skill_groups", %{
+          "skill_group" => %{"name" => ""}
+        })
+
+      assert %{"errors" => _} = json_response(conn, 422)
+    end
+  end
 end
