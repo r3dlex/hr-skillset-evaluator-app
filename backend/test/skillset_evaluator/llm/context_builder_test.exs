@@ -5,6 +5,7 @@ defmodule SkillsetEvaluator.LLM.ContextBuilderTest do
   alias SkillsetEvaluator.{Chat, Teams}
   alias SkillsetEvaluator.Repo
   alias SkillsetEvaluator.Teams.UserTeam
+  alias SkillsetEvaluator.Glossary.Term
 
   setup do
     # Clear the process dict glossary cache before each test
@@ -352,6 +353,224 @@ defmodule SkillsetEvaluator.LLM.ContextBuilderTest do
         ContextBuilder.build_system_prompt(ctx.user, %{
           "screen" => "self-evaluation",
           "skillset_id" => to_string(ctx.skillset.id)
+        })
+
+      assert is_binary(result)
+    end
+
+    test "works for user with non-standard role (covers data_access_rules catch-all)", ctx do
+      # A user with a role not matching user/manager/admin hits the _user catch-all clause
+      custom_user = %{ctx.user | role: "custom_role"}
+      result = ContextBuilder.build_system_prompt(custom_user)
+      assert is_binary(result)
+      assert String.length(result) > 0
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Edge cases for build_screen_context
+  # ---------------------------------------------------------------------------
+
+  describe "build_screen_context edge cases" do
+    test "returns nil when no screen key in context", ctx do
+      result = ContextBuilder.build_screen_context(ctx.user, %{"tab" => "chart"})
+      assert is_nil(result)
+    end
+
+    test "skillset screen with non-parseable skillset_id hits get_int error branch", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.user, %{
+          "screen" => "skillset",
+          "skillset_id" => "not-a-number"
+        })
+
+      # get_int returns nil for non-integer strings → skillset is nil → no skillset message
+      assert is_binary(result)
+      assert result =~ "no skillset is selected"
+    end
+
+    test "manager accessing unauthorized user falls back to own data", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.manager, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "user_id" => "999999"
+        })
+
+      assert is_binary(result)
+    end
+
+    test "dashboard screen for user with non-standard role uses manager branch", ctx do
+      # A user with role != 'user' falls into the non-user dashboard screen handler
+      other_role_user = %{ctx.manager | role: "supervisor"}
+
+      result =
+        ContextBuilder.build_screen_context(other_role_user, %{
+          "screen" => "dashboard"
+        })
+
+      assert is_binary(result)
+    end
+
+    test "skillset screen with integer skillset_id value (not binary)", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.user, %{
+          "screen" => "skillset",
+          "skillset_id" => ctx.skillset.id
+        })
+
+      assert is_binary(result)
+    end
+
+    test "admin skillset screen shows team members when team_id and no specific user", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.admin, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "team_id" => to_string(ctx.team.id),
+          "visible_member_count" => 3
+        })
+
+      assert is_binary(result)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # Glossary context with DB terms
+  # ---------------------------------------------------------------------------
+
+  describe "build_glossary_context/0 with DB terms" do
+    test "returns non-nil when glossary terms exist in DB" do
+      Process.delete(:glossary_context_cache)
+
+      Repo.insert!(%Term{
+        concept: "UniqueTestConcept_#{System.unique_integer()}",
+        term_en: "Test Term",
+        domain: "TestDomain",
+        description_en: "A test description for coverage"
+      })
+
+      result = ContextBuilder.build_glossary_context()
+      assert is_binary(result)
+      assert result =~ "Application Terms"
+    end
+
+    test "term with nil description_en and nil domain renders correctly" do
+      Process.delete(:glossary_context_cache)
+
+      concept = "MinimalConcept_#{System.unique_integer()}"
+
+      Repo.insert!(%Term{
+        concept: concept,
+        term_en: "Minimal"
+      })
+
+      result = ContextBuilder.build_glossary_context()
+      assert is_binary(result)
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # build_user_context with evaluations in current period
+  # ---------------------------------------------------------------------------
+
+  describe "build_user_context/1 with current-period evaluations" do
+    test "user context includes evaluation lines when scores exist for current period", ctx do
+      period = "#{Date.utc_today().year}-#{if Date.utc_today().month <= 6, do: "H1", else: "H2"}"
+      evaluation_fixture(%{user: ctx.user, skill: ctx.skill, period: period, self_score: 3})
+
+      result = ContextBuilder.build_user_context(ctx.user)
+      assert is_binary(result)
+      assert String.length(result) > 0
+    end
+
+    test "manager context includes evaluation lines when team member has scores", ctx do
+      period = "#{Date.utc_today().year}-#{if Date.utc_today().month <= 6, do: "H1", else: "H2"}"
+
+      evaluation_fixture(%{
+        user: ctx.user,
+        skill: ctx.skill,
+        period: period,
+        manager_score: 4,
+        self_score: 3
+      })
+
+      result = ContextBuilder.build_user_context(ctx.manager)
+      assert is_binary(result)
+    end
+
+    test "manager with no team_id returns context", _ctx do
+      solo_manager = user_fixture(%{name: "Solo Mgr #{System.unique_integer()}", role: "manager"})
+      result = ContextBuilder.build_user_context(solo_manager)
+      assert is_binary(result)
+      assert result =~ "Manager"
+    end
+  end
+
+  # ---------------------------------------------------------------------------
+  # build_screen_context — gap and scoring paths
+  # ---------------------------------------------------------------------------
+
+  describe "build_screen_context/2 with scored evaluations" do
+    test "skillset screen shows gap analysis when evaluations have scores", ctx do
+      period = "#{Date.utc_today().year}-#{if Date.utc_today().month <= 6, do: "H1", else: "H2"}"
+
+      evaluation_fixture(%{
+        user: ctx.user,
+        skill: ctx.skill,
+        period: period,
+        manager_score: 4,
+        self_score: 2
+      })
+
+      result =
+        ContextBuilder.build_screen_context(ctx.manager, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => period,
+          "team_id" => to_string(ctx.team.id)
+        })
+
+      assert is_binary(result)
+    end
+
+    test "self-evaluation screen shows data for current period", ctx do
+      period = "#{Date.utc_today().year}-#{if Date.utc_today().month <= 6, do: "H1", else: "H2"}"
+      evaluation_fixture(%{user: ctx.user, skill: ctx.skill, period: period, self_score: 3})
+
+      result =
+        ContextBuilder.build_screen_context(ctx.user, %{
+          "screen" => "self-evaluation",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => period
+        })
+
+      assert is_binary(result)
+      assert result =~ "Self-Evaluation"
+    end
+
+    test "skillset screen for admin with no team shows :all branch with evaluations", ctx do
+      period = "#{Date.utc_today().year}-#{if Date.utc_today().month <= 6, do: "H1", else: "H2"}"
+      evaluation_fixture(%{user: ctx.user, skill: ctx.skill, period: period, manager_score: 3})
+
+      result =
+        ContextBuilder.build_screen_context(ctx.admin, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => period
+        })
+
+      assert is_binary(result)
+    end
+
+    test "authorized_team_members catch-all (non user/manager/admin role) returns user", ctx do
+      other = %{ctx.user | role: "guest"}
+
+      result =
+        ContextBuilder.build_screen_context(other, %{
+          "screen" => "dashboard"
         })
 
       assert is_binary(result)

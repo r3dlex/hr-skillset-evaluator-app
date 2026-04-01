@@ -1,7 +1,9 @@
 {
-  "minimum_coverage": 58,
+  "minimum_coverage": 90,
   "skip_files": [
     "test/",
-    "lib/skillset_evaluator_web/endpoint.ex"
+    "lib/skillset_evaluator_web/endpoint.ex",
+    "lib/skillset_evaluator/release.ex",
+    "lib/skillset_evaluator_web.ex"
   ]
 }

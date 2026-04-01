@@ -275,7 +275,7 @@ defmodule SkillsetEvaluatorWeb.ChatController do
     task =
       Task.async(fn ->
         result =
-          Req.post(url,
+          req_post(url,
             json: body,
             headers: headers,
             receive_timeout: 120_000,
@@ -418,6 +418,13 @@ defmodule SkillsetEvaluatorWeb.ChatController do
   end
 
   ## Helpers
+
+  defp req_post(url, opts) do
+    case Application.get_env(:skillset_evaluator, :controller_test_http) do
+      nil -> Req.post(url, opts)
+      mock -> mock.(url, opts)
+    end
+  end
 
   defp format_changeset_errors(%Ecto.Changeset{} = changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->

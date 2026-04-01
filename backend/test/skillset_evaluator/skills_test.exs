@@ -2,6 +2,7 @@ defmodule SkillsetEvaluator.SkillsTest do
   use SkillsetEvaluator.DataCase
 
   alias SkillsetEvaluator.Skills
+  alias SkillsetEvaluator.Skills.Skillset
 
   describe "list_skillsets/0" do
     test "returns all skillsets ordered by position" do
@@ -207,6 +208,24 @@ defmodule SkillsetEvaluator.SkillsTest do
     test "returns empty list for skillset with no groups" do
       skillset = skillset_fixture()
       assert Skills.list_skills_for_skillset(skillset.id) == []
+    end
+  end
+
+  describe "Skillset.roles/1" do
+    test "returns empty list when applicable_roles is default" do
+      skillset = skillset_fixture()
+      assert Skillset.roles(skillset) == []
+    end
+
+    test "returns roles list when applicable_roles is valid JSON array" do
+      skillset = skillset_fixture(%{applicable_roles: ~s(["admin","manager"])})
+      assert Skillset.roles(skillset) == ["admin", "manager"]
+    end
+
+    test "returns empty list when applicable_roles contains invalid JSON" do
+      skillset = skillset_fixture()
+      bad_skillset = %{skillset | applicable_roles: "not-json"}
+      assert Skillset.roles(bad_skillset) == []
     end
   end
 end

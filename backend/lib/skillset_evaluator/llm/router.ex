@@ -9,12 +9,18 @@ defmodule SkillsetEvaluator.LLM.Router do
   Returns the appropriate LLM provider module based on configuration and locale.
   """
   def get_provider(locale \\ "en") do
-    case provider_setting() do
-      "anthropic" -> Anthropic
-      "minimax" -> MiniMax
-      "test" -> SkillsetEvaluator.LLM.TestProvider
-      "auto" -> if locale == "zh" && minimax_configured?(), do: MiniMax, else: Anthropic
-      _ -> Anthropic
+    case Application.get_env(:skillset_evaluator, :llm_provider_module) do
+      nil ->
+        case provider_setting() do
+          "anthropic" -> Anthropic
+          "minimax" -> MiniMax
+          "test" -> SkillsetEvaluator.LLM.TestProvider
+          "auto" -> if locale == "zh" && minimax_configured?(), do: MiniMax, else: Anthropic
+          _ -> Anthropic
+        end
+
+      module ->
+        module
     end
   end
 

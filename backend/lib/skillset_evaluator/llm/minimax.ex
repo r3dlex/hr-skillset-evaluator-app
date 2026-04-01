@@ -32,7 +32,7 @@ defmodule SkillsetEvaluator.LLM.MiniMax do
 
       mm_messages = format_messages(messages, system)
 
-      case Req.post("#{api_url()}?GroupId=#{group_id}",
+      case req_post("#{api_url()}?GroupId=#{group_id}",
              json: %{model: model, messages: mm_messages, tokens_to_generate: max_tokens},
              headers: [{"Authorization", "Bearer #{api_key}"}],
              receive_timeout: 60_000
@@ -63,6 +63,13 @@ defmodule SkillsetEvaluator.LLM.MiniMax do
   @impl true
   def stream(_messages, _opts) do
     {:error, "MiniMax streaming not yet implemented"}
+  end
+
+  defp req_post(url, opts) do
+    case Application.get_env(:skillset_evaluator, :minimax_test_http) do
+      nil -> Req.post(url, opts)
+      mock -> mock.(url, opts)
+    end
   end
 
   defp format_messages(messages, system) do

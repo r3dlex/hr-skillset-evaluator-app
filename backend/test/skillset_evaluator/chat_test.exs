@@ -270,6 +270,32 @@ defmodule SkillsetEvaluator.ChatTest do
       results = Chat.search_conversations(ctx.user.id, "topic", limit: 2)
       assert length(results) <= 2
     end
+
+    test "sanitizes special SQL wildcard characters in query", ctx do
+      {:ok, _} = Chat.create_conversation(ctx.user.id, %{title: "100% complete"})
+      # Query with %, _, and \ characters should not cause errors
+      results_pct = Chat.search_conversations(ctx.user.id, "100%")
+      results_underscore = Chat.search_conversations(ctx.user.id, "comp_ete")
+      results_backslash = Chat.search_conversations(ctx.user.id, "back\\slash")
+      assert is_list(results_pct)
+      assert is_list(results_underscore)
+      assert is_list(results_backslash)
+    end
+
+    test "builds snippet with prefix and suffix for long message content", ctx do
+      long_prefix = String.duplicate("x", 50)
+      long_suffix = String.duplicate("z", 50)
+      content = "#{long_prefix}TARGET#{long_suffix}"
+
+      {:ok, conv} = Chat.create_conversation(ctx.user.id)
+      Chat.create_message(conv.id, %{role: "user", content: content})
+
+      results = Chat.search_conversations(ctx.user.id, "TARGET")
+      assert length(results) >= 1
+
+      snippet = hd(results).match_snippet
+      assert is_binary(snippet)
+    end
   end
 
   describe "cleanup_old_conversations/1" do

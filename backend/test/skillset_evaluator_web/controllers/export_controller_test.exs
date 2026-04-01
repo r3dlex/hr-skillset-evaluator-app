@@ -71,7 +71,22 @@ defmodule SkillsetEvaluatorWeb.ExportControllerTest do
           "period" => "2025-Q1"
         })
 
-      assert json_response(conn, 403) || json_response(conn, 401)
+      assert conn.status in [401, 403]
+    end
+
+    test "returns 200 with team_id filter", ctx do
+      team = team_fixture(%{name: "Export Team"})
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.manager)
+        |> get("/api/export", %{
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "team_id" => to_string(team.id)
+        })
+
+      assert response(conn, 200)
     end
   end
 end

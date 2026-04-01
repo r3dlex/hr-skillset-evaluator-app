@@ -298,6 +298,172 @@ defmodule SkillsetEvaluatorWeb.ChatControllerTest do
       assert msg["role"] == "assistant"
       assert msg["content"] == "Test response from LLM."
     end
+
+    test "streams SSE events via streaming provider (success path)", ctx do
+      {:ok, conv} = Chat.create_conversation(ctx.user.id, %{locale: "en"})
+
+      # Inject a streaming provider via the module override
+      Application.put_env(
+        :skillset_evaluator,
+        :llm_provider_module,
+        SkillsetEvaluator.LLM.TestStreamingProvider
+      )
+
+      # Configure the stream config with a mock HTTP function that calls the into: callback
+      Application.put_env(:skillset_evaluator, :test_stream_config, %{
+        url: "http://test.local/messages",
+        headers: [{"x-api-key", "test"}, {"anthropic-version", "2023-06-01"}],
+        body: %{model: "test", messages: [], max_tokens: 100}
+      })
+
+      sse_data =
+        ~s'data: {"type":"message_start","message":{"usage":{"input_tokens":10}}}\n\n' <>
+          ~s'data: {"type":"content_block_delta","delta":{"text":"Hello world"}}\n\n' <>
+          ~s'data: {"type":"message_delta","usage":{"output_tokens":5}}\n\n' <>
+          ~s'data: {"type":"message_stop"}\n\n'
+
+      Application.put_env(:skillset_evaluator, :controller_test_http, fn _url, opts ->
+        into_fn = Keyword.get(opts, :into)
+        if into_fn, do: into_fn.({:data, sse_data}, {nil, nil})
+        {:ok, %{status: 200, body: ""}}
+      end)
+
+      on_exit(fn ->
+        Application.delete_env(:skillset_evaluator, :llm_provider_module)
+        Application.delete_env(:skillset_evaluator, :test_stream_config)
+        Application.delete_env(:skillset_evaluator, :controller_test_http)
+      end)
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.user)
+        |> post("/api/chat/conversations/#{conv.id}/messages", %{
+          "content" => "Hello"
+        })
+
+      # Chunked responses accumulate outside resp_body in test mode;
+      # verify success by checking the assistant message was persisted.
+      assert conn.status == 200
+
+      conv_with_msgs = Chat.get_conversation(conv.id)
+
+      assert Enum.any?(conv_with_msgs.messages, fn m ->
+               m.role == "assistant" and m.content =~ "Hello world"
+             end)
+    end
+
+    test "streams SSE error event when provider returns non-200 status", ctx do
+      {:ok, conv} = Chat.create_conversation(ctx.user.id, %{locale: "en"})
+
+      Application.put_env(
+        :skillset_evaluator,
+        :llm_provider_module,
+        SkillsetEvaluator.LLM.TestStreamingProvider
+      )
+
+      Application.put_env(:skillset_evaluator, :test_stream_config, %{
+        url: "http://test.local/messages",
+        headers: [{"x-api-key", "test"}],
+        body: %{model: "test", messages: []}
+      })
+
+      Application.put_env(:skillset_evaluator, :controller_test_http, fn _url, _opts ->
+        {:ok, %{status: 401, body: %{"error" => %{"type" => "authentication_error"}}}}
+      end)
+
+      on_exit(fn ->
+        Application.delete_env(:skillset_evaluator, :llm_provider_module)
+        Application.delete_env(:skillset_evaluator, :test_stream_config)
+        Application.delete_env(:skillset_evaluator, :controller_test_http)
+      end)
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.user)
+        |> post("/api/chat/conversations/#{conv.id}/messages", %{
+          "content" => "Hello"
+        })
+
+      # Error path: chunked stream was started (200), no assistant message saved
+      assert conn.status == 200
+      conv_with_msgs = Chat.get_conversation(conv.id)
+      refute Enum.any?(conv_with_msgs.messages, fn m -> m.role == "assistant" end)
+    end
+
+    test "streams SSE error when provider returns empty response", ctx do
+      {:ok, conv} = Chat.create_conversation(ctx.user.id, %{locale: "en"})
+
+      Application.put_env(
+        :skillset_evaluator,
+        :llm_provider_module,
+        SkillsetEvaluator.LLM.TestStreamingProvider
+      )
+
+      Application.put_env(:skillset_evaluator, :test_stream_config, %{
+        url: "http://test.local/messages",
+        headers: [{"x-api-key", "test"}],
+        body: %{model: "test", messages: []}
+      })
+
+      # Returns 200 but no chunks → "No response from LLM provider" → stream_error classify
+      Application.put_env(:skillset_evaluator, :controller_test_http, fn _url, _opts ->
+        {:ok, %{status: 200, body: ""}}
+      end)
+
+      on_exit(fn ->
+        Application.delete_env(:skillset_evaluator, :llm_provider_module)
+        Application.delete_env(:skillset_evaluator, :test_stream_config)
+        Application.delete_env(:skillset_evaluator, :controller_test_http)
+      end)
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.user)
+        |> post("/api/chat/conversations/#{conv.id}/messages", %{
+          "content" => "Hello"
+        })
+
+      assert conn.status == 200
+      conv_with_msgs = Chat.get_conversation(conv.id)
+      refute Enum.any?(conv_with_msgs.messages, fn m -> m.role == "assistant" end)
+    end
+
+    test "streams SSE error on connection failure", ctx do
+      {:ok, conv} = Chat.create_conversation(ctx.user.id, %{locale: "en"})
+
+      Application.put_env(
+        :skillset_evaluator,
+        :llm_provider_module,
+        SkillsetEvaluator.LLM.TestStreamingProvider
+      )
+
+      Application.put_env(:skillset_evaluator, :test_stream_config, %{
+        url: "http://test.local/messages",
+        headers: [{"x-api-key", "test"}],
+        body: %{model: "test", messages: []}
+      })
+
+      Application.put_env(:skillset_evaluator, :controller_test_http, fn _url, _opts ->
+        {:error, %{reason: :econnrefused}}
+      end)
+
+      on_exit(fn ->
+        Application.delete_env(:skillset_evaluator, :llm_provider_module)
+        Application.delete_env(:skillset_evaluator, :test_stream_config)
+        Application.delete_env(:skillset_evaluator, :controller_test_http)
+      end)
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.user)
+        |> post("/api/chat/conversations/#{conv.id}/messages", %{
+          "content" => "Hello"
+        })
+
+      assert conn.status == 200
+      conv_with_msgs = Chat.get_conversation(conv.id)
+      refute Enum.any?(conv_with_msgs.messages, fn m -> m.role == "assistant" end)
+    end
   end
 
   # ---------------------------------------------------------------------------

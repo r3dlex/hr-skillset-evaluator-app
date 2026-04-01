@@ -75,5 +75,16 @@ defmodule SkillsetEvaluatorWeb.DashboardControllerTest do
       conn = get(ctx.conn, "/api/dashboard/stats")
       assert json_response(conn, 401)
     end
+
+    test "stats filtered by period with no evaluations gives 0 average", ctx do
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.user)
+        |> get("/api/dashboard/stats", %{"period" => "9999-Q9"})
+
+      assert %{"data" => data} = json_response(conn, 200)
+      assert data["skills_rated"] == 0
+      assert data["average_score"] == 0
+    end
   end
 end

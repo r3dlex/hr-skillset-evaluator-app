@@ -2,6 +2,7 @@ defmodule SkillsetEvaluator.Import.PipelineTest do
   use SkillsetEvaluator.DataCase
 
   alias SkillsetEvaluator.Import.Pipeline
+  alias SkillsetEvaluator.Import.XlsxParser.PersonRow
 
   @fixture_xlsx Path.join([__DIR__, "../../../..", "data", "SkillMatrix.xlsx"])
                 |> Path.expand()
@@ -76,6 +77,109 @@ defmodule SkillsetEvaluator.Import.PipelineTest do
       assert result.created == 0
       assert result.updated == 0
       assert result.errors == []
+    end
+  end
+
+  describe "handle_batch/4" do
+    test "returns messages unchanged" do
+      messages = [
+        %Broadway.Message{data: "test-data", acknowledger: Broadway.NoopAcknowledger.init()}
+      ]
+
+      result = Pipeline.handle_batch(:default, messages, %Broadway.BatchInfo{}, %{})
+      assert result == messages
+    end
+
+    test "returns empty list unchanged" do
+      result = Pipeline.handle_batch(:default, [], %Broadway.BatchInfo{}, %{})
+      assert result == []
+    end
+  end
+
+  describe "handle_message/3" do
+    test "marks message as failed when user not found" do
+      row = %PersonRow{
+        name: "Nonexistent User #{System.unique_integer()}",
+        team: "Test Team",
+        sheet_name: "Application Development",
+        scores: [],
+        period: "2025-Q1",
+        role: "user",
+        location: nil
+      }
+
+      message = %Broadway.Message{
+        data: row,
+        acknowledger: Broadway.NoopAcknowledger.init()
+      }
+
+      result = Pipeline.handle_message(:default, message, %{evaluator_id: nil})
+      assert match?({:failed, _}, result.status)
+    end
+
+    test "marks message as failed when skillset not found" do
+      # Create user but no skillset with the given name
+      user = user_fixture(%{name: "Handle Msg User #{System.unique_integer()}"})
+
+      row = %PersonRow{
+        name: user.name,
+        team: nil,
+        sheet_name: "Definitely Nonexistent Skillset #{System.unique_integer()}",
+        scores: [],
+        period: "2025-Q1",
+        role: "user",
+        location: nil
+      }
+
+      message = %Broadway.Message{
+        data: row,
+        acknowledger: Broadway.NoopAcknowledger.init()
+      }
+
+      result = Pipeline.handle_message(:default, message, %{evaluator_id: nil})
+      assert match?({:failed, _}, result.status)
+    end
+
+    test "processes row successfully when user and skillset exist" do
+      team = team_fixture(%{name: "Handle Team #{System.unique_integer()}"})
+      user = user_fixture(%{name: "Handle User #{System.unique_integer()}", team_id: team.id})
+      skillset = skillset_fixture(%{name: "Handle Skillset #{System.unique_integer()}"})
+
+      row = %PersonRow{
+        name: user.name,
+        team: team.name,
+        sheet_name: skillset.name,
+        scores: [],
+        period: "2025-Q1",
+        role: "user",
+        location: nil
+      }
+
+      message = %Broadway.Message{
+        data: row,
+        acknowledger: Broadway.NoopAcknowledger.init()
+      }
+
+      result = Pipeline.handle_message(:default, message, %{evaluator_id: nil})
+      assert result.status == :ok
+    end
+  end
+
+  describe "process_rows_sync/2 — error accumulation" do
+    test "accumulates errors for rows with missing users" do
+      row = %PersonRow{
+        name: "Missing Person #{System.unique_integer()}",
+        team: nil,
+        sheet_name: "Some Sheet",
+        scores: [],
+        period: "2025-Q1",
+        role: "user",
+        location: nil
+      }
+
+      result = Pipeline.process_rows_sync([row], nil)
+      assert is_map(result)
+      assert length(result.errors) > 0
     end
   end
 end

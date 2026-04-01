@@ -43,7 +43,7 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
 
     body = if system, do: Map.put(body, :system, system), else: body
 
-    case Req.post(api_url(),
+    case req_post(api_url(),
            json: body,
            headers: [
              {"x-api-key", api_key},
@@ -113,6 +113,13 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
       %{role: msg[:role] || msg["role"], content: msg[:content] || msg["content"]}
     end)
     |> Enum.filter(fn msg -> msg.role in ["user", "assistant"] end)
+  end
+
+  defp req_post(url, opts) do
+    case Application.get_env(:skillset_evaluator, :anthropic_test_http) do
+      nil -> Req.post(url, opts)
+      mock -> mock.(url, opts)
+    end
   end
 
   defp get_api_key do

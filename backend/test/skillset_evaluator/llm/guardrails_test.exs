@@ -176,5 +176,24 @@ defmodule SkillsetEvaluator.LLM.GuardrailsTest do
       {:ok, result} = Guardrails.validate_output(content, current)
       assert result =~ "[redacted]"
     end
+
+    test "does not redact when user names have 3 or fewer characters" do
+      _short_name_user = user_fixture(%{name: "Ali"})
+      current = user_fixture(%{role: "user"})
+      {:ok, result} = Guardrails.validate_output("Ali did well.", current)
+      refute result =~ "[redacted]"
+    end
+  end
+
+  describe "validate_input/1 with PII" do
+    test "accepts input with SSN-like pattern (warns but does not block)" do
+      content = "My number is 123-45-6789"
+      assert :ok = Guardrails.validate_input(content)
+    end
+
+    test "accepts input with credit card-like pattern (warns but does not block)" do
+      content = "Card: 4111 1111 1111 1111"
+      assert :ok = Guardrails.validate_input(content)
+    end
   end
 end

@@ -37,6 +37,23 @@ defmodule SkillsetEvaluatorWeb.EvaluationControllerTest do
       assert hd(data)["manager_score"] == 3
     end
 
+    test "returns 200 with skill_group_id filter", ctx do
+      %{user: user, skillset: skillset, conn: conn} = ctx
+      group2 = skill_group_fixture(%{skillset_id: skillset.id, name: "Group 2", position: 2})
+
+      conn =
+        conn
+        |> log_in_user(user)
+        |> get("/api/evaluations", %{
+          "user_id" => to_string(user.id),
+          "skillset_id" => to_string(skillset.id),
+          "period" => "2025-Q1",
+          "skill_group_id" => to_string(group2.id)
+        })
+
+      assert %{"data" => _} = json_response(conn, 200)
+    end
+
     test "returns 400 when missing required params", ctx do
       conn =
         ctx.conn
@@ -65,6 +82,30 @@ defmodule SkillsetEvaluatorWeb.EvaluationControllerTest do
 
       assert %{"data" => data} = json_response(conn, 200)
       assert length(data) == 2
+    end
+
+    test "returns 403 when manager has restricted scope and user is not in scope", ctx do
+      # Manager with a restrictive scope (team_only scoped to a specific team)
+      team = team_fixture(%{name: "Scoped Team #{System.unique_integer()}"})
+
+      restricted_manager =
+        manager_fixture(%{
+          name: "Restricted Mgr #{System.unique_integer()}",
+          manager_scope: Jason.encode!(%{"team_only" => true, "team_id" => team.id})
+        })
+
+      other_user = user_fixture(%{name: "Out-Of-Scope User #{System.unique_integer()}"})
+
+      conn =
+        ctx.conn
+        |> log_in_user(restricted_manager)
+        |> put("/api/evaluations/manager", %{
+          "user_id" => to_string(other_user.id),
+          "period" => "2025-Q1",
+          "scores" => []
+        })
+
+      assert json_response(conn, 403)
     end
 
     test "returns 401 when not authenticated", ctx do

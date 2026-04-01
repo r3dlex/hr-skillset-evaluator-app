@@ -263,7 +263,10 @@ defmodule SkillsetEvaluator.LLM.ContextBuilder do
     period = ctx["period"] || current_period()
 
     if skillset_id do
-      evals = Evaluations.list_evaluations(user.id, skillset_id, period)
+      evals =
+        Evaluations.list_evaluations(user.id, skillset_id, period)
+        |> Repo.preload([:user, :skill])
+
       skillset = Skills.get_skillset(skillset_id)
 
       """
