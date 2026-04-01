@@ -9,7 +9,7 @@ export function useTour() {
 
   const currentStep = computed(() => steps.value[currentIndex.value] || null)
   const isFirst = computed(() => currentIndex.value === 0)
-  const isLast = computed(() => currentIndex.value === steps.value.length - 1)
+  const isLast = computed(() => steps.value.length === 0 || currentIndex.value === steps.value.length - 1)
   const stepLabel = computed(() => `${currentIndex.value + 1} / ${steps.value.length}`)
 
   function start(tourSteps: TourStep[]) {

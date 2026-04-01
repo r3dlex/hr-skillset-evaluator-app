@@ -90,5 +90,19 @@ defmodule SkillsetEvaluatorWeb.SkillsetControllerTest do
 
       assert json_response(conn, 403)
     end
+
+    test "returns 422 when skillset params are invalid (missing name)", %{conn: conn} do
+      manager = manager_fixture()
+
+      conn =
+        conn
+        |> log_in_user(manager)
+        |> post("/api/skillsets", %{
+          "skillset" => %{"name" => "", "position" => 1}
+        })
+
+      assert %{"errors" => errors} = json_response(conn, 422)
+      assert is_map(errors)
+    end
   end
 end

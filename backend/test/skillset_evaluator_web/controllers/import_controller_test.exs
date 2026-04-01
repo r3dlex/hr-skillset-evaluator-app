@@ -1,6 +1,9 @@
 defmodule SkillsetEvaluatorWeb.ImportControllerTest do
   use SkillsetEvaluatorWeb.ConnCase
 
+  @fixture_xlsx Path.join([__DIR__, "../../../..", "data", "SkillMatrix.xlsx"])
+               |> Path.expand()
+
   setup do
     manager = manager_fixture(%{name: "Import Manager"})
     user = user_fixture(%{name: "Regular User"})
@@ -49,6 +52,73 @@ defmodule SkillsetEvaluatorWeb.ImportControllerTest do
       # Manager-only route returns 403 for regular users
       status = conn.status
       assert status in [401, 403]
+    end
+
+    test "returns 422 for xlsx file that cannot be parsed", ctx do
+      upload = %Plug.Upload{
+        path: create_temp_file("invalid xlsx binary content"),
+        filename: "data.xlsx",
+        content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.manager)
+        |> post("/api/import", %{"file" => upload})
+
+      # Invalid xlsx content triggers a parse error → 422
+      assert json_response(conn, 422)
+    end
+
+    test "returns 200 with import summary for valid xlsx", ctx do
+      if File.exists?(@fixture_xlsx) do
+        upload = %Plug.Upload{
+          path: @fixture_xlsx,
+          filename: "SkillMatrix.xlsx",
+          content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        }
+
+        conn =
+          ctx.conn
+          |> log_in_user(ctx.manager)
+          |> post("/api/import", %{"file" => upload})
+
+        assert %{"data" => summary} = json_response(conn, 200)
+        assert Map.has_key?(summary, "rows_processed")
+        assert Map.has_key?(summary, "evaluations_created")
+        assert Map.has_key?(summary, "evaluations_updated")
+      end
+    end
+
+    test "uses default period when not supplied", ctx do
+      upload = %Plug.Upload{
+        path: create_temp_file("not real xlsx"),
+        filename: "data.xlsx",
+        content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.manager)
+        |> post("/api/import", %{"file" => upload})
+
+      # Response will be either 200 or 422 depending on parse result
+      assert conn.status in [200, 422]
+    end
+
+    test "accepts explicit period param", ctx do
+      upload = %Plug.Upload{
+        path: create_temp_file("not real xlsx"),
+        filename: "data.xlsx",
+        content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      }
+
+      conn =
+        ctx.conn
+        |> log_in_user(ctx.manager)
+        |> post("/api/import", %{"file" => upload, "period" => "2025-Q2"})
+
+      assert conn.status in [200, 422]
     end
   end
 

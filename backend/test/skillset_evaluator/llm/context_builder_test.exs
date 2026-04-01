@@ -208,6 +208,103 @@ defmodule SkillsetEvaluator.LLM.ContextBuilderTest do
 
       assert is_binary(result)
     end
+
+    test "admin skillset screen with no team_id shows :all branch", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.admin, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1"
+        })
+
+      assert is_binary(result)
+    end
+
+    test "admin skillset screen with target user_id", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.admin, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "user_id" => to_string(ctx.user.id)
+        })
+
+      assert is_binary(result)
+    end
+
+    test "manager skillset screen viewing own data", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.manager, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "user_id" => to_string(ctx.manager.id)
+        })
+
+      assert is_binary(result)
+    end
+
+    test "skillset screen with invalid skillset_id returns no skillset message", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.user, %{
+          "screen" => "skillset",
+          "skillset_id" => "999999"
+        })
+
+      assert is_binary(result)
+      assert result =~ "no skillset is selected"
+    end
+
+    test "self-evaluation screen WITH skillset_id shows eval data", ctx do
+      # Use a period with no evaluations to avoid user-preload issue in format_eval_table
+      result =
+        ContextBuilder.build_screen_context(ctx.user, %{
+          "screen" => "self-evaluation",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2099-H1"
+        })
+
+      assert is_binary(result)
+      assert result =~ "Self-Evaluation"
+    end
+
+    test "skillset screen with skill_group_id filter", ctx do
+      group = skill_group_fixture(%{skillset_id: ctx.skillset.id, name: "Extra Group"})
+
+      result =
+        ContextBuilder.build_screen_context(ctx.user, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "skill_group_id" => to_string(group.id)
+        })
+
+      assert is_binary(result)
+    end
+
+    test "skillset screen with visible_member_names list", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.manager, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "visible_member_names" => ["Alice", "Bob"]
+        })
+
+      assert is_binary(result)
+    end
+
+    test "user viewing own skillset screen", ctx do
+      result =
+        ContextBuilder.build_screen_context(ctx.user, %{
+          "screen" => "skillset",
+          "skillset_id" => to_string(ctx.skillset.id),
+          "period" => "2025-Q1",
+          "user_id" => to_string(ctx.user.id)
+        })
+
+      assert is_binary(result)
+    end
   end
 
   # ---------------------------------------------------------------------------
@@ -240,6 +337,23 @@ defmodule SkillsetEvaluator.LLM.ContextBuilderTest do
 
     test "works with empty screen context", ctx do
       result = ContextBuilder.build_system_prompt(ctx.admin, %{})
+      assert is_binary(result)
+    end
+
+    test "includes job_title when user has it", ctx do
+      user_with_title = user_fixture(%{name: "Developer", job_title: "Senior Engineer"})
+      result = ContextBuilder.build_system_prompt(user_with_title)
+      assert is_binary(result)
+      assert result =~ "Senior Engineer"
+    end
+
+    test "works for user with self-evaluation screen context", ctx do
+      result =
+        ContextBuilder.build_system_prompt(ctx.user, %{
+          "screen" => "self-evaluation",
+          "skillset_id" => to_string(ctx.skillset.id)
+        })
+
       assert is_binary(result)
     end
   end

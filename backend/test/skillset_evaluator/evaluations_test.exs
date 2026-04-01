@@ -186,5 +186,93 @@ defmodule SkillsetEvaluator.EvaluationsTest do
       assert is_nil(gap.self_score)
       assert is_nil(gap.gap)
     end
+
+    test "filters by skill_group_id option", ctx do
+      %{user: user, manager: manager, skill1: skill1, skillset: skillset, group: group} = ctx
+
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 4}
+        ])
+
+      gaps = Evaluations.get_gap_analysis(user.id, skillset.id, "2025-Q1", skill_group_id: group.id)
+      assert is_list(gaps)
+    end
+
+    test "filters by team_id and location options", ctx do
+      %{user: user, manager: manager, skill1: skill1, skillset: skillset} = ctx
+
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 4}
+        ])
+
+      gaps = Evaluations.get_gap_analysis(user.id, skillset.id, "2025-Q1",
+        team_id: 999_999, location: "DE")
+      assert is_list(gaps)
+    end
+
+    test "includes role averages when user has job_title", ctx do
+      %{skillset: skillset, skill1: skill1, manager: manager} = ctx
+
+      user_with_title = user_fixture(%{name: "Engineer", job_title: "Dev"})
+
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user_with_title.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 4}
+        ])
+
+      {:ok, _} =
+        Evaluations.upsert_self_scores(user_with_title.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 3}
+        ])
+
+      gaps = Evaluations.get_gap_analysis(user_with_title.id, skillset.id, "2025-Q1")
+      assert is_list(gaps)
+      assert length(gaps) >= 1
+    end
+  end
+
+  describe "get_radar_data_for_group/3" do
+    setup :setup_skillset_and_skills
+
+    test "returns radar data for a specific group", ctx do
+      %{user: user, manager: manager, skill1: skill1, group: group} = ctx
+
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 4}
+        ])
+
+      radar = Evaluations.get_radar_data_for_group([user.id], group.id, "2025-Q1")
+      assert is_list(radar.labels)
+      assert is_list(radar.datasets)
+    end
+
+    test "returns empty datasets when no evaluations for group", ctx do
+      %{user: user, group: group} = ctx
+      radar = Evaluations.get_radar_data_for_group([user.id], group.id, "2025-Q3")
+      assert is_list(radar.labels)
+    end
+  end
+
+  describe "list_periods/2" do
+    setup :setup_skillset_and_skills
+
+    test "returns empty list when no user_ids", ctx do
+      assert Evaluations.list_periods([], ctx.skillset.id) == []
+    end
+
+    test "returns periods for given users and skillset", ctx do
+      %{user: user, manager: manager, skill1: skill1, skillset: skillset} = ctx
+
+      {:ok, _} =
+        Evaluations.upsert_manager_scores(manager, user.id, "2025-Q1", [
+          %{skill_id: skill1.id, score: 3}
+        ])
+
+      periods = Evaluations.list_periods([user.id], skillset.id)
+      assert "2025-Q1" in periods
+    end
   end
 end
