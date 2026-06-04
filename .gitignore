@@ -68,3 +68,13 @@ Thumbs.db
 
 # archgate
 .archgate/.cache/
+
+# OMC scratch state: keep tracked plan, spec, and wiki folders only
+.omc/*
+!.omc/plans/
+!.omc/specs/
+!.omc/wiki/
+.omx/*
+!.omx/plans/
+!.omx/specs/
+!.omx/wiki/
