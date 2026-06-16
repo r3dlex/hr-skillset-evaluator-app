@@ -10,10 +10,15 @@ permissions:
   contents: read
 
 jobs:
-  backend-test:
-    name: Backend Tests
-    runs-on: ubuntu-latest
+  # ── backend-test ──────────────────────────────────────────────────────────
+
+  _backend-test-self-hosted:
+    name: Backend Tests (self-hosted)
+    runs-on: [self-hosted, ubuntu-latest]
+    continue-on-error: true
     timeout-minutes: 15
+    outputs:
+      passed: ${{ steps.mark.outputs.passed }}
 
     steps:
       - name: Checkout
@@ -21,6 +26,8 @@ jobs:
 
       - name: Set up Elixir
         uses: erlef/setup-beam@v1
+        env:
+          ImageOS: ubuntu24
         with:
           elixir-version: "1.16"
           otp-version: "26"
@@ -59,10 +66,102 @@ jobs:
           MIX_ENV: test
         run: mix test --cover
 
-  frontend-test:
-    name: Frontend Tests
+      - name: Mark passed
+        id: mark
+        if: success()
+        run: echo "passed=true" >> "$GITHUB_OUTPUT"
+
+  _backend-test-gate:
+    name: Backend Tests (gate)
     runs-on: ubuntu-latest
+    needs: _backend-test-self-hosted
+    if: always()
+    outputs:
+      passed: ${{ steps.gate.outputs.passed }}
+
+    steps:
+      - name: Gate
+        id: gate
+        run: |
+          if [ "${{ needs._backend-test-self-hosted.result }}" = "success" ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: [_backend-test-self-hosted, _backend-test-gate]
+    if: always()
+    timeout-minutes: 15
+
+    steps:
+      - name: Route
+        run: |
+          echo "Self-hosted passed: ${{ needs._backend-test-gate.outputs.passed }}"
+          echo "Falling back to GH-hosted: ${{ needs._backend-test-gate.outputs.passed != 'true' }}"
+
+      - name: Checkout
+        if: needs._backend-test-gate.outputs.passed != 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        if: needs._backend-test-gate.outputs.passed != 'true'
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.16"
+          otp-version: "26"
+
+      - name: Cache deps
+        if: needs._backend-test-gate.outputs.passed != 'true'
+        uses: actions/cache@v4
+        with:
+          path: backend/deps
+          key: elixir-deps-${{ hashFiles('backend/mix.lock') }}
+          restore-keys: elixir-deps-
+
+      - name: Cache build
+        if: needs._backend-test-gate.outputs.passed != 'true'
+        uses: actions/cache@v4
+        with:
+          path: backend/_build
+          key: elixir-build-${{ hashFiles('backend/mix.lock') }}-${{ hashFiles('backend/lib/**') }}
+          restore-keys: elixir-build-
+
+      - name: Install dependencies
+        if: needs._backend-test-gate.outputs.passed != 'true'
+        working-directory: ./backend
+        run: mix deps.get
+
+      - name: Check formatting
+        if: needs._backend-test-gate.outputs.passed != 'true'
+        working-directory: ./backend
+        run: mix format --check-formatted
+
+      - name: Compile (warnings as errors)
+        if: needs._backend-test-gate.outputs.passed != 'true'
+        working-directory: ./backend
+        env:
+          MIX_ENV: test
+        run: mix compile --warnings-as-errors
+
+      - name: Run tests with coverage
+        if: needs._backend-test-gate.outputs.passed != 'true'
+        working-directory: ./backend
+        env:
+          MIX_ENV: test
+        run: mix test --cover
+
+  # ── frontend-test ─────────────────────────────────────────────────────────
+
+  _frontend-test-self-hosted:
+    name: Frontend Tests (self-hosted)
+    runs-on: [self-hosted, ubuntu-latest]
+    continue-on-error: true
     timeout-minutes: 10
+    outputs:
+      passed: ${{ steps.mark.outputs.passed }}
 
     steps:
       - name: Checkout
@@ -91,11 +190,85 @@ jobs:
         working-directory: ./frontend
         run: npx vitest run --coverage
 
-  docker-build:
-    name: Docker Build
+      - name: Mark passed
+        id: mark
+        if: success()
+        run: echo "passed=true" >> "$GITHUB_OUTPUT"
+
+  _frontend-test-gate:
+    name: Frontend Tests (gate)
     runs-on: ubuntu-latest
+    needs: _frontend-test-self-hosted
+    if: always()
+    outputs:
+      passed: ${{ steps.gate.outputs.passed }}
+
+    steps:
+      - name: Gate
+        id: gate
+        run: |
+          if [ "${{ needs._frontend-test-self-hosted.result }}" = "success" ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: [_frontend-test-self-hosted, _frontend-test-gate]
+    if: always()
+    timeout-minutes: 10
+
+    steps:
+      - name: Route
+        run: |
+          echo "Self-hosted passed: ${{ needs._frontend-test-gate.outputs.passed }}"
+          echo "Falling back to GH-hosted: ${{ needs._frontend-test-gate.outputs.passed != 'true' }}"
+
+      - name: Checkout
+        if: needs._frontend-test-gate.outputs.passed != 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: needs._frontend-test-gate.outputs.passed != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        if: needs._frontend-test-gate.outputs.passed != 'true'
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: TypeScript check
+        if: needs._frontend-test-gate.outputs.passed != 'true'
+        working-directory: ./frontend
+        run: npx vue-tsc --noEmit
+
+      - name: Lint
+        if: needs._frontend-test-gate.outputs.passed != 'true'
+        working-directory: ./frontend
+        run: npx eslint src --ext .ts,.vue
+
+      - name: Run tests with coverage
+        if: needs._frontend-test-gate.outputs.passed != 'true'
+        working-directory: ./frontend
+        run: npx vitest run --coverage
+
+  # ── docker-build ──────────────────────────────────────────────────────────
+
+  _docker-build-self-hosted:
+    name: Docker Build (self-hosted)
+    runs-on: [self-hosted, ubuntu-latest]
+    continue-on-error: true
     timeout-minutes: 20
-    needs: [backend-test, frontend-test]
+    needs: [_backend-test-self-hosted, _frontend-test-self-hosted]
+    if: always()
+    outputs:
+      passed: ${{ steps.mark.outputs.passed }}
 
     steps:
       - name: Checkout
@@ -114,12 +287,72 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  e2e-test:
-    name: E2E Tests
+      - name: Mark passed
+        id: mark
+        if: success()
+        run: echo "passed=true" >> "$GITHUB_OUTPUT"
+
+  _docker-build-gate:
+    name: Docker Build (gate)
     runs-on: ubuntu-latest
+    needs: _docker-build-self-hosted
+    if: always()
+    outputs:
+      passed: ${{ steps.gate.outputs.passed }}
+
+    steps:
+      - name: Gate
+        id: gate
+        run: |
+          if [ "${{ needs._docker-build-self-hosted.result }}" = "success" ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [_docker-build-self-hosted, _docker-build-gate, backend-test, frontend-test]
+    if: always()
+    timeout-minutes: 20
+
+    steps:
+      - name: Route
+        run: |
+          echo "Self-hosted passed: ${{ needs._docker-build-gate.outputs.passed }}"
+          echo "Falling back to GH-hosted: ${{ needs._docker-build-gate.outputs.passed != 'true' }}"
+
+      - name: Checkout
+        if: needs._docker-build-gate.outputs.passed != 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: needs._docker-build-gate.outputs.passed != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build production image
+        if: needs._docker-build-gate.outputs.passed != 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: skillforge:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── e2e-test ──────────────────────────────────────────────────────────────
+
+  _e2e-self-hosted:
+    name: E2E Tests (self-hosted)
+    runs-on: [self-hosted, ubuntu-latest]
+    continue-on-error: true
     timeout-minutes: 15
-    needs: [docker-build]
-    if: github.event_name == 'pull_request'
+    needs: [_docker-build-self-hosted]
+    if: always() && github.event_name == 'pull_request'
+    outputs:
+      passed: ${{ steps.mark.outputs.passed }}
 
     steps:
       - name: Checkout
@@ -162,4 +395,88 @@ jobs:
 
       - name: Stop app
         if: always()
+        run: docker compose down
+
+      - name: Mark passed
+        id: mark
+        if: success()
+        run: echo "passed=true" >> "$GITHUB_OUTPUT"
+
+  _e2e-gate:
+    name: E2E Tests (gate)
+    runs-on: ubuntu-latest
+    needs: _e2e-self-hosted
+    if: always() && github.event_name == 'pull_request'
+    outputs:
+      passed: ${{ steps.gate.outputs.passed }}
+
+    steps:
+      - name: Gate
+        id: gate
+        run: |
+          if [ "${{ needs._e2e-self-hosted.result }}" = "success" ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [_e2e-self-hosted, _e2e-gate, docker-build]
+    if: always() && github.event_name == 'pull_request'
+    timeout-minutes: 15
+
+    steps:
+      - name: Route
+        run: |
+          echo "Self-hosted passed: ${{ needs._e2e-gate.outputs.passed }}"
+          echo "Falling back to GH-hosted: ${{ needs._e2e-gate.outputs.passed != 'true' }}"
+
+      - name: Checkout
+        if: needs._e2e-gate.outputs.passed != 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: needs._e2e-gate.outputs.passed != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install frontend deps
+        if: needs._e2e-gate.outputs.passed != 'true'
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        if: needs._e2e-gate.outputs.passed != 'true'
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Start app via Docker
+        if: needs._e2e-gate.outputs.passed != 'true'
+        run: |
+          docker compose up --build -d
+          sleep 20
+          curl -f http://localhost:4000/api/health || (docker compose logs && exit 1)
+        env:
+          SECRET_KEY_BASE: test_secret_key_base_that_is_at_least_64_bytes_long_for_ci_testing_only
+          ADMIN_EMAIL: admin@example.com
+          ADMIN_PASSWORD: change-me-in-production
+
+      - name: Run E2E tests
+        if: needs._e2e-gate.outputs.passed != 'true'
+        working-directory: ./frontend
+        run: npx playwright test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/test-results/
+          retention-days: 7
+
+      - name: Stop app
+        if: always() && needs._e2e-gate.outputs.passed != 'true'
         run: docker compose down
