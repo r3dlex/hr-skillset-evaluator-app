@@ -56,6 +56,7 @@ jobs:
   _backend-test-self-hosted:
     name: Backend Tests (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
+    if: github.event_name != 'pull_request'
     continue-on-error: true
     timeout-minutes: 15
     outputs:
@@ -199,6 +200,7 @@ jobs:
   _frontend-test-self-hosted:
     name: Frontend Tests (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
+    if: github.event_name != 'pull_request'
     continue-on-error: true
     timeout-minutes: 10
     outputs:
@@ -304,6 +306,7 @@ jobs:
   _docker-build-self-hosted:
     name: Docker Build (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
+    if: github.event_name != 'pull_request'
     continue-on-error: true
     timeout-minutes: 20
     needs: [_backend-test-self-hosted, _frontend-test-self-hosted]
@@ -388,10 +391,10 @@ jobs:
   _e2e-self-hosted:
     name: E2E Tests (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
+    if: false
     continue-on-error: true
     timeout-minutes: 15
     needs: [_docker-build-self-hosted]
-    if: always() && github.event_name == 'pull_request'
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
 
