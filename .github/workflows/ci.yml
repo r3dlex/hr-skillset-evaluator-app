@@ -496,7 +496,7 @@ jobs:
         working-directory: ./frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Create env file
+      - name: Create env file and data directory
         if: needs._e2e-gate.outputs.passed != 'true'
         run: |
           cp .env.example .env
@@ -505,6 +505,8 @@ jobs:
             echo "ADMIN_EMAIL=admin@example.com"
             echo "ADMIN_PASSWORD=change-me-in-production"
           } >> .env
+          mkdir -p data
+          chmod 777 data
 
       - name: Start app via Docker
         if: needs._e2e-gate.outputs.passed != 'true'
