@@ -306,11 +306,10 @@ jobs:
   _docker-build-self-hosted:
     name: Docker Build (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
-    if: github.event_name != 'pull_request'
+    if: always() && github.event_name != 'pull_request'
     continue-on-error: true
     timeout-minutes: 20
     needs: [_backend-test-self-hosted, _frontend-test-self-hosted]
-    if: always()
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
 
