@@ -39,4 +39,4 @@ This submodule uses:
 - ruff lint and format checks
 - mypy strict mode
 - pytest with coverage gate
-- a focused GitHub Actions CI job
+- a focused GitHub Actions CI job on pull requests
