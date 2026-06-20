@@ -2,8 +2,6 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from pipeline_runner.config import STAGES, StageConfig
 from pipeline_runner.runner import StageResult, run_pipeline, run_stage
 
@@ -109,7 +107,10 @@ class TestRunPipeline:
     def test_filter_stages(self, mock_run_stage: MagicMock) -> None:
         """Pipeline should only run specified stages."""
         mock_run_stage.return_value = StageResult(
-            name="test", success=True, output="", duration_ms=100,
+            name="test",
+            success=True,
+            output="",
+            duration_ms=100,
         )
 
         results = run_pipeline(stages=["test"])
@@ -121,3 +122,37 @@ class TestRunPipeline:
         """Pipeline should return empty list for unknown stages."""
         results = run_pipeline(stages=["nonexistent"])
         assert results == []
+
+    @patch("pipeline_runner.runner.subprocess.run")
+    def test_stage_timeout(self, mock_run: MagicMock) -> None:
+        """Timeouts produce a failed stage result."""
+        import subprocess
+
+        mock_run.side_effect = subprocess.TimeoutExpired(cmd="sleep 999", timeout=300)
+
+        config = StageConfig(
+            name="timeout-stage",
+            commands=["sleep 999"],
+            workdir="/tmp",
+        )
+
+        result = run_stage(config)
+
+        assert result.success is False
+        assert "TIMEOUT" in result.output
+
+    @patch("pipeline_runner.runner.subprocess.run")
+    def test_stage_unexpected_error(self, mock_run: MagicMock) -> None:
+        """Unexpected subprocess errors produce a failed stage result."""
+        mock_run.side_effect = OSError("boom")
+
+        config = StageConfig(
+            name="error-stage",
+            commands=["false"],
+            workdir="/tmp",
+        )
+
+        result = run_stage(config)
+
+        assert result.success is False
+        assert "boom" in result.output
