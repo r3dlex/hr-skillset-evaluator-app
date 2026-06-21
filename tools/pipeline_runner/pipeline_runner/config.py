@@ -1,6 +1,6 @@
 """Stage definitions with commands and working directories."""
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass

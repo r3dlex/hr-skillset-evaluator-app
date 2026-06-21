@@ -53,7 +53,9 @@ def run_stage(config: StageConfig) -> StageResult:
                 all_success = False
                 console.print(f"  [red]Command failed (exit {result.returncode})[/red]")
                 if output.strip():
-                    console.print(Panel(output.strip()[:2000], title="Error Output", border_style="red"))
+                    console.print(
+                        Panel(output.strip()[:2000], title="Error Output", border_style="red")
+                    )
                 break
             else:
                 console.print(f"  [green]Done[/green] ({elapsed_ms}ms)")

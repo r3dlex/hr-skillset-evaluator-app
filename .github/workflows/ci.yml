@@ -10,11 +10,53 @@ permissions:
   contents: read
 
 jobs:
+  pipeline-runner:
+    name: Pipeline Runner
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: ./tools/pipeline_runner
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: tools/pipeline_runner/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Ruff format
+        run: uv run ruff format --check pipeline_runner tests
+
+      - name: Ruff check
+        run: uv run ruff check pipeline_runner tests
+
+      - name: Mypy
+        run: uv run mypy pipeline_runner tests
+
+      - name: Pytest
+        run: uv run pytest
+
+      - name: Build package
+        run: uv build
+
   # ── backend-test ──────────────────────────────────────────────────────────
 
   _backend-test-self-hosted:
     name: Backend Tests (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
+    if: github.event_name != 'pull_request'
     continue-on-error: true
     timeout-minutes: 15
     outputs:
@@ -158,6 +200,7 @@ jobs:
   _frontend-test-self-hosted:
     name: Frontend Tests (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
+    if: github.event_name != 'pull_request'
     continue-on-error: true
     timeout-minutes: 10
     outputs:
@@ -263,10 +306,10 @@ jobs:
   _docker-build-self-hosted:
     name: Docker Build (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
+    if: always() && github.event_name != 'pull_request'
     continue-on-error: true
     timeout-minutes: 20
     needs: [_backend-test-self-hosted, _frontend-test-self-hosted]
-    if: always()
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
 
@@ -347,10 +390,10 @@ jobs:
   _e2e-self-hosted:
     name: E2E Tests (self-hosted)
     runs-on: [self-hosted, ubuntu-latest]
+    if: false
     continue-on-error: true
     timeout-minutes: 15
     needs: [_docker-build-self-hosted]
-    if: always() && github.event_name == 'pull_request'
     outputs:
       passed: ${{ steps.mark.outputs.passed }}
 
@@ -452,6 +495,18 @@ jobs:
         if: needs._e2e-gate.outputs.passed != 'true'
         working-directory: ./frontend
         run: npx playwright install --with-deps chromium
+
+      - name: Create env file and data directory
+        if: needs._e2e-gate.outputs.passed != 'true'
+        run: |
+          cp .env.example .env
+          {
+            echo "SECRET_KEY_BASE=test_secret_key_base_that_is_at_least_64_bytes_long_for_ci_testing_only"
+            echo "ADMIN_EMAIL=admin@example.com"
+            echo "ADMIN_PASSWORD=change-me-in-production"
+          } >> .env
+          mkdir -p data
+          chmod 777 data
 
       - name: Start app via Docker
         if: needs._e2e-gate.outputs.passed != 'true'

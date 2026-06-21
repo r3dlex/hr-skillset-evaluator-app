@@ -10,7 +10,15 @@ defmodule SkillsetEvaluatorWeb.SkillGroupController do
       {:ok, skill} ->
         conn
         |> put_status(:created)
-        |> json(%{data: %{id: skill.id, name: skill.name, priority: skill.priority, position: skill.position, skill_group_id: skill.skill_group_id}})
+        |> json(%{
+          data: %{
+            id: skill.id,
+            name: skill.name,
+            priority: skill.priority,
+            position: skill.position,
+            skill_group_id: skill.skill_group_id
+          }
+        })
 
       {:error, changeset} ->
         conn

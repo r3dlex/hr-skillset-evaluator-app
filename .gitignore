@@ -39,6 +39,9 @@ docs/.vitepress/cache/
 tools/pipeline_runner/.venv/
 tools/pipeline_runner/__pycache__/
 tools/pipeline_runner/*.egg-info/
+
+tools/pipeline_runner/.coverage
+tools/pipeline_runner/dist/
 **/__pycache__/
 *.pyc
 
