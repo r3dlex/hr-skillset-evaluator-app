@@ -1,4 +1,4 @@
-# `.omx/specs/` — OMX test and acceptance specs for SkillForge
+# `.omx/specs/` - OMX test and acceptance specs for SkillForge
 
 Test specifications, acceptance criteria, and escalation-signal
 definitions scoped to the hr-skillset-evaluator-app subrepo. These

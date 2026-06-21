@@ -1,4 +1,4 @@
-# `.omx/plans/` — OMX plans for SkillForge
+# `.omx/plans/` - OMX plans for SkillForge
 
 PRDs (product requirements documents) and other OMX planning
 artifacts scoped to the hr-skillset-evaluator-app subrepo. OMX

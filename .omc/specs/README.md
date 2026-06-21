@@ -1,4 +1,4 @@
-# `.omc/specs/` — deep-interview and other input specs for SkillForge
+# `.omc/specs/` - deep-interview and other input specs for SkillForge
 
 Input specifications that seed OMC planning workflows scoped to the
 hr-skillset-evaluator-app subrepo. A spec captures the problem
@@ -11,9 +11,9 @@ Mirrors the rib-workspace convention (see
 ## When to write here
 
 - A **deep-interview** transcript/spec produced from a SkillForge-
-  scoped session
+ scoped session
 - Any other OMC input specification that grounds a subsequent
-  `.omc/plans/` artifact in this subrepo
+ `.omc/plans/` artifact in this subrepo
 
 ## Companion artifacts
 
