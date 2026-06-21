@@ -11,16 +11,19 @@ test.describe('AI chat flow', () => {
     await page.waitForSelector('text=Manager Dashboard')
 
     // Open the chat panel via the chat button in the sidebar/header
-    const chatButton = page.locator('button[aria-label="Open chat"], button:has-text("Chat")').first()
+    const chatButton = page.locator('button[aria-label="Open chat"], button[title="AI Assistant"], button:has-text("Chat")').first()
     if (await chatButton.count() > 0) {
       await chatButton.click()
       await page.waitForTimeout(500)
     }
 
     // Chat panel or a chat-related element should be visible
-    const chatPanel = page.locator('[data-testid="chat-panel"], .chat-panel, text=New Conversation').first()
+    const chatPanel = page.locator('.chat-panel, [data-testid="chat-panel"]').first()
+    const newConversationText = page.getByText('New conversation', { exact: false }).first()
     if (await chatPanel.count() > 0) {
       await expect(chatPanel).toBeVisible()
+    } else if (await newConversationText.count() > 0) {
+      await expect(newConversationText).toBeVisible()
     } else {
       // Navigate directly to the chat view if no panel trigger found
       await page.goto('/chat')
@@ -35,7 +38,7 @@ test.describe('AI chat flow', () => {
     await page.waitForSelector('text=Manager Dashboard')
 
     // Try to find and open chat
-    const chatButton = page.locator('button[aria-label="Open chat"]').first()
+    const chatButton = page.locator('button[aria-label="Open chat"], button[title="AI Assistant"]').first()
     if (await chatButton.count() > 0) {
       await chatButton.click()
       await page.waitForTimeout(500)
