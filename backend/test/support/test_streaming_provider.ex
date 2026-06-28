@@ -11,7 +11,7 @@ defmodule SkillsetEvaluator.LLM.TestStreamingProvider do
   def stream(_messages, _opts) do
     case Application.get_env(:skillset_evaluator, :test_stream_config) do
       nil -> {:error, "no test stream config set"}
-      config -> {:ok, config}
+      config -> {:ok, Map.put_new(config, :adapter, SkillsetEvaluator.LLM.AnthropicStreamAdapter)}
     end
   end
 end

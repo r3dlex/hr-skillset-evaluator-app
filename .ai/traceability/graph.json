@@ -20,6 +20,13 @@
       "relation": "summarized-by",
       "source": "workflow:hr-skillset-evaluator-app:init-ai-repo",
       "target": "handoff:hr-skillset-evaluator-app:init-ai-repo"
+    },
+    {
+      "source": "plan:hr-skillset-evaluator-app:northstar-architecture-llm-stream-adapter",
+      "target": "handoff:hr-skillset-evaluator-app:northstar-architecture-llm-stream-adapter",
+      "relation": "summarized-by",
+      "created_by": "northstar",
+      "evidence_path": ".ai/handoff/northstar-architecture-llm-stream-adapter.md"
     }
   ],
   "generated_at": "2026-06-28T12:54:35Z",
@@ -67,8 +74,28 @@
       "status": "active",
       "title": "init-ai-repo handoff",
       "type": "handoff"
+    },
+    {
+      "id": "plan:hr-skillset-evaluator-app:northstar-architecture-llm-stream-adapter",
+      "type": "plan",
+      "title": "northstar sliced plan: architecture-llm-stream-adapter",
+      "status": "active",
+      "repo_id": "hr-skillset-evaluator-app",
+      "path": ".ai/handoff/northstar-architecture-llm-stream-adapter.md",
+      "backlinks": []
+    },
+    {
+      "id": "handoff:hr-skillset-evaluator-app:northstar-architecture-llm-stream-adapter",
+      "type": "handoff",
+      "title": "northstar A->B handoff: architecture-llm-stream-adapter",
+      "status": "active",
+      "repo_id": "hr-skillset-evaluator-app",
+      "path": ".ai/handoff/northstar-architecture-llm-stream-adapter.md",
+      "backlinks": [
+        "plan:hr-skillset-evaluator-app:northstar-architecture-llm-stream-adapter"
+      ]
     }
   ],
   "root_repo_id": "hr-skillset-evaluator-app",
-  "schema_version": "1.0"
+  "schema_version": "1.1"
 }

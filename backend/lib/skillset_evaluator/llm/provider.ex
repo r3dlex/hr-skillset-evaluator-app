@@ -8,7 +8,7 @@ defmodule SkillsetEvaluator.LLM.Provider do
               | {:error, term()}
 
   @callback stream(messages :: list(map()), opts :: keyword()) ::
-              {:ok, map()} | {:error, term()}
+              {:ok, SkillsetEvaluator.LLM.Stream.config()} | {:error, term()}
 
   @callback name() :: String.t()
 end

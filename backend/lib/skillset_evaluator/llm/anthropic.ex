@@ -103,7 +103,8 @@ defmodule SkillsetEvaluator.LLM.Anthropic do
          {"anthropic-version", "2023-06-01"},
          {"content-type", "application/json"}
        ],
-       body: body
+       body: body,
+       adapter: SkillsetEvaluator.LLM.AnthropicStreamAdapter
      }}
   end
 

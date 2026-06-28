@@ -11,6 +11,11 @@
       "enabled_when": "umbrella topology",
       "id": "multi-repo-cascade",
       "status": "not-applicable"
+    },
+    {
+      "id": "northstar-handoff-architecture-llm-stream-adapter",
+      "enabled_when": "northstar_handoff_present",
+      "status": "available"
     }
   ],
   "phases": [
