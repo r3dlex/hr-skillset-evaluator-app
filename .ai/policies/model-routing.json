@@ -1,0 +1,27 @@
+{
+  "host_aliases": {
+    "claude": {
+      "cheap": "haiku",
+      "frontier": "sonnet",
+      "mid": "sonnet"
+    },
+    "codex": {
+      "cheap": "gpt-5.3-codex-spark",
+      "frontier": "gpt-5.5",
+      "mid": "gpt-5.4-mini"
+    }
+  },
+  "schema_version": "1.0",
+  "task_classes": {
+    "architecture": "frontier",
+    "ci-monitoring": "cheap",
+    "implementation": "mid",
+    "requirements": "frontier",
+    "test-generation": "cheap"
+  },
+  "tiers": [
+    "frontier",
+    "mid",
+    "cheap"
+  ]
+}

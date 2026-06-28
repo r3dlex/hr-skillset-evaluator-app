@@ -1,0 +1,7 @@
+{
+  "judge": {
+    "ci_runs_model": false,
+    "mode": "out-of-band"
+  },
+  "schema_version": "1.0"
+}

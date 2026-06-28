@@ -1,0 +1,15 @@
+{
+  "application_boundary": null,
+  "default_branch": "main",
+  "generated_at": "2026-06-28T12:54:35Z",
+  "language_pack": "elixir-vue-python",
+  "name": "SkillForge HR skillset evaluator",
+  "remote": "git@github.com:r3dlex/hr-skillset-evaluator-app.git",
+  "repo_id": "hr-skillset-evaluator-app",
+  "schema_version": "1.0",
+  "topology_type": "standalone",
+  "tracker": {
+    "hosted_policy_mutation": "checklist-only",
+    "type": "github"
+  }
+}

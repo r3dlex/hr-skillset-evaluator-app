@@ -276,3 +276,9 @@ All specs live in `spec/` and are numbered for execution order:
 ## License
 
 See [LICENSE](LICENSE).
+
+<!-- ai-sdlc-init:start -->
+## AI-SDLC governance
+
+This repository follows the AI-SDLC methodology. See [AGENTS.md](./AGENTS.md), [RULES.md](./RULES.md), [PLANS.md](./PLANS.md), [.ai/workflows/repo-workflow.md](./.ai/workflows/repo-workflow.md), and [.ai/workflows/repo-workflow.json](./.ai/workflows/repo-workflow.json).
+<!-- ai-sdlc-init:end -->

@@ -1,0 +1,29 @@
+{
+  "aggregate_score": 1.0,
+  "criteria": [
+    {
+      "name": "Structure",
+      "rationale": "Required scaffold files are present.",
+      "score": 1.0
+    },
+    {
+      "name": "Safety",
+      "rationale": "Hosted policy mutations are checklist-only.",
+      "score": 1.0
+    },
+    {
+      "name": "Traceability",
+      "rationale": "Graph edges resolve.",
+      "score": 1.0
+    }
+  ],
+  "disclaimer": "recorded out-of-band demonstration, not a CI gate",
+  "evalset_path": ".ai/evals/example-output-eval/evalset.json",
+  "judge_model": "recorded-example",
+  "passing_threshold": 0.8,
+  "recorded_at": "2026-06-28T12:54:35Z",
+  "rubric_path": ".ai/evals/example-output-eval/rubric.md",
+  "schema_version": "1.0",
+  "skill_under_test": "init-ai-repo",
+  "verdict": "pass"
+}

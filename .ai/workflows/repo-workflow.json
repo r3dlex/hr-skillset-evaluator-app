@@ -1,0 +1,57 @@
+{
+  "entry_surfaces": [
+    "AGENTS.md",
+    "README.md"
+  ],
+  "handoff": ".ai/handoff/init-ai-repo-handoff.md",
+  "human_doc": ".ai/workflows/repo-workflow.md",
+  "manifest": ".ai/workflows/repo-workflow.json",
+  "optional_branches": [
+    {
+      "enabled_when": "umbrella topology",
+      "id": "multi-repo-cascade",
+      "status": "not-applicable"
+    }
+  ],
+  "phases": [
+    {
+      "id": "01-discover-decide",
+      "outputs": [
+        ".ai/validation/report.md"
+      ],
+      "required": true,
+      "status_path": ".ai/phases/01-discover-decide/status.json",
+      "title": "Discover and Decide"
+    },
+    {
+      "id": "02-govern-plan",
+      "outputs": [
+        ".ai/validation/report.md"
+      ],
+      "required": true,
+      "status_path": ".ai/phases/02-govern-plan/status.json",
+      "title": "Govern and Plan"
+    },
+    {
+      "id": "03-configure-generate",
+      "outputs": [
+        ".ai/validation/report.md"
+      ],
+      "required": true,
+      "status_path": ".ai/phases/03-configure-generate/status.json",
+      "title": "Configure and Generate"
+    },
+    {
+      "id": "04-validate-handoff",
+      "outputs": [
+        ".ai/validation/report.md"
+      ],
+      "required": true,
+      "status_path": ".ai/phases/04-validate-handoff/status.json",
+      "title": "Validate and Handoff"
+    }
+  ],
+  "schema_version": "1.0",
+  "topology_type": "standalone",
+  "workflow_id": "init-ai-repo"
+}

@@ -1,0 +1,12 @@
+{
+  "checked_paths": [
+    ".ai",
+    ".memory",
+    "docs",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "drift_detected": false,
+  "generated_at": "2026-06-28T12:54:35Z",
+  "schema_version": "1.0"
+}
