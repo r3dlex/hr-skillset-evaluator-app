@@ -1,0 +1,12 @@
+{
+  "actions": [
+    {
+      "action": "copy",
+      "backup_path": null,
+      "confirmation_token": null,
+      "path": ".ai/matrix.json"
+    }
+  ],
+  "generated_at": "2026-06-28T12:54:35Z",
+  "schema_version": "1.0"
+}

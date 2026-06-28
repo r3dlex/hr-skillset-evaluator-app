@@ -101,3 +101,15 @@ cd frontend && npx vitest run
 cd backend && mix test --cover
 cd frontend && npx vitest run --coverage
 ```
+
+<!-- ai-sdlc-init:start -->
+## AI-SDLC v3 governance
+
+AI-SDLC source of truth:
+- Human workflow: [.ai/workflows/repo-workflow.md](./.ai/workflows/repo-workflow.md)
+- Machine workflow: [.ai/workflows/repo-workflow.json](./.ai/workflows/repo-workflow.json)
+- Topology matrix: [.ai/matrix.json](./.ai/matrix.json)
+- Traceability index: [.ai/traceability/index.md](./.ai/traceability/index.md)
+
+Hosted branch and policy changes are checklist-only unless explicitly confirmed. PR merge requires architect, reviewer, and executor agreement, resolved comments, local validation, and green hosted CI.
+<!-- ai-sdlc-init:end -->

@@ -1,0 +1,22 @@
+{
+  "a2a": {
+    "correlation_id_required": true,
+    "cross_repo": false,
+    "handoff_convention": ".ai/mcp/a2a-handoff.md",
+    "protocol": "A2A"
+  },
+  "schema_version": "1.0",
+  "servers": [
+    {
+      "endpoint": null,
+      "name": "workspace-sync",
+      "status": "stub",
+      "tools": [
+        "validate",
+        "sync",
+        "drift-report"
+      ],
+      "transport": "stdio"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "cases": [
+    {
+      "expected": "workflow and traceability surfaces are linked",
+      "id": "governance-links",
+      "input": "Check AI-SDLC links"
+    }
+  ],
+  "schema_version": "1.0",
+  "set_id": "example-output-eval"
+}

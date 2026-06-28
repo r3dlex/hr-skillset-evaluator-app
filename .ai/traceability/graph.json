@@ -1,0 +1,74 @@
+{
+  "edges": [
+    {
+      "created_by": "init-ai-repo",
+      "evidence_path": ".ai/traceability/index.md",
+      "relation": "governed-by",
+      "source": "workflow:hr-skillset-evaluator-app:init-ai-repo",
+      "target": "adr:hr-skillset-evaluator-app:init-ai-sdlc-v3"
+    },
+    {
+      "created_by": "init-ai-repo",
+      "evidence_path": ".ai/validation/report.md",
+      "relation": "validated-by",
+      "source": "workflow:hr-skillset-evaluator-app:init-ai-repo",
+      "target": "validation:hr-skillset-evaluator-app:ai-sdlc-structural"
+    },
+    {
+      "created_by": "init-ai-repo",
+      "evidence_path": ".ai/handoff/init-ai-repo-handoff.md",
+      "relation": "summarized-by",
+      "source": "workflow:hr-skillset-evaluator-app:init-ai-repo",
+      "target": "handoff:hr-skillset-evaluator-app:init-ai-repo"
+    }
+  ],
+  "generated_at": "2026-06-28T12:54:35Z",
+  "nodes": [
+    {
+      "backlinks": [
+        "validation:hr-skillset-evaluator-app:ai-sdlc-structural"
+      ],
+      "id": "workflow:hr-skillset-evaluator-app:init-ai-repo",
+      "path": ".ai/workflows/repo-workflow.md",
+      "repo_id": "hr-skillset-evaluator-app",
+      "status": "active",
+      "title": "init-ai-repo workflow",
+      "type": "workflow"
+    },
+    {
+      "backlinks": [
+        "workflow:hr-skillset-evaluator-app:init-ai-repo"
+      ],
+      "id": "adr:hr-skillset-evaluator-app:init-ai-sdlc-v3",
+      "path": "docs/architecture/adr/0001-init-ai-sdlc-v3.md",
+      "repo_id": "hr-skillset-evaluator-app",
+      "status": "accepted",
+      "title": "Adopt AI-SDLC v3",
+      "type": "adr"
+    },
+    {
+      "backlinks": [
+        "workflow:hr-skillset-evaluator-app:init-ai-repo"
+      ],
+      "id": "validation:hr-skillset-evaluator-app:ai-sdlc-structural",
+      "path": ".ai/validation/report.md",
+      "repo_id": "hr-skillset-evaluator-app",
+      "status": "active",
+      "title": "AI-SDLC structural validation",
+      "type": "validation"
+    },
+    {
+      "backlinks": [
+        "workflow:hr-skillset-evaluator-app:init-ai-repo"
+      ],
+      "id": "handoff:hr-skillset-evaluator-app:init-ai-repo",
+      "path": ".ai/handoff/init-ai-repo-handoff.md",
+      "repo_id": "hr-skillset-evaluator-app",
+      "status": "active",
+      "title": "init-ai-repo handoff",
+      "type": "handoff"
+    }
+  ],
+  "root_repo_id": "hr-skillset-evaluator-app",
+  "schema_version": "1.0"
+}
