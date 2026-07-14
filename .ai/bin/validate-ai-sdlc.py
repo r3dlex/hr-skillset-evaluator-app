@@ -5,7 +5,15 @@ import json
 import sys
 from pathlib import Path
 
+from protected_edit_approval import (
+    ApprovalError as ProtectedEditApprovalError,
+    check_repository as check_protected_edit_repository,
+    run_regression_tests as run_protected_edit_regression_tests,
+    self_test as protected_edit_self_test,
+)
+
 ROOT = Path(__file__).resolve().parents[2]
+
 REQUIRED = [
     '.ai/matrix.json', '.ai/init/repo-profile.json', '.ai/init/sdlc-path.md',
     '.ai/workflows/repo-workflow.md', '.ai/workflows/repo-workflow.json',
@@ -21,6 +29,9 @@ REQUIRED = [
     'docs/architecture/adr/0001-init-ai-sdlc-v3.md',
     'docs/specifications/ACTIVE/init-ai-sdlc-v3.md', 'RULES.md', 'PLANS.md',
     'AGENTS.md', 'README.md', 'CLAUDE.md', 'GEMINI.md', 'CONTRIBUTING.md',
+    '.ai/rules/protected-edit-approvals.md',
+    '.ai/bin/protected_edit_approval.py',
+    '.ai/tests/test_protected_edit_approval.py',
 ]
 
 def fail(message: str) -> None:
@@ -87,5 +98,12 @@ review = (ROOT / '.ai/reviews/ai-failure-modes.md').read_text().lower()
 for word in ['hallucinated', 'slopsquatting', 'error handling', 'looks-right']:
     if word not in review:
         fail(f'missing review keyword {word}')
+
+try:
+    check_protected_edit_repository(ROOT)
+    protected_edit_self_test()
+    run_protected_edit_regression_tests(ROOT)
+except ProtectedEditApprovalError as exc:
+    fail(f"Protected-edit approval harness failed: {exc}")
 
 print('AI-SDLC validation passed')

@@ -15,6 +15,21 @@
       "mode": "physical-copy",
       "path": ".ai/workflows/repo-workflow.md",
       "source": "."
+    },
+    {
+      "mode": "physical-copy",
+      "path": ".ai/rules/protected-edit-approvals.md",
+      "source": "r3dlex/rib-workspace"
+    },
+    {
+      "mode": "physical-copy",
+      "path": ".ai/bin/protected_edit_approval.py",
+      "source": "r3dlex/rib-workspace"
+    },
+    {
+      "mode": "physical-copy",
+      "path": ".ai/tests/test_protected_edit_approval.py",
+      "source": "r3dlex/rib-workspace"
     }
   ],
   "max_allowed_depth": 0,

@@ -102,6 +102,13 @@ cd backend && mix test --cover
 cd frontend && npx vitest run --coverage
 ```
 
+## Protected edit approvals
+
+The shared contract is `.ai/rules/protected-edit-approvals.md`. Individual
+approval remains recommended. Block approval is optional only for an exact,
+manifest-bound large set at the current Git HEAD. It never applies to
+`agent-config`.
+
 <!-- ai-sdlc-init:start -->
 ## AI-SDLC v3 governance
 
